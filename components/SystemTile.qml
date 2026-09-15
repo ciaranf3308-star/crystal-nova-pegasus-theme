@@ -41,10 +41,11 @@ Item {
 
     Image {
         id: icon
-        width: 76
-        height: 76
+        // Icon art fills ~0.6 of the tile width, per the approved reference.
+        width: 200
+        height: 132
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 26
+        y: 14
         fillMode: Image.PreserveAspectFit
         smooth: true
         source: iconSource()
@@ -53,16 +54,16 @@ Item {
 
     // Fallback glyph if no icon file exists for this system
     Text {
-        width: 76
-        height: 76
+        width: 200
+        height: 132
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 26
+        y: 14
         visible: icon.status !== Image.Ready
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         font.family: root.fontFamily
         font.bold: true
-        font.pixelSize: 30
+        font.pixelSize: 44
         color: root.selected ? root.selInk : root.tileInk
         text: root.shortName.length >= 2 ? root.shortName.substring(0, 3).toUpperCase() : "?"
     }
@@ -70,7 +71,7 @@ Item {
     Text {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 26
+        anchors.bottomMargin: 21
         width: parent.width - 24
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight

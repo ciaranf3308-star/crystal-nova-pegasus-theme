@@ -93,12 +93,20 @@ The theme reads `theme.cfg` at the folder root; `theme.qml` is the entry point.
 Drop real art into `assets/icons/` as:
 
 ```
-<shortname>.png            unselected tile icon
-<shortname>_selected.png   selected tile icon
+<shortname>.png            unselected tile icon (icy-blue artwork, transparent bg)
+<shortname>_selected.png   selected tile icon (dark-navy artwork for the cream tile)
 ```
 
 `<shortname>` is the collection's `shortName` in lowercase (e.g. `gba.png`).
+Icons render in a 200×132 box (`PreserveAspectFit`) — roughly 0.6 of the tile
+width, per the approved reference. Tight transparent crops work best.
 Missing files fall back to a text badge automatically — no config needed.
+
+`tools/splice_icons.py` extracts individual console logos from a supplier
+contact sheet: connected-component detection, margin crop, flood-fill
+background removal, plus the navy `_selected` remap. The six current console
+icons (GBA/SNES/PS1/N64/Dreamcast/PSP) were produced this way; arcade,
+favourites, more and unknown are still placeholders.
 
 ## What has been tested (PySide6 harness)
 
