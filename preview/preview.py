@@ -6,11 +6,16 @@ Usage:
                [--battery 0.73] [--charging] [--nobattery] [--delay 120]
 
 The mock api mirrors the real Pegasus theme API surface (verified against
-pegasus-frontend master):
+pegasus-frontend master and http://pegasus-frontend.org/docs/themes/api/):
   api.collections  -> ObjectListModel, roles: modelData/name/shortName/sortBy/
                       summary/description/extra/assets/games; .get(i), .count
-  api.keys         -> isLeft/isRight/isUp/isDown/isAccept/isCancel/isDetails/
-                      isFilters/isNextPage/isPrevPage/isPageUp/isPageDown/isMenu
+  collection.games -> QObject item model: .count, .get(i); each game exposes
+                      title/sortBy/assets(boxFront/poster/...)/launch()
+  game.launch()    -> the real Pegasus launch call; the mock records it in
+                      LAUNCH_LOG so tests can assert the launch path
+  api.keys         -> isAccept/isCancel/isDetails/isFilters/isNextPage/
+                      isPrevPage/isPageUp/isPageDown (+ isLeft/isRight/isUp/
+                      isDown shims the real api does NOT have)
   api.device       -> batteryPercent (float 0..1), batteryCharging (bool),
                       batteryStatus (int enum)
   api.memory       -> get/set/has/unset
@@ -72,6 +77,105 @@ ROLE_NAMES = {
 }
 
 
+class MockGameAssets(QObject):
+    """Mirrors game.assets: boxFront/poster/... as URL strings ("" when absent)."""
+    def __init__(self, box_front="", poster="", parent=None):
+        super().__init__(parent)
+        self._box_front = box_front
+        self._poster = poster
+
+    boxFront = Property(str, lambda self: self._box_front, constant=True)
+    poster = Property(str, lambda self: self._poster, constant=True)
+    boxBack = Property(str, lambda self: "", constant=True)
+    screenshot = Property(str, lambda self: "", constant=True)
+
+
+# Titles from the Phase 2 brief (mock test data only — never shipped into
+# the production collection model).
+GBA_GAMES = [
+    "Mario Golf: Advance Tour",
+    "Pok\u00e9mon FireRed",
+    "Metroid Fusion",
+    "Advance Wars",
+    "Golden Sun",
+    "WarioWare, Inc.: Mega Microgames!",
+    "The Legend of Zelda: The Minish Cap",
+    "Mario & Luigi: Superstar Saga",
+]
+PS2_GAMES = [
+    "TOCA Race Driver 3",
+    "Gran Turismo 4",
+    "Burnout 3: Takedown",
+    "SSX 3",
+    "Grand Theft Auto: San Andreas",
+    "Metal Gear Solid 3: Snake Eater",
+    "Jak II",
+    "Ratchet & Clank",
+]
+
+BOXART_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                          "assets", "boxart")
+
+
+def _slug(sys, title):
+    s = "".join(c.lower() if c.isalnum() else "-" for c in title).strip("-")
+    while "--" in s:
+        s = s.replace("--", "-")
+    return "%s-%s.png" % (sys, s)
+
+
+class MockGame(QObject):
+    """Mirrors the Pegasus game object: title, assets, launch()."""
+    def __init__(self, title, short_name, art=True, parent=None, art_sys=None):
+        super().__init__(parent)
+        self._title = title
+        box = ""
+        if art:
+            path = os.path.join(BOXART_DIR,
+                                _slug(art_sys or short_name, title))
+            if os.path.exists(path):
+                box = QUrl.fromLocalFile(path).toString()
+        self._assets = MockGameAssets(box_front=box, parent=self)
+
+    def _get_title(self):
+        return self._title
+
+    def _get_assets(self):
+        return self._assets
+
+    @Slot()
+    def launch(self):
+        # The real Pegasus launch mechanism is game.launch(); the mock
+        # records the invocation so tests can assert the theme called it.
+        LAUNCH_LOG.append(self._title)
+
+    title = Property(str, _get_title, constant=True)
+    sortBy = Property(str, _get_title, constant=True)
+    assets = Property(QObject, _get_assets, constant=True)
+
+
+# Recorded game.launch() invocations, in order.
+LAUNCH_LOG = []
+
+
+class MockGameList(QObject):
+    """Mirrors a collection's games item model: .count and .get(i)."""
+    def __init__(self, games, parent=None):
+        super().__init__(parent)
+        self._games = list(games)
+
+    def _get_count(self):
+        return len(self._games)
+
+    @Slot(int, result=QObject)
+    def get(self, idx):
+        if 0 <= idx < len(self._games):
+            return self._games[idx]
+        return None
+
+    count = Property(int, _get_count, constant=True)
+
+
 class MockGames(QObject):
     def __init__(self, count, parent=None):
         super().__init__(parent)
@@ -84,11 +188,15 @@ class MockGames(QObject):
 
 
 class MockCollection(QObject):
-    def __init__(self, name, short_name, game_count, parent=None):
+    def __init__(self, name, short_name, game_count, parent=None, games=None):
         super().__init__(parent)
         self._name = name
         self._short = short_name
-        self._games = MockGames(game_count, self)
+        if games is None:
+            games = [MockGame("Game %d" % (i + 1), short_name.lower(),
+                              art=False, parent=self)
+                     for i in range(game_count)]
+        self._games = MockGameList(games, self)
 
     def _get_name(self):
         return self._name
@@ -107,9 +215,11 @@ class MockCollection(QObject):
 class MockCollections(QAbstractListModel):
     countChanged = Signal()
 
-    def __init__(self, items, parent=None):
+    def __init__(self, items, parent=None, gameset="default"):
         super().__init__(parent)
-        self._items = [MockCollection(n, s, g, self) for n, s, g in items]
+        self._items = [MockCollection(n, s, g, self,
+                                      games=_build_gameset(s, gameset))
+                       for n, s, g in items]
 
     def rowCount(self, parent=QModelIndex()):
         return 0 if parent.isValid() else len(self._items)
@@ -207,11 +317,40 @@ class MockMemory(QObject):
     def unset(self, k): self._d.pop(k, None)
 
 
+# gameset scenarios for the library (applied to the "gba" collection;
+# "ps2" always keeps its 8; anything else gets generic numbered games).
+def _build_gameset(short, gameset):
+    short = (short or "").lower()
+    if short == "ps2":
+        return [MockGame(t, short, art=True) for t in PS2_GAMES]
+    if short != "gba":
+        return None
+    if gameset == "empty":
+        return []
+    if gameset == "one":
+        return [MockGame(GBA_GAMES[0], short, art=True)]
+    if gameset == "ten":
+        games = [MockGame(t, short, art=True) for t in GBA_GAMES]
+        games.append(MockGame("Game Nine", short, art=True, art_sys="extra"))
+        games.append(MockGame("Game Ten", short, art=True, art_sys="extra"))
+        return games
+    if gameset == "noart":
+        return [MockGame(t, short, art=(i != 3))
+                for i, t in enumerate(GBA_GAMES)]
+    if gameset == "longtitle":
+        titles = list(GBA_GAMES)
+        titles[6] = ("The Legend of Zelda: The Minish Cap \u2014 Definitive "
+                     "Extended Collector\u2019s Edition")
+        return [MockGame(t, short, art=True) for t in titles]
+    return [MockGame(t, short, art=True) for t in GBA_GAMES]
+
+
 class MockApi(QObject):
-    def __init__(self, n, battery, charging, parent=None, restore=None):
+    def __init__(self, n, battery, charging, parent=None, restore=None,
+                 restore_screen="", gameset="default"):
         super().__init__(parent)
         items = (PAGE1 + PAGE2) if n == 18 else (PAGE1 if n == 9 else [])
-        self._collections = MockCollections(items, self)
+        self._collections = MockCollections(items, self, gameset=gameset)
         self._all_games = MockCollections([], self)
         self._keys = MockKeys(self)
         self._device = MockDevice(battery, charging, self)
@@ -219,6 +358,8 @@ class MockApi(QObject):
         if restore:
             # Pre-seed api.memory so the theme's onCompleted restore path runs.
             self._memory._d["crystalNova.lastSystem"] = restore
+        if restore_screen:
+            self._memory._d["crystalNova.lastScreen"] = restore_screen
 
     def _get_collections(self): return self._collections
     def _get_all_games(self): return self._all_games
@@ -253,17 +394,28 @@ def main():
     ap.add_argument("--settle", type=int, default=600, help="ms before grab")
     ap.add_argument("--restore", default="",
                     help="pre-seed api.memory crystalNova.lastSystem with a shortName")
+    ap.add_argument("--restore-screen", default="",
+                    help="pre-seed api.memory crystalNova.lastScreen (e.g. system)")
     ap.add_argument("--clock", default="",
                     help="fix the header clock (e.g. 12:34) for deterministic shots")
     ap.add_argument("--print-state", action="store_true",
                     help="print screen/selectedIndex/page as KEY=VALUE for tests")
+    ap.add_argument("--gameset", default="default",
+                    choices=("default", "ten", "one", "empty", "noart",
+                             "longtitle"),
+                    help="library scenario for the gba collection")
+    ap.add_argument("--enter", action="store_true",
+                    help="press Accept once after load (enter selected system)")
+    ap.add_argument("--print-launches", action="store_true",
+                    help="print LAUNCHED=<title> lines for game.launch() calls")
     args = ap.parse_args()
 
     battery = -1.0 if args.nobattery else args.battery
 
     app = QGuiApplication(sys.argv)
     api = MockApi(args.n, battery, args.charging,
-                  restore=args.restore or None)
+                  restore=args.restore or None,
+                  restore_screen=args.restore_screen, gameset=args.gameset)
 
     view = QQuickView()
     view.engine().rootContext().setContextProperty("api", api)
@@ -293,6 +445,9 @@ def main():
     app.processEvents()
 
     from PySide6.QtTest import QTest
+    if args.enter:
+        QTest.keyClick(view, KEYS["Return"])
+        QTest.qWait(args.delay)
     for name in [k.strip() for k in args.keys.split(",") if k.strip()]:
         code = KEYS[name]
         QTest.keyClick(view, code)
@@ -313,13 +468,25 @@ def main():
         from PySide6.QtQuick import QQuickItem
         root = view.rootObject()
         grid = root.findChild(QQuickItem, "systemGrid")
+        lib = root.findChild(QQuickItem, "gameLibrary")
+        ggrid = lib.findChild(QQuickItem, "gameGrid") if lib else None
+        gtitle = root.findChild(QQuickItem, "libraryGameTitle")
         state = {
             "screen": root.property("screen"),
             "selectedIndex": grid.property("globalIndex") if grid else None,
             "page": grid.property("page") if grid else None,
+            "libShort": lib.property("shortName") if lib else None,
+            "gameIndex": ggrid.property("currentIndex") if ggrid else None,
+            "gamePage": ggrid.property("page") if ggrid else None,
+            "gameCount": ggrid.property("count") if ggrid else None,
+            "gameTitle": gtitle.property("text") if gtitle else None,
         }
         for k, v in state.items():
             print(f"STATE {k}={v}")
+
+    if args.print_launches:
+        for title in LAUNCH_LOG:
+            print(f"LAUNCHED {title}")
 
 
 if __name__ == "__main__":

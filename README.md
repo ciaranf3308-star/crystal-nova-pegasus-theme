@@ -1,8 +1,11 @@
-# Crystal Nova — Pegasus Theme (Phase 1.7)
+# Crystal Nova — Pegasus Theme (Phase 2)
 
 Custom Pegasus Frontend theme for the **Retroid Pocket Nova**.
 
-![Phase 1 home screen](preview/phase1-home-1280x960.png)
+![Phase 2 GBA library](preview/phase2-gba-library.png)
+
+Phase 2 adds the real game-library screen: HOME → SYSTEM → GAME → EMULATOR.
+The Phase 1.7 home screen is locked production UI and is unchanged.
 
 Visual source of truth: `reference/approved-crystal-nova-ui.png` — the approved
 Crystal Nova handheld dashboard. That image is the contract; the theme matches
@@ -41,9 +44,13 @@ crystal-nova-pegasus-theme/
 │   ├── IconResolver.js       Centralized shortName → icon resolver + alias map
 │   ├── CrystalTheme.js       Central palette, geometry, display-name resolver
 │   ├── FooterHints.qml        Keycap + RECENT · page indicator · keycap + FAVOURITES
+│   ├── GameTile.qml           Box-art tile: dark frame, cream selection
+│   ├── GameGrid.qml           4×2 paged grid, D-pad navigation
+│   ├── GameFallbackArt.qml    No-art fallback card (abbr + title + icon)
+│   ├── LibraryFooter.qml      [B] BACK · page indicator · [A] PLAY
 │   └── Toast.qml              Brief overlay notice
 ├── screens/
-│   └── SystemPlaceholder.qml  Temporary system screen (interaction proof)
+│   └── GameLibrary.qml        Per-system game library (replaces Phase 1 stub)
 ├── assets/
 │   ├── icons/                 30 production icons, 512×512 RGBA (see below)
 │   └── backgrounds/           (reserved)
@@ -54,7 +61,13 @@ crystal-nova-pegasus-theme/
 │   └── approved-crystal-nova-ui.png   Approved visual reference — do not redesign
 ├── preview/
 │   ├── preview.py             PySide6 harness: mock Pegasus api, 1280×960 renders
-│   └── phase1-home-1280x960.png       Current Phase 1 implementation screenshot
+│   └── phase1-home-1280x960.png       Phase 1 home screenshot (locked)
+│   ├── phase2-gba-library.png         GBA library, Mario Golf selected
+│   ├── phase2-gba-selected.png        GBA library, Zelda selected
+│   ├── phase2-ps2-library.png         PS2 library, TOCA selected
+│   ├── phase2-page2.png               10-game library, page 2
+│   ├── phase2-missing-art.png         Missing-art fallback card
+│   └── phase2-empty-library.png       Empty-collection state
 ├── tests/
 │   ├── test_preview.py        18-check render + state suite
 │   ├── test_icon_resolver.py  Resolver logic (QJSEngine) + PNG validation
@@ -69,18 +82,53 @@ crystal-nova-pegasus-theme/
 | Input | Action |
 |---|---|
 | D-pad / arrows | Move selection (wraps within row, pages at grid edges) |
-| A / Enter | Open system (placeholder screen in Phase 1) |
+| A / Enter on home | Open the system's game library |
+| A / Enter on a game | Launch via the real Pegasus `game.launch()` |
 | B / Esc on system screen | Back to home |
 | B / Esc on home | **Not consumed** — Pegasus opens its own menu |
-| L1 / PageUp | RECENT toast (Phase 2 stub) |
-| R1 / PageDown | FAVOURITES toast (Phase 2 stub) |
+| L1 / PageUp | RECENT toast (Phase 3 stub) |
+| R1 / PageDown | FAVOURITES toast (Phase 3 stub) |
 
 The last selected system persists across restarts via
-`api.memory` key `crystalNova.lastSystem`.
+`api.memory` key `crystalNova.lastSystem`. Before launching, the theme
+stores `crystalNova.lastScreen = "system"` and
+`crystalNova.lastGame` (the game index); Pegasus reloads the theme after
+a game exits, and the theme restores the library with the game selection
+intact.
+
+## Phase 2: game library
+
+Pressing A on a system tile opens `screens/GameLibrary.qml`, a 4×2
+box-art grid driven by the real `collection.games` model — no demo
+content in production.
+
+- Artwork: `game.assets.boxFront`, falling back to `game.assets.poster`,
+  then to a polished Crystal fallback card (system abbreviation + title
+  + production system icon). Never a broken-image icon. Images load
+  asynchronously; only the current page of 8 is instantiated.
+- Selected cover: warm cream outer frame, dark inner edge, viewfinder
+  corner brackets, 90ms colour response only. No zoom/bounce/glow.
+- Header becomes `CRYSTAL / GBA` (header architecture unchanged).
+- Footer: `[B] BACK` left, `[A] PLAY` right, quiet `n / m` page indicator
+  centred (only when more than one page). Empty collections hide PLAY.
+- D-pad crosses page boundaries; navigation never lands on an invalid
+  slot. Zero/one/partial-page libraries are handled.
+- Empty collection: `NO GAMES FOUND` / `ADD GAMES TO THIS COLLECTION`.
+- Launch: `game.launch()` — Pegasus owns emulator selection via its
+  metadata; the theme only invokes the call.
+
+New components: `components/GameGrid.qml`, `components/GameTile.qml`,
+`components/GameFallbackArt.qml`, `components/LibraryFooter.qml`;
+library geometry is centralized in `components/CrystalTheme.js`
+(`lib*` constants) the same way Phase 1.7 was measured.
 
 ## Pegasus APIs / properties used
 
 - `api.collections` — `count`, `get(index)`; roles `name`, `shortName`. Drives the grid.
+- `collection.games` — item model: `count`, `get(index)`.
+- Game objects — `title`, `assets.boxFront`, `assets.poster`, and the
+  callable `launch()` (the real Pegasus launch mechanism; shows
+  Pegasus' own file selector when a game has multiple launchable files).
 - `api.keys` — `isAccept(event)`, `isCancel(event)`, `isPrevPage(event)`,
   `isNextPage(event)`. Directional input (D-pad/arrows) is handled with
   standard QML `event.key === Qt.Key_Left/Right/Up/Down` — Pegasus does not
@@ -210,25 +258,45 @@ keycaps 82×41 at y828.
 carries four dark viewfinder brackets (8px arms, 32px long, 7px inset);
 footer keycaps have stepped pixel corners; the battery is segmented.
 
+`python3 tests/test_library.py` — 31 checks, all passing at 1280×960
+(Phase 2):
+
+State (QML state asserted after scripted input): library entry from HOME
+with the correct collection (`gba`, 8 games, `MARIO GOLF: ADVANCE TOUR`
+titled), Right/Left/Up/Down navigation, row-edge crossing, edge holds,
+next/previous page across the boundary on a 10-game library, partial
+final page, one-game and empty collections, missing-artwork fallback,
+long-title elision, B returning home with the home selection intact,
+home selection restored from `api.memory`, library + game index restored
+when Pegasus reloads after a game, PS2 library (`TOCA RACE DRIVER 3`
+first), and A invoking the real mocked `game.launch()` for the selected
+game (not the first).
+
+Render (screenshot valid at 1280×960): GBA library, selected game, PS2
+library, page 2, missing-art fallback, empty state, long title.
+
 ## What has NOT been validated yet
 
-- **Real Pegasus runtime.** All verification so far is the PySide6/QML
-  preview harness. On-device Pegasus validation on the Nova is the next step.
+- **Real Pegasus runtime, especially game launching.** All verification
+  so far is the PySide6/QML preview harness. On-device Pegasus validation
+  on the Nova — including pressing A on Mario Golf: Advance Tour (GBA →
+  RetroArch/mGBA) and TOCA Race Driver 3 (PS2 → NetherSX2 Classic 3668)
+  — is the next step. `game.launch()` is the documented Pegasus launch
+  mechanism (verified against pegasus-frontend.org/docs/themes/api/),
+  but real-device launch success is NOT claimed until tested on hardware.
 - Real collection data (names, shortNames, counts) from an actual library.
 - Real battery/charging behavior on hardware.
 - The exact Android themes directory path on the Nova (see install notes).
 - Controller mapping on the Nova (D-pad/L1/R1/A/B → Pegasus key events).
 
-## Known stubs (Phase 2)
+## Known stubs (Phase 3)
 
-- `screens/SystemPlaceholder.qml` — interaction proof only, not the real
-  game-library view.
 - L1/RECENT and R1/FAVOURITES show toast notices; no real functionality.
-- No settings screen, no game grid, no detail views yet.
+- No settings screen, no game detail views, no search, no scraping UI.
 - Utility icons (allgames, recent, favourites, more, pokemon, collections)
   are integrated and available, but no fake utility tiles are injected
   into the live collection model — real tiles come from `api.collections`
-  only. Wiring those behaviors is Phase 2.
+  only.
 
 ## Test harness setup
 

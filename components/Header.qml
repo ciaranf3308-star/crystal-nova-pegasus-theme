@@ -11,10 +11,13 @@ Item {
 
     property string fontFamily: "monospace"
     property string fixedClock: ""
+    // Library screens set this to e.g. "CRYSTAL / GBA"; the home screen
+    // keeps the plain "CRYSTAL" brand.
+    property string title: "CRYSTAL"
 
     Text {
         id: brand
-        text: "CRYSTAL"
+        text: root.title
         x: T.brandX
         // glyph cap top lands at y44 (font ascent puts ink 10px below y)
         y: 34

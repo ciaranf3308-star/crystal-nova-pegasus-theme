@@ -32,6 +32,9 @@ FocusScope {
         anchors.left: parent.left
         anchors.right: parent.right
         fontFamily: root.fontFamily
+        title: root.screen === "system"
+               ? "CRYSTAL / " + (sysScreen.shortName || "").toUpperCase()
+               : "CRYSTAL"
     }
 
     FooterHints {
@@ -42,6 +45,19 @@ FocusScope {
         fontFamily: root.fontFamily
         page: grid.page
         pageCount: grid.pageCount
+        visible: root.screen === "home"
+    }
+
+    LibraryFooter {
+        id: libFooter
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        fontFamily: root.fontFamily
+        page: sysScreen.page
+        pageCount: sysScreen.pageCount
+        showPlay: !sysScreen.isEmpty
+        visible: root.screen === "system"
     }
 
     SystemGrid {
@@ -72,27 +88,42 @@ FocusScope {
         fontFamily: root.fontFamily
     }
 
-    SystemPlaceholder {
+    GameLibrary {
         id: sysScreen
+        objectName: "gameLibrary" // test hook: lets the preview harness read library state
         anchors.fill: parent
         fontFamily: root.fontFamily
         visible: root.screen === "system"
+        onCollectionChanged: reset()
     }
 
-    function enterSystem() {
+    function enterSystem(restoreGame) {
         var coll = grid.currentCollection()
         if (!coll) return
-        api.memory.set("crystalNova.lastSystem", coll.shortName || coll.name || "")
+        var sn = coll.shortName || coll.name || ""
+        api.memory.set("crystalNova.lastSystem", sn)
+        api.memory.set("crystalNova.lastScreen", "system")
         sysScreen.collection = coll
+        sysScreen.shortName = sn
+        sysScreen.reset()
+        if (restoreGame === true && api.memory.has("crystalNova.lastGame")) {
+            var gi = api.memory.get("crystalNova.lastGame")
+            if (typeof gi === "number") sysScreen.setGameIndex(gi)
+        }
         root.screen = "system"
     }
 
     function leaveSystem() {
+        api.memory.set("crystalNova.lastScreen", "home")
         root.screen = "home"
     }
 
     Component.onCompleted: {
-        // Restore the last selected system across restarts.
+        // Restore the last selected system across restarts. Pegasus reloads
+        // the theme after a game exits; if we were inside a library, go
+        // straight back there with the game selection intact.
+        var lastScreen = api.memory.has("crystalNova.lastScreen")
+            ? api.memory.get("crystalNova.lastScreen") : "home"
         if (api.memory.has("crystalNova.lastSystem")) {
             var want = api.memory.get("crystalNova.lastSystem")
             for (var i = 0; i < api.collections.count; i++) {
@@ -103,11 +134,24 @@ FocusScope {
                 }
             }
         }
+        if (lastScreen === "system") {
+            enterSystem(true)
+        }
     }
 
     Keys.onPressed: {
         if (root.screen === "system") {
-            if (!event.isAutoRepeat && api.keys.isCancel(event)) {
+            // Directional input uses standard QML KeyEvent values — real
+            // Pegasus does NOT expose api.keys.isLeft/isRight/isUp/isDown.
+            if (event.key === Qt.Key_Left)       { event.accepted = true; sysScreen.moveLeft() }
+            else if (event.key === Qt.Key_Right) { event.accepted = true; sysScreen.moveRight() }
+            else if (event.key === Qt.Key_Up)    { event.accepted = true; sysScreen.moveUp() }
+            else if (event.key === Qt.Key_Down)  { event.accepted = true; sysScreen.moveDown() }
+            else if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                event.accepted = true
+                sysScreen.launchCurrent()
+            }
+            else if (!event.isAutoRepeat && api.keys.isCancel(event)) {
                 event.accepted = true
                 leaveSystem()
             }

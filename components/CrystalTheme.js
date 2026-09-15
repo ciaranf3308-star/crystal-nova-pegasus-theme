@@ -115,6 +115,41 @@ var titleLetterSpacing  = 10;
 var footerLetterSpacing = 3;
 var labelLetterSpacing  = 2;
 
+// ----------------------------------------------------------------
+// Phase 2: game library geometry (measured against the Phase 1.7 home
+// screen so the library reads as the next screen of the same firmware).
+// 4 columns x 2 rows of box art; selected-game title above the footer;
+// footer keeps the Phase 1.7 divider/keycap geometry.
+var libCoverW = 248;
+var libCoverH = 290;
+var libGridX  = 60;
+var libGridY  = 116;
+var libColGap = 56;
+var libRowGap = 34;
+var libCols   = 4;
+var libRows   = 2;
+var libPageSize = 8;
+
+function libTileX(col) { return libGridX + col * (libCoverW + libColGap); }
+function libTileY(row) { return libGridY + row * (libCoverH + libRowGap); }
+
+// Selected-game title area: sits between the grid and the footer divider.
+var libTitleY = 742;
+var libTitleH = 58;              // room for two lines at 26px
+var libTitlePx = 26;
+
+// Game tile frame: dark inner edge + cream outer frame on selection,
+// with the same viewfinder corner-bracket language as the system tiles.
+var gameFrameW = 3;
+var gameSelFrameW = 5;
+var gameMarkInset = 8;
+var gameMarkThick = 7;
+var gameMarkLen = 28;
+
+// Fallback card typography
+var fallbackAbbrPx = 40;
+var fallbackTitlePx = 20;
+
 // ---------------------------------------------------------------- display names
 // Central resolver: raw Pegasus collection names become the short,
 // intentional labels the hero uses (GBA, PS2, PSP, GAMECUBE, PC ENGINE).
