@@ -108,7 +108,9 @@ background removal, plus the navy `_selected` remap. Current real artwork:
 GBA, SNES, PS1, N64, Dreamcast, PSP, Game Boy, Game Boy Color, NES,
 Genesis, Sega CD, Sega 32X, Sega Saturn, PC Engine / TurboGrafx-16
 (`pcengine.png`, aliased as `tg16.png`), Arcade, Nintendo DS, Nintendo 3DS,
-Nintendo Wii. Favourites, more and unknown are still placeholders.
+Nintendo Wii, PlayStation 2, GameCube (`gamecube.png`, aliased as `gc.png`),
+PlayStation Vita, Wii U, Nintendo Switch, PC. Favourites, more and unknown
+are still placeholders.
 
 ## What has been tested (PySide6 harness)
 
