@@ -312,3 +312,24 @@ python3 -m venv ~/workspace/.venv-qml
 `--keys` accepts: Up Down Left Right Return Escape PageUp PageDown.
 `--restore` pre-seeds `api.memory` so the selection-restore path runs.
 `--print-state` prints `screen`, `selectedIndex`, `page` for tests.
+
+## Version marker (Crystal Nova Manager)
+
+`crystal-version.json` at the repo root is the machine-readable release
+marker consumed by the Crystal Nova Manager Android updater:
+
+```json
+{"version":"2.0.0","commit":"8a86a06bdd5f1845f8b02bf66fa65e769e733fac","channel":"stable"}
+```
+
+- `version` — semantic version of the stable cut.
+- `commit` — the theme-content baseline this version describes (the last
+  verified-good theme commit before the marker itself was added; the
+  commit that adds/bumps the marker is the release cut).
+- `channel` — `stable` (only channel shipped; `beta` is architected
+  in the updater but not exposed).
+
+The updater treats the GitHub API commit SHA for the production branch
+as authoritative for "latest"; the marker's `commit` is a fallback for
+theme folders installed by hand. Release process: bump `version`,
+commit the marker, push — the resulting commit becomes the new stable.
