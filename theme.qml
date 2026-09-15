@@ -46,6 +46,7 @@ FocusScope {
 
     SystemGrid {
         id: grid
+        objectName: "systemGrid" // test hook: lets the preview harness read grid state
         anchors.top: header.bottom
         anchors.bottom: footer.top
         anchors.left: parent.left
@@ -121,10 +122,12 @@ FocusScope {
         }
 
         // home screen
-        if (api.keys.isLeft(event))       { event.accepted = true; grid.moveLeft() }
-        else if (api.keys.isRight(event)) { event.accepted = true; grid.moveRight() }
-        else if (api.keys.isUp(event))    { event.accepted = true; grid.moveUp() }
-        else if (api.keys.isDown(event))  { event.accepted = true; grid.moveDown() }
+        // Directional input uses standard QML KeyEvent values — real Pegasus
+        // does NOT expose api.keys.isLeft/isRight/isUp/isDown.
+        if (event.key === Qt.Key_Left)       { event.accepted = true; grid.moveLeft() }
+        else if (event.key === Qt.Key_Right) { event.accepted = true; grid.moveRight() }
+        else if (event.key === Qt.Key_Up)    { event.accepted = true; grid.moveUp() }
+        else if (event.key === Qt.Key_Down)  { event.accepted = true; grid.moveDown() }
         else if (!event.isAutoRepeat && api.keys.isAccept(event)) {
             event.accepted = true
             enterSystem()

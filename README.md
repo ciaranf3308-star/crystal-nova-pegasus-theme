@@ -67,8 +67,10 @@ The last selected system persists across restarts via
 ## Pegasus APIs / properties used
 
 - `api.collections` — `count`, `get(index)`; roles `name`, `shortName`. Drives the grid.
-- `api.keys` — `isLeft`, `isRight`, `isUp`, `isDown`, `isAccept`, `isCancel`,
-  `isPrevPage`, `isNextPage`. All navigation and screen flow.
+- `api.keys` — `isAccept(event)`, `isCancel(event)`, `isPrevPage(event)`,
+  `isNextPage(event)`. Directional input (D-pad/arrows) is handled with
+  standard QML `event.key === Qt.Key_Left/Right/Up/Down` — Pegasus does not
+  expose `api.keys.isLeft/isRight/isUp/isDown` for theme use.
 - `api.device` — `batteryPercent` (0..1), `batteryCharging` (bool).
   Unknown/absent battery renders an empty outline; nothing is faked.
 - `api.memory` — `get`, `has`, `set`, `unset`. Selection persistence.
@@ -79,12 +81,8 @@ No Qt 6-only syntax is used.
 ## Installing on Android Pegasus
 
 1. Copy the **entire `crystal-nova-pegasus-theme` folder** to the device.
-2. Place it in Pegasus's themes directory. On Android this is typically:
-   - `/storage/emulated/0/pegasus_frontend/themes/crystal-nova-pegasus-theme/`
-   
-   If that path does not exist on the Nova, check Pegasus's own settings /
-   documentation for the themes location on your build — the folder name
-   `crystal-nova-pegasus-theme` is what Pegasus should be pointed at.
+2. Place it in Pegasus's themes directory:
+   - `/storage/emulated/0/pegasus-frontend/themes/crystal-nova-pegasus-theme/`
 3. In Pegasus, open Settings → Theme and select **Crystal Nova**.
 4. On desktop builds, F5 reloads the theme after edits.
 
@@ -104,16 +102,17 @@ Missing files fall back to a text badge automatically — no config needed.
 
 ## What has been tested (PySide6 harness)
 
-`python3 tests/test_preview.py` — 12 scenarios, all passing at 1280×960:
+`python3 tests/test_preview.py` — 18 checks, all passing at 1280×960:
 
-- Initial 3×3 home grid
-- Moved selection (Right,Right,Down → correct tile)
-- Row wrap (Left from first tile wraps to row end)
-- 11-collection second page (D-pad paging, top-aligned partial page)
-- System placeholder via Enter, return via Escape
-- L1/R1 toasts
-- Battery: charging, low (12%), unknown/absent
-- Empty state (0 collections → "NO SYSTEMS FOUND")
+Render (screenshot valid at 1280×960): initial 3×3 grid, moved selection,
+row wrap, 11-collection second page, system entry/exit, L1/R1 toasts,
+battery charging / low / unknown, empty state.
+
+State (QML state asserted after scripted input): selected index after
+directional input (5 after Right,Right,Down; wrap lands on 2), page 1 after
+paging through 11 collections, `screen == "system"` after Accept,
+`screen == "home"` after Cancel, and selection restored from
+`api.memory` (`--restore PSP` → index 5).
 
 The harness (`preview/preview.py`) mocks the verified Pegasus api surface
 (ObjectListModel roles, `api.keys`, `api.device`, `api.memory`) and injects
@@ -143,7 +142,10 @@ python3 -m venv ~/workspace/.venv-qml
 ~/workspace/.venv-qml/bin/pip install PySide6
 ~/workspace/.venv-qml/bin/python preview/preview.py --out shot.png \
     [--n 0|9|11] [--battery 0.73] [--charging] [--nobattery] \
-    [--keys "Right,Right,Down,Return,Escape"]
+    [--keys "Right,Right,Down,Return,Escape"] \
+    [--restore SHORTNAME] [--print-state]
 ```
 
 `--keys` accepts: Up Down Left Right Return Escape PageUp PageDown.
+`--restore` pre-seeds `api.memory` so the selection-restore path runs.
+`--print-state` prints `screen`, `selectedIndex`, `page` for tests.

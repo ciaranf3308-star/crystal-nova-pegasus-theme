@@ -124,11 +124,10 @@ class MockCollections(QAbstractListModel):
 
 
 class MockKeys(QObject):
+    # Mirrors the api.keys surface the theme is allowed to use. Directional
+    # input is handled in QML via event.key === Qt.Key_Left/Right/Up/Down,
+    # per the Pegasus docs — not via api.keys.
     MAP = {
-        "isLeft": (Qt.Key_Left,),
-        "isRight": (Qt.Key_Right,),
-        "isUp": (Qt.Key_Up,),
-        "isDown": (Qt.Key_Down,),
         "isAccept": (Qt.Key_Return, Qt.Key_Enter),
         "isCancel": (Qt.Key_Escape,),
         "isPrevPage": (Qt.Key_PageUp,),
@@ -147,18 +146,6 @@ class MockKeys(QObject):
         return key in self.MAP[name]
 
     @Slot(QJSValue, result=bool)
-    def isLeft(self, e): return self._check("isLeft", e)
-
-    @Slot(QJSValue, result=bool)
-    def isRight(self, e): return self._check("isRight", e)
-
-    @Slot(QJSValue, result=bool)
-    def isUp(self, e): return self._check("isUp", e)
-
-    @Slot(QJSValue, result=bool)
-    def isDown(self, e): return self._check("isDown", e)
-
-    @Slot(QJSValue, result=bool)
     def isAccept(self, e): return self._check("isAccept", e)
 
     @Slot(QJSValue, result=bool)
@@ -169,21 +156,6 @@ class MockKeys(QObject):
 
     @Slot(QJSValue, result=bool)
     def isNextPage(self, e): return self._check("isNextPage", e)
-
-    @Slot(object, result=bool)
-    def isDetails(self, e): return False
-
-    @Slot(object, result=bool)
-    def isFilters(self, e): return False
-
-    @Slot(object, result=bool)
-    def isPageUp(self, e): return False
-
-    @Slot(object, result=bool)
-    def isPageDown(self, e): return False
-
-    @Slot(object, result=bool)
-    def isMenu(self, e): return False
 
 
 class MockDevice(QObject):
@@ -225,7 +197,7 @@ class MockMemory(QObject):
 
 
 class MockApi(QObject):
-    def __init__(self, n, battery, charging, parent=None):
+    def __init__(self, n, battery, charging, parent=None, restore=None):
         super().__init__(parent)
         items = ELEVEN if n == 11 else (NINE if n == 9 else [])
         self._collections = MockCollections(items, self)
@@ -233,6 +205,9 @@ class MockApi(QObject):
         self._keys = MockKeys(self)
         self._device = MockDevice(battery, charging, self)
         self._memory = MockMemory(self)
+        if restore:
+            # Pre-seed api.memory so the theme's onCompleted restore path runs.
+            self._memory._d["crystalNova.lastSystem"] = restore
 
     def _get_collections(self): return self._collections
     def _get_all_games(self): return self._all_games
@@ -265,12 +240,17 @@ def main():
     ap.add_argument("--nobattery", action="store_true")
     ap.add_argument("--delay", type=int, default=120, help="ms between key events")
     ap.add_argument("--settle", type=int, default=600, help="ms before grab")
+    ap.add_argument("--restore", default="",
+                    help="pre-seed api.memory crystalNova.lastSystem with a shortName")
+    ap.add_argument("--print-state", action="store_true",
+                    help="print screen/selectedIndex/page as KEY=VALUE for tests")
     args = ap.parse_args()
 
     battery = -1.0 if args.nobattery else args.battery
 
     app = QGuiApplication(sys.argv)
-    api = MockApi(args.n, battery, args.charging)
+    api = MockApi(args.n, battery, args.charging,
+                  restore=args.restore or None)
 
     view = QQuickView()
     view.engine().rootContext().setContextProperty("api", api)
@@ -309,6 +289,18 @@ def main():
         sys.exit(3)
     img.save(args.out)
     print("saved", args.out, img.size().width(), "x", img.size().height())
+
+    if args.print_state:
+        from PySide6.QtQuick import QQuickItem
+        root = view.rootObject()
+        grid = root.findChild(QQuickItem, "systemGrid")
+        state = {
+            "screen": root.property("screen"),
+            "selectedIndex": grid.property("globalIndex") if grid else None,
+            "page": grid.property("page") if grid else None,
+        }
+        for k, v in state.items():
+            print(f"STATE {k}={v}")
 
 
 if __name__ == "__main__":
