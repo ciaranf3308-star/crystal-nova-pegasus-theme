@@ -1,4 +1,4 @@
-# Crystal Nova — Pegasus Theme (Phase 1.6)
+# Crystal Nova — Pegasus Theme (Phase 1.7)
 
 Custom Pegasus Frontend theme for the **Retroid Pocket Nova**.
 
@@ -9,7 +9,7 @@ Crystal Nova handheld dashboard. That image is the contract; the theme matches
 it, it does not reinterpret it.
 
 Style: bespoke retro firmware / old-LCD feel. Muted icy blue and cream on a
-dark blue-grey background, pixel-clean DejaVu Sans Mono typography, minimal
+very dark navy background, pixel-clean Departure Mono typography, minimal
 clutter. No neon gradients, no glassmorphism, no floating cards.
 
 ## Target
@@ -17,8 +17,12 @@ clutter. No neon gradients, no glassmorphism, no floating cards.
 - **Device:** Retroid Pocket Nova (Android)
 - **Resolution:** 1280×960, 4:3
 - **Frontend:** Pegasus Frontend
-- **Status:** Phase 1.6 — HOME / SYSTEM SELECTION screen with the final
-  production icon pack (30 icons, centralized alias resolver)
+- **Status:** Phase 1.7 — hero-perfect production polish. Every geometric and
+  typographic value measured from the approved reference and centralized in
+  `components/CrystalTheme.js`; Departure Mono firmware typeface; hero-matched
+  header, segmented battery, open-corner tile frames with registration dots,
+  cream selected tile with viewfinder brackets, stepped keycaps, and a
+  display-name resolver (GBA, PS2, PSP, GAMECUBE, PC ENGINE, …).
 
 ## Layout
 
@@ -28,18 +32,24 @@ crystal-nova-pegasus-theme/
 ├── theme.qml                  Root: screen state, key handling, layout
 ├── components/
 │   ├── Header.qml             CRYSTAL title, live clock, battery, divider
-│   ├── BatteryIndicator.qml   Real api.device battery rendering
-│   ├── SystemGrid.qml         3×3 grid, D-pad nav, paging, row wrap
+│   ├── BatteryIndicator.qml   Real api.device battery rendering (segmented)
+│   ├── SystemGrid.qml         3×3 grid at hero-measured geometry, D-pad nav, paging
 │   ├── SystemTile.qml         Tile: production icon via IconResolver, text fallback
+│   ├── TileFrame.qml          Unselected frame: open corners + registration dots
+│   ├── SelectedMarks.qml      Selected tile: dark viewfinder corner brackets
+│   ├── Keycap.qml             Footer keycap: stepped pixel corners, L1 / R1
 │   ├── IconResolver.js       Centralized shortName → icon resolver + alias map
-│   ├── FooterHints.qml        L1 / RECENT · page indicator · R1 / FAVOURITES
+│   ├── CrystalTheme.js       Central palette, geometry, display-name resolver
+│   ├── FooterHints.qml        Keycap + RECENT · page indicator · keycap + FAVOURITES
 │   └── Toast.qml              Brief overlay notice
 ├── screens/
 │   └── SystemPlaceholder.qml  Temporary system screen (interaction proof)
 ├── assets/
 │   ├── icons/                 30 production icons, 512×512 RGBA (see below)
-│   ├── fonts/                 DejaVu Sans Mono + Bold
 │   └── backgrounds/           (reserved)
+├── fonts/
+│   ├── DepartureMono-Regular.otf   Pixel firmware typeface (SIL OFL 1.1)
+│   └── OFL.txt                     Licence for the bundled font
 ├── reference/
 │   └── approved-crystal-nova-ui.png   Approved visual reference — do not redesign
 ├── preview/
@@ -47,11 +57,10 @@ crystal-nova-pegasus-theme/
 │   └── phase1-home-1280x960.png       Current Phase 1 implementation screenshot
 ├── tests/
 │   ├── test_preview.py        18-check render + state suite
-│   └── test_icon_resolver.py  Resolver logic (QJSEngine) + PNG validation
+│   ├── test_icon_resolver.py  Resolver logic (QJSEngine) + PNG validation
+│   └── test_crystal_theme.py  Display names, geometry, palette, component inventory
 ├── tools/
 │   └── splice_icons.py        Production icon builder: sheet → 512×512 icons
-├── LICENSES/
-│   └── DejaVu-LICENCE.txt     Bitstream Vera licence for the bundled fonts
 └── README.md
 ```
 
@@ -161,9 +170,45 @@ paging through 18 collections, `screen == "system"` after Accept,
 - PNG validation: every icon is 512×512 RGBA with genuine alpha
   transparency and visible non-transparent pixels
 
+`python3 tests/test_crystal_theme.py` — loads the real
+`components/CrystalTheme.js` in a QJSEngine and verifies it directly:
+
+- display-name resolver: 30+ cases mapping raw Pegasus names to the short
+  intentional labels the hero uses (GBA, SNES, PS1, N64, DREAMCAST, PSP,
+  ARCADE, NDS, PS2, GAMECUBE, PC ENGINE, …), including long-name fallback
+  when shortName is empty
+- geometry: canvas 1280×960, all nine tiles inside the canvas without
+  overlap, dividers and keycaps placed sanely
+- palette: every named color a valid `#rrggbb`
+- inventory: Keycap/TileFrame/SelectedMarks components, the Departure Mono
+  OTF, and its OFL licence all present
+
 The harness (`preview/preview.py`) mocks the verified Pegasus api surface
 (ObjectListModel roles, `api.keys`, `api.device`, `api.memory`) and injects
-scripted key sequences via QTest.
+scripted key sequences via QTest. `--clock "12:34"` pins the header clock
+for deterministic screenshots (production runtime is untouched).
+
+## Phase 1.7 production values
+
+All measured from the approved hero at 1280×960; centralized in
+`components/CrystalTheme.js`.
+
+**Typeface:** Departure Mono Regular (SIL Open Font License 1.1, Helena
+Zhang), bundled in `fonts/`. Title/clock 36px, footer 30px, tile labels
+26px bold.
+
+**Palette:** background `#0a1929`, tile fill `#0e2236`, tile frame
+`#7ba7d9`, cream `#f0ebdc`, cream ink `#1b2c4e`, primary ink `#e9f1f6`,
+divider `#8fa5b8`, keycap fill `#cfd9e2`.
+
+**Geometry:** margin 60; header 92 (divider y85); grid origin (61,119),
+tiles 360×210, column pitch 371, row pitch 226; footer divider y806,
+keycaps 82×41 at y828.
+
+**Details:** unselected tiles use open corners (3px frame segments stop
+8px short, 5×5 registration dot in each gap); the selected cream tile
+carries four dark viewfinder brackets (8px arms, 32px long, 7px inset);
+footer keycaps have stepped pixel corners; the battery is segmented.
 
 ## What has NOT been validated yet
 

@@ -253,6 +253,8 @@ def main():
     ap.add_argument("--settle", type=int, default=600, help="ms before grab")
     ap.add_argument("--restore", default="",
                     help="pre-seed api.memory crystalNova.lastSystem with a shortName")
+    ap.add_argument("--clock", default="",
+                    help="fix the header clock (e.g. 12:34) for deterministic shots")
     ap.add_argument("--print-state", action="store_true",
                     help="print screen/selectedIndex/page as KEY=VALUE for tests")
     args = ap.parse_args()
@@ -281,6 +283,12 @@ def main():
     view.show()
     view.requestActivate()
     app.processEvents()
+    if args.clock:
+        from PySide6.QtQuick import QQuickItem
+        hdr = view.rootObject().findChild(QQuickItem, "crystalHeader")
+        if hdr is not None:
+            hdr.setProperty("fixedClock", args.clock)
+            app.processEvents()
     time.sleep(0.4)
     app.processEvents()
 

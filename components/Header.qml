@@ -1,63 +1,67 @@
 import QtQuick 2.12
+import "CrystalTheme.js" as T
 
 // Top status bar: CRYSTAL brand left, clock + battery right, thin divider.
-// Firmware feel: flat, pixel-clean, no decoration.
+// Geometry measured from the approved hero (1280x960).
+// Set fixedClock (e.g. "12:34") for deterministic previews/screenshots;
+// when empty the live clock runs as normal.
 Item {
     id: root
-    height: 92
+    height: T.headerH
 
-    property color ink: "#dfe9f0"
-    property color dim: "#8ba3b5"
-    property color line: "#46566a"
     property string fontFamily: "monospace"
+    property string fixedClock: ""
 
     Text {
         id: brand
         text: "CRYSTAL"
-        anchors.left: parent.left
-        anchors.leftMargin: 56
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: -2
+        x: T.brandX
+        // glyph cap top lands at y44 (font ascent puts ink 10px below y)
+        y: 34
         font.family: root.fontFamily
-        font.bold: true
-        font.pixelSize: 36
-        font.letterSpacing: 4
-        color: root.ink
+        font.pixelSize: T.fontTitlePx
+        font.letterSpacing: T.titleLetterSpacing
+        color: T.primaryInk
     }
 
     Text {
         id: clock
-        anchors.right: battery.left
-        anchors.rightMargin: 28
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: -2
+        // right edge at clockRightX, baseline aligned with the brand
+        // (6px shaved off the margin for the glyph right side bearing)
+        anchors.right: parent.right
+        anchors.rightMargin: T.canvasW - T.clockRightX - 6
+        y: brand.y
         font.family: root.fontFamily
-        font.pixelSize: 30
-        color: "#cfe0ea"
-        text: "--:--"
+        font.pixelSize: T.fontTitlePx
+        font.letterSpacing: 2
+        color: T.primaryInk
+        // fixedClock pins the text for deterministic previews; the live
+        // timer writes clockText so it never breaks this binding.
+        property string clockText: "--:--"
+        text: root.fixedClock !== "" ? root.fixedClock : clockText
 
         Timer {
             interval: 1000
-            running: true
+            running: root.fixedClock === ""
             repeat: true
             triggeredOnStart: true
-            onTriggered: parent.text = Qt.formatTime(new Date(), "hh:mm")
+            onTriggered: parent.clockText = Qt.formatTime(new Date(), "hh:mm")
         }
     }
 
     BatteryIndicator {
         id: battery
-        anchors.right: parent.right
-        anchors.rightMargin: 56
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: -2
+        x: T.batteryX
+        y: T.batteryY
+        width: T.batteryW
+        height: T.batteryH
     }
 
     Rectangle {
-        x: 56
-        width: parent.width - 112
-        y: parent.height - 2
-        height: 2
-        color: root.line
+        x: T.margin
+        width: parent.width - 2 * T.margin
+        y: T.headerDividerY
+        height: T.headerDividerH
+        color: T.divider
     }
 }

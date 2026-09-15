@@ -1,14 +1,11 @@
 import QtQuick 2.12
+import "CrystalTheme.js" as T
 
-// Battery level indicator driven by the real Pegasus device API:
-//   api.device.batteryPercent  (float, 0..1)
-//   api.device.batteryCharging (bool)
-//   api.device.batteryStatus   (enum: Unknown/NoBattery/Discharging/Charging/Charged)
-// Unknown / no-battery devices render an empty outline; nothing is faked.
+// Battery level indicator, measured from the hero: 70x32 shell with a
+// terminal nub and segmented charge fill. Driven by the real Pegasus
+// device API; unknown / no-battery devices render an empty outline.
 Item {
     id: root
-    width: 58
-    height: 32
 
     property real level: {
         var p = api.device.batteryPercent
@@ -16,36 +13,34 @@ Item {
     }
     property bool charging: !!api.device.batteryCharging
 
-    property color frame: "#8ba3b5"
-    property color fill: root.charging ? "#e8f2f8"
-                     : root.level < 0 ? "transparent"
-                     : root.level < 0.2 ? "#c46a5a"
-                     : "#9fc4d8"
+    property int segments: 4
+    property int filledSegments: root.level < 0 ? 0
+                                 : Math.round(root.level * root.segments)
 
     Rectangle { // outer shell
-        width: 48
-        height: 22
-        anchors.verticalCenter: parent.verticalCenter
+        x: 0; y: 2
+        width: 62; height: 28
         color: "transparent"
-        border.color: root.frame
+        border.color: T.batteryFrame
         border.width: 2
-        radius: 3
     }
     Rectangle { // terminal nub
-        x: 48
-        width: 5
-        height: 10
-        anchors.verticalCenter: parent.verticalCenter
-        color: root.frame
-        radius: 1
+        x: 62; y: 10
+        width: 6; height: 12
+        color: T.batteryFrame
     }
-    Rectangle { // charge fill
-        x: 5
-        width: Math.max(0, 38 * root.level)
-        height: 12
-        anchors.verticalCenter: parent.verticalCenter
-        color: root.fill
-        radius: 1
-        visible: root.level >= 0
+    Row { // segmented charge fill
+        x: 6; y: 7
+        spacing: 3
+        Repeater {
+            model: root.segments
+            Rectangle {
+                width: 11; height: 18
+                color: index < root.filledSegments
+                       ? (root.charging ? T.primaryInk
+                          : root.level < 0.2 ? T.batteryLow : T.batteryFill)
+                       : "transparent"
+            }
+        }
     }
 }

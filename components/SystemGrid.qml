@@ -1,6 +1,8 @@
 import QtQuick 2.12
+import "CrystalTheme.js" as T
 
 // 3x3 system grid, populated dynamically from api.collections.
+// Tiles sit at the hero-measured fixed geometry (origin, pitch, size).
 // Paging: collections are chunked into pages of 9. D-pad movement at a grid
 // edge advances to the adjacent page when one exists, otherwise wraps
 // predictably within the current page.
@@ -80,37 +82,19 @@ Item {
         return api.collections.get(globalIndex)
     }
 
-    Grid {
-        id: gridLayout
-        columns: root.columns
-        rows: 3
-        columnSpacing: 28
-        rowSpacing: 28
-        anchors.horizontalCenter: parent.horizontalCenter
-        // Top-align to where a full 3-row grid would start when centered,
-        // so partial last pages don't float vertically centered.
-        anchors.top: parent.top
-        anchors.topMargin: Math.max(0, (parent.height - (3 * cellH + 2 * rowSpacing)) / 2)
+    Repeater {
+        model: root.pageItemCount
+        delegate: SystemTile {
+            x: T.tileX(index % 3)
+            y: T.tileY(Math.floor(index / 3))
+            width: T.tileW
+            height: T.tileH
+            fontFamily: root.fontFamily
+            selected: index === root.currentIndex
 
-        property real cellW: (root.width - (columns - 1) * columnSpacing) / columns
-        property real cellH: (root.height - (rows - 1) * rowSpacing) / rows
-
-        Repeater {
-            model: root.pageItemCount
-            delegate: SystemTile {
-                width: gridLayout.cellW
-                height: gridLayout.cellH
-                fontFamily: root.fontFamily
-                selected: index === root.currentIndex
-
-                property var coll: api.collections.get(root.page * root.pageSize + index)
-                shortName: coll ? (coll.shortName || "") : ""
-                label: {
-                    if (!coll) return ""
-                    var s = coll.shortName || coll.name || ""
-                    return s.toUpperCase()
-                }
-            }
+            property var coll: api.collections.get(root.page * root.pageSize + index)
+            shortName: coll ? (coll.shortName || "") : ""
+            label: coll ? T.displayNameFor(coll.shortName, coll.name) : ""
         }
     }
 }

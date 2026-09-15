@@ -16,18 +16,18 @@ FocusScope {
     // "home" | "system"
     property string screen: "home"
 
-    FontLoader { id: monoRegular; source: "assets/fonts/DejaVuSansMono.ttf" }
-    FontLoader { id: monoBold; source: "assets/fonts/DejaVuSansMono-Bold.ttf" }
-    readonly property string fontFamily: monoRegular.status === FontLoader.Ready
-                                         ? monoRegular.name : "monospace"
+    FontLoader { id: departure; source: "fonts/DepartureMono-Regular.otf" }
+    readonly property string fontFamily: departure.status === FontLoader.Ready
+                                         ? departure.name : "monospace"
 
     Rectangle {
         anchors.fill: parent
-        color: "#262f3b"
+        color: "#0a1929"
     }
 
     Header {
         id: header
+        objectName: "crystalHeader" // test hook: lets the preview harness fix the clock
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
@@ -47,14 +47,7 @@ FocusScope {
     SystemGrid {
         id: grid
         objectName: "systemGrid" // test hook: lets the preview harness read grid state
-        anchors.top: header.bottom
-        anchors.bottom: footer.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.leftMargin: 88
-        anchors.rightMargin: 88
-        anchors.topMargin: 36
-        anchors.bottomMargin: 36
+        anchors.fill: parent
         fontFamily: root.fontFamily
         visible: root.screen === "home" && api.collections.count > 0
     }

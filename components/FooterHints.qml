@@ -1,58 +1,68 @@
 import QtQuick 2.12
+import "CrystalTheme.js" as T
 
-// Bottom bar: thin divider, L1/RECENT left, R1/FAVOURITES right.
+// Bottom bar: thin divider, keycap + label left (L1 / RECENT) and right
+// (R1 / FAVOURITES), measured from the approved hero.
 // A quiet page indicator appears in the centre only when the grid spans
 // more than one page.
 Item {
     id: root
-    height: 88
+    // spans from the footer divider to the bottom of the screen
+    height: T.canvasH - T.footerDividerY
 
-    property color dim: "#8ba3b5"
-    property color line: "#46566a"
     property string fontFamily: "monospace"
     property int page: 0
     property int pageCount: 1
 
     Rectangle {
-        x: 56
-        width: parent.width - 112
+        x: T.margin
+        width: parent.width - 2 * T.margin
         y: 0
-        height: 2
-        color: root.line
+        height: T.footerDividerH
+        color: T.divider
+    }
+
+    Keycap {
+        x: T.keycapL1X
+        y: T.keycapY
+        fontFamily: root.fontFamily
+        text: "L1"
     }
 
     Text {
-        anchors.left: parent.left
-        anchors.leftMargin: 56
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: 2
+        x: T.recentX
+        y: T.keycapY
         font.family: root.fontFamily
-        font.pixelSize: 22
-        font.letterSpacing: 2
-        color: root.dim
-        text: "L1 / RECENT"
+        font.pixelSize: T.fontFooterPx
+        font.letterSpacing: T.footerLetterSpacing
+        color: T.tileInk
+        text: "RECENT"
+    }
+
+    Keycap {
+        x: T.keycapR1X
+        y: T.keycapY
+        fontFamily: root.fontFamily
+        text: "R1"
     }
 
     Text {
-        anchors.right: parent.right
-        anchors.rightMargin: 56
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: 2
+        x: T.favouritesX
+        y: T.keycapY
         font.family: root.fontFamily
-        font.pixelSize: 22
-        font.letterSpacing: 2
-        color: root.dim
-        text: "R1 / FAVOURITES"
+        font.pixelSize: T.fontFooterPx
+        font.letterSpacing: T.footerLetterSpacing
+        color: T.tileInk
+        text: "FAVOURITES"
     }
 
     Text {
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: 2
+        y: T.keycapY
         font.family: root.fontFamily
-        font.pixelSize: 20
-        color: root.dim
-        opacity: 0.8
+        font.pixelSize: T.fontFooterPx - 8
+        color: T.tileInk
+        opacity: 0.7
         visible: root.pageCount > 1
         text: (root.page + 1) + " / " + root.pageCount
     }
