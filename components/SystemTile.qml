@@ -1,10 +1,12 @@
 import QtQuick 2.12
+import "IconResolver.js" as IconResolver
 
 // One console tile: system icon + short label.
 // Selected tile: strong cream highlight. Unselected: restrained blue/dark.
-// Icon art is resolved from assets/icons/<shortname>.png with a text-glyph
-// fallback, so custom Crystal artwork can be dropped in later without
-// touching layout code.
+// Icon art is resolved through IconResolver (components/IconResolver.js),
+// which normalizes Pegasus collection shortNames to the 30 production
+// icons in assets/icons/. Selection never changes the artwork -- the cream
+// tile is the selection signal, per the approved Crystal reference.
 Item {
     id: root
 
@@ -35,8 +37,8 @@ Item {
     }
 
     function iconSource() {
-        var base = "../assets/icons/" + root.shortName.toLowerCase().replace(/[^a-z0-9]/g, "")
-        return base + (root.selected ? "_selected" : "") + ".png"
+        // Single artwork for both states; "" falls back to the text glyph.
+        return IconResolver.iconFor(root.shortName, root.selected)
     }
 
     Image {
@@ -49,7 +51,7 @@ Item {
         fillMode: Image.PreserveAspectFit
         smooth: true
         source: iconSource()
-        visible: status === Image.Ready
+        visible: source !== "" && status === Image.Ready
     }
 
     // Fallback glyph if no icon file exists for this system
@@ -58,7 +60,7 @@ Item {
         height: 132
         anchors.horizontalCenter: parent.horizontalCenter
         y: 14
-        visible: icon.status !== Image.Ready
+        visible: icon.source === "" || icon.status !== Image.Ready
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         font.family: root.fontFamily

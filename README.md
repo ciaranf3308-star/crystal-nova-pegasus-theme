@@ -1,4 +1,4 @@
-# Crystal Nova — Pegasus Theme (Phase 1)
+# Crystal Nova — Pegasus Theme (Phase 1.6)
 
 Custom Pegasus Frontend theme for the **Retroid Pocket Nova**.
 
@@ -17,7 +17,8 @@ clutter. No neon gradients, no glassmorphism, no floating cards.
 - **Device:** Retroid Pocket Nova (Android)
 - **Resolution:** 1280×960, 4:3
 - **Frontend:** Pegasus Frontend
-- **Status:** Phase 1 — HOME / SYSTEM SELECTION screen only
+- **Status:** Phase 1.6 — HOME / SYSTEM SELECTION screen with the final
+  production icon pack (30 icons, centralized alias resolver)
 
 ## Layout
 
@@ -29,13 +30,14 @@ crystal-nova-pegasus-theme/
 │   ├── Header.qml             CRYSTAL title, live clock, battery, divider
 │   ├── BatteryIndicator.qml   Real api.device battery rendering
 │   ├── SystemGrid.qml         3×3 grid, D-pad nav, paging, row wrap
-│   ├── SystemTile.qml         Tile: icon PNG or text fallback
+│   ├── SystemTile.qml         Tile: production icon via IconResolver, text fallback
+│   ├── IconResolver.js       Centralized shortName → icon resolver + alias map
 │   ├── FooterHints.qml        L1 / RECENT · page indicator · R1 / FAVOURITES
 │   └── Toast.qml              Brief overlay notice
 ├── screens/
 │   └── SystemPlaceholder.qml  Temporary system screen (interaction proof)
 ├── assets/
-│   ├── icons/                 Placeholder icon pairs (<name>.png + <name>_selected.png)
+│   ├── icons/                 30 production icons, 512×512 RGBA (see below)
 │   ├── fonts/                 DejaVu Sans Mono + Bold
 │   └── backgrounds/           (reserved)
 ├── reference/
@@ -44,7 +46,10 @@ crystal-nova-pegasus-theme/
 │   ├── preview.py             PySide6 harness: mock Pegasus api, 1280×960 renders
 │   └── phase1-home-1280x960.png       Current Phase 1 implementation screenshot
 ├── tests/
-│   └── test_preview.py        12-scenario render test suite
+│   ├── test_preview.py        18-check render + state suite
+│   └── test_icon_resolver.py  Resolver logic (QJSEngine) + PNG validation
+├── tools/
+│   └── splice_icons.py        Production icon builder: sheet → 512×512 icons
 ├── LICENSES/
 │   └── DejaVu-LICENCE.txt     Bitstream Vera licence for the bundled fonts
 └── README.md
@@ -88,43 +93,73 @@ No Qt 6-only syntax is used.
 
 The theme reads `theme.cfg` at the folder root; `theme.qml` is the entry point.
 
-## Per-system artwork
+## Per-system artwork (Phase 1.6 production pack)
 
-Drop real art into `assets/icons/` as:
+`assets/icons/` holds 30 production icons, one per file, each a 512×512
+RGBA PNG with genuine alpha transparency. The artwork is optically centered
+(alpha-centroid) at ~78% of the canvas and reads on both the dark tile and
+the cream selected tile — **there are no separate `_selected` files**.
+Selection is communicated by the cream tile itself, per the approved
+reference.
 
-```
-<shortname>.png            unselected tile icon (icy-blue artwork, transparent bg)
-<shortname>_selected.png   selected tile icon (dark-navy artwork for the cream tile)
-```
+Icons render in a 200×132 box (`PreserveAspectFit`) — roughly 0.6 of the
+tile width, per the approved reference.
 
-`<shortname>` is the collection's `shortName` in lowercase (e.g. `gba.png`).
-Icons render in a 200×132 box (`PreserveAspectFit`) — roughly 0.6 of the tile
-width, per the approved reference. Tight transparent crops work best.
-Missing files fall back to a text badge automatically — no config needed.
+### Alias resolver
 
-`tools/splice_icons.py` extracts individual console logos from a supplier
-contact sheet: connected-component detection, margin crop, flood-fill
-background removal, plus the navy `_selected` remap. Current real artwork:
-GBA, SNES, PS1, N64, Dreamcast, PSP, Game Boy, Game Boy Color, NES,
-Genesis, Sega CD, Sega 32X, Sega Saturn, PC Engine / TurboGrafx-16
-(`pcengine.png`, aliased as `tg16.png`), Arcade, Nintendo DS, Nintendo 3DS,
-Nintendo Wii, PlayStation 2, GameCube (`gamecube.png`, aliased as `gc.png`),
-PlayStation Vita, Wii U, Nintendo Switch, PC. Favourites, more and unknown
-are still placeholders.
+Pegasus collection shortNames don't always match icon filenames, so every
+lookup goes through `components/IconResolver.js`:
+
+- normalizes input: lowercase, diacritics folded, spaces/hyphens/
+  underscores stripped
+- maps common alternative names (`game-boy` → `gb`, `megadrive` →
+  `genesis`, `tg16` → `pcengine`, `32x` → `sega32x`, `psx` → `ps1`,
+  `favorites` → `favourites`, `history` → `recent`, `library` →
+  `allgames`, `windows`/`steam` → `pc`, …)
+- unknown names resolve to `""` so the tile falls back to its text glyph
+  instead of a broken image
+- `iconFor(shortName, selected)` returns the same artwork in both states;
+  `SELECTED_VARIANTS` is the hook for alternate selected art later
+
+Current inventory: gba, snes, ps1, n64, dreamcast, psp, gb, gbc, nes,
+genesis, segacd, sega32x, saturn, pcengine, arcade, nds, 3ds, wii, ps2,
+gamecube, vita, wiiu, switch, pc, allgames, recent, favourites, more,
+pokemon, collections.
+
+### Building icons from a supplier sheet
+
+`tools/splice_icons.py <sheet.png> <outdir>` extracts the 3×2 supplier
+sheet into normalized icons: connected-component detection on the alpha
+channel (stray pixels discarded), crop on visible alpha bounds, small
+consistent transparent margin, longest side scaled to 400px, optical
+centering via the alpha centroid. Source pixels are only resampled once —
+no sharpening, recoloring, or tracing. Set the module's `ORDER` list to
+the sheet's six names (top row left-to-right, then bottom row).
 
 ## What has been tested (PySide6 harness)
 
 `python3 tests/test_preview.py` — 18 checks, all passing at 1280×960:
 
 Render (screenshot valid at 1280×960): initial 3×3 grid, moved selection,
-row wrap, 11-collection second page, system entry/exit, L1/R1 toasts,
+row wrap, 18-collection second page, system entry/exit, L1/R1 toasts,
 battery charging / low / unknown, empty state.
 
 State (QML state asserted after scripted input): selected index after
 directional input (5 after Right,Right,Down; wrap lands on 2), page 1 after
-paging through 11 collections, `screen == "system"` after Accept,
+paging through 18 collections, `screen == "system"` after Accept,
 `screen == "home"` after Cancel, and selection restored from
-`api.memory` (`--restore PSP` → index 5).
+`api.memory` (`--restore psp` → index 5).
+
+`python3 tests/test_icon_resolver.py` — loads the real
+`components/IconResolver.js` in a QJSEngine and verifies it directly:
+
+- 79 resolve cases: canonical shortNames, every documented alias, unknown
+  names falling back to `""`, and selected/unselected returning identical
+  artwork
+- icon inventory: exactly the 30 production files, no `_selected.png`
+  files remaining
+- PNG validation: every icon is 512×512 RGBA with genuine alpha
+  transparency and visible non-transparent pixels
 
 The harness (`preview/preview.py`) mocks the verified Pegasus api surface
 (ObjectListModel roles, `api.keys`, `api.device`, `api.memory`) and injects
@@ -144,8 +179,11 @@ scripted key sequences via QTest.
 - `screens/SystemPlaceholder.qml` — interaction proof only, not the real
   game-library view.
 - L1/RECENT and R1/FAVOURITES show toast notices; no real functionality.
-- Icons in `assets/icons/` are placeholders, not final art.
 - No settings screen, no game grid, no detail views yet.
+- Utility icons (allgames, recent, favourites, more, pokemon, collections)
+  are integrated and available, but no fake utility tiles are injected
+  into the live collection model — real tiles come from `api.collections`
+  only. Wiring those behaviors is Phase 2.
 
 ## Test harness setup
 
@@ -153,7 +191,7 @@ scripted key sequences via QTest.
 python3 -m venv ~/workspace/.venv-qml
 ~/workspace/.venv-qml/bin/pip install PySide6
 ~/workspace/.venv-qml/bin/python preview/preview.py --out shot.png \
-    [--n 0|9|11] [--battery 0.73] [--charging] [--nobattery] \
+    [--n 0|9|18] [--battery 0.73] [--charging] [--nobattery] \
     [--keys "Right,Right,Down,Return,Escape"] \
     [--restore SHORTNAME] [--print-state]
 ```

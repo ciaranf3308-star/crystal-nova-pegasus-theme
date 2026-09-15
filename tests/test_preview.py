@@ -31,8 +31,7 @@ RENDER_SCENARIOS = [
     ("home-9",            ["--n", "9"]),
     ("home-moved",        ["--n", "9", "--keys", "Right,Right,Down"]),
     ("home-wrap",         ["--n", "9", "--keys", "Left"]),
-    ("home-page2",        ["--n", "11", "--keys",
-                           "Right,Right,Right,Right,Right,Right,Right,Right,Right"]),
+    ("home-page2",        ["--n", "18", "--keys", "Right,Right,Right"]),
     ("system-enter",      ["--n", "9", "--keys", "Return"]),
     ("system-back",       ["--n", "9", "--keys", "Return,Escape"]),
     ("toast-recent",      ["--n", "9", "--keys", "PageUp"]),
@@ -52,8 +51,7 @@ STATE_SCENARIOS = [
      ["--n", "9", "--keys", "Left"],
      {"screen": "home", "selectedIndex": 2, "page": 0}),
     ("state-page",
-     ["--n", "11", "--keys",
-      "Right,Right,Right,Right,Right,Right,Right,Right,Right"],
+     ["--n", "18", "--keys", "Right,Right,Right"],
      {"screen": "home", "selectedIndex": 9, "page": 1}),
     ("state-accept",
      ["--n", "9", "--keys", "Return"],
@@ -62,7 +60,7 @@ STATE_SCENARIOS = [
      ["--n", "9", "--keys", "Return,Escape"],
      {"screen": "home", "selectedIndex": 0, "page": 0}),
     ("state-restore",
-     ["--n", "9", "--restore", "PSP"],
+     ["--n", "9", "--restore", "psp"],
      {"screen": "home", "selectedIndex": 5, "page": 0}),
 ]
 

@@ -2,7 +2,7 @@
 """Render the Crystal Nova Pegasus theme headlessly with a mock Pegasus api.
 
 Usage:
-    preview.py --out shot.png [--keys Right,Down,Return] [--n 9|11]
+    preview.py --out shot.png [--keys Right,Down,Return] [--n 9|18]
                [--battery 0.73] [--charging] [--nobattery] [--delay 120]
 
 The mock api mirrors the real Pegasus theme API surface (verified against
@@ -32,20 +32,31 @@ from PySide6.QtQml import QJSValue
 
 THEME_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-NINE = [
-    ("Game Boy Advance", "GBA", 42),
-    ("Super Nintendo", "SNES", 128),
-    ("PlayStation", "PS1", 96),
-    ("Nintendo 64", "N64", 61),
-    ("Dreamcast", "DREAMCAST", 33),
-    ("PlayStation Portable", "PSP", 54),
-    ("Arcade", "ARCADE", 210),
-    ("Favourites", "FAVOURITES", 17),
-    ("More Systems", "MORE", 0),
+# Phase 1.6 preview dataset: real production systems only. Page 1 is the
+# brief's mandated lineup; page 2 is another 9 from the asset set. A couple
+# of page-2 shortNames deliberately use aliases ("32X", "TG16") to prove
+# the IconResolver end-to-end in renders.
+PAGE1 = [
+    ("Game Boy Advance", "gba", 42),
+    ("Super Nintendo", "snes", 128),
+    ("PlayStation", "ps1", 96),
+    ("Nintendo 64", "n64", 61),
+    ("Dreamcast", "dreamcast", 33),
+    ("PlayStation Portable", "psp", 54),
+    ("Arcade", "arcade", 210),
+    ("Nintendo DS", "nds", 40),
+    ("PlayStation 2", "ps2", 60),
 ]
-ELEVEN = NINE + [
+PAGE2 = [
     ("Sega Genesis", "GENESIS", 88),
-    ("Neo Geo", "NEOGEO", 45),
+    ("Sega CD", "SEGACD", 12),
+    ("Sega 32X", "32X", 8),
+    ("Sega Saturn", "SATURN", 24),
+    ("PC Engine", "TG16", 15),
+    ("Game Boy", "GB", 30),
+    ("Game Boy Color", "GBC", 22),
+    ("Nintendo Entertainment System", "NES", 35),
+    ("Nintendo Wii", "WII", 28),
 ]
 
 ROLE_NAMES = {
@@ -199,7 +210,7 @@ class MockMemory(QObject):
 class MockApi(QObject):
     def __init__(self, n, battery, charging, parent=None, restore=None):
         super().__init__(parent)
-        items = ELEVEN if n == 11 else (NINE if n == 9 else [])
+        items = (PAGE1 + PAGE2) if n == 18 else (PAGE1 if n == 9 else [])
         self._collections = MockCollections(items, self)
         self._all_games = MockCollections([], self)
         self._keys = MockKeys(self)
@@ -234,7 +245,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
     ap.add_argument("--keys", default="")
-    ap.add_argument("--n", type=int, default=9, choices=(0, 9, 11))
+    ap.add_argument("--n", type=int, default=9, choices=(0, 9, 18))
     ap.add_argument("--battery", type=float, default=0.73)
     ap.add_argument("--charging", action="store_true")
     ap.add_argument("--nobattery", action="store_true")
