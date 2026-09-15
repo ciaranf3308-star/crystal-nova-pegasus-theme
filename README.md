@@ -106,8 +106,9 @@ Missing files fall back to a text badge automatically — no config needed.
 contact sheet: connected-component detection, margin crop, flood-fill
 background removal, plus the navy `_selected` remap. Current real artwork:
 GBA, SNES, PS1, N64, Dreamcast, PSP, Game Boy, Game Boy Color, NES,
-Genesis, Sega CD, Sega 32X. Arcade, favourites, more and unknown are still
-placeholders.
+Genesis, Sega CD, Sega 32X, Sega Saturn, PC Engine / TurboGrafx-16
+(`pcengine.png`, aliased as `tg16.png`), Arcade, Nintendo DS, Nintendo 3DS,
+Nintendo Wii. Favourites, more and unknown are still placeholders.
 
 ## What has been tested (PySide6 harness)
 
