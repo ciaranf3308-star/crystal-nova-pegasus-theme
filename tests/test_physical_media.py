@@ -16,6 +16,8 @@ Plus static architecture guards (no QML runtime needed):
   - launch still flows through GameLibrary.launchCurrent (no game.launch()
     in the PhysicalMedia layer)
   - QML brace balance on new/modified files
+  - JS import aliases match their uses (regression: the 74b8868 Nova
+    freeze was a MediaTemplates-vs-MT alias mismatch)
 
 Run:
     python3 tests/test_physical_media.py
@@ -155,6 +157,36 @@ def check_qml_imports_sane():
     print("ok - PhysicalMedia imports are QtQuick/local only")
 
 
+def check_js_import_alias_consistent():
+    # Regression guard for the 74b8868 Nova freeze: PhysicalInspect.qml
+    # and PhysicalObject.qml imported MediaTemplates.js "as MT" but
+    # referenced it as bare "MediaTemplates." — an undeclared identifier
+    # under Pegasus Qt 5.15. Bindings threw ReferenceError (tile object
+    # never activated) and open() threw after GameLibrary had already set
+    # inspecting=true, permanently routing all keys into dead handlers.
+    # Static logic tests never execute QML, so this alias mismatch is
+    # asserted here instead.
+    for name in sorted(EXPECTED_PM_FILES):
+        if not name.endswith(".qml"):
+            continue
+        src = read(os.path.join(PM, name))
+        for m in re.finditer(
+                r'^\s*import\s+"([^"]+\.js)"\s+as\s+(\w+)', src, re.M):
+            js_file, alias = m.group(1), m.group(2)
+            base = js_file[:-3]  # "MediaTemplates.js" -> "MediaTemplates"
+            for lm in re.finditer(r'(?<![\w])' + re.escape(base)
+                                  + r'\.(?!js)', src):
+                line = src[:lm.start()].count("\n") + 1
+                # the import line itself and filename mentions in comments
+                # are fine; any other bare-BaseName. reference is a bug
+                context = src.split("\n")[line - 1]
+                is_import = "import" in context and js_file in context
+                assert is_import, \
+                    "%s:%d uses '%s.' but the module is imported as '%s'" \
+                    % (name, line, base, alias)
+    print("ok - JS import aliases match their uses")
+
+
 def run_node_driver():
     node = shutil.which("node") or shutil.which("nodejs")
     if not node:
@@ -177,6 +209,7 @@ def main():
     check_launch_path_untouched()
     check_braces()
     check_qml_imports_sane()
+    check_js_import_alias_consistent()
     run_node_driver()
     print("\nphysical-media tests passed")
 

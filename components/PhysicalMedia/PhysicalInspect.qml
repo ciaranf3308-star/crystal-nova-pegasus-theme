@@ -31,8 +31,8 @@ Item {
 
     property var game: null
     property string shortName: ""
-    readonly property string family: MediaTemplates.familyFor(root.shortName)
-    readonly property var views: MediaTemplates.inspectViews(root.family)
+    readonly property string family: MT.familyFor(root.shortName)
+    readonly property var views: MT.inspectViews(root.family)
     property int viewIndex: 0
     readonly property string view: root.views.length > 0
                                      ? root.views[root.viewIndex % root.views.length] : "front"
@@ -66,7 +66,7 @@ Item {
     }
 
     function open(game, shortName, fromRect) {
-        if (!game || !MediaTemplates.supportsPhysical(shortName || "")) return
+        if (!game || !MT.supportsPhysical(shortName || "")) return
         root.game = game
         root.shortName = shortName || ""
         root.returnRect = fromRect
@@ -231,7 +231,7 @@ Item {
             font.pixelSize: 40
             font.letterSpacing: 4
             color: T.primaryInk
-            text: MediaTemplates.viewLabel(root.view)
+            text: MT.viewLabel(root.view)
         }
         // view cycle readout: current view lit, rest dim
         Row {
@@ -245,7 +245,7 @@ Item {
                     font.letterSpacing: 2
                     color: index === root.viewIndex ? T.primaryInk : T.tileInk
                     opacity: index === root.viewIndex ? 1 : 0.45
-                    text: MediaTemplates.viewLabel(modelData)
+                    text: MT.viewLabel(modelData)
                 }
             }
         }

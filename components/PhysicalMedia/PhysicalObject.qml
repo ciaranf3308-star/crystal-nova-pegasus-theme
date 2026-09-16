@@ -28,7 +28,7 @@ Item {
     property bool lifting: false        // PS2 launch transition
     property bool inserting: false      // GBA launch transition
 
-    readonly property string family: MediaTemplates.familyFor(root.shortName)
+    readonly property string family: MT.familyFor(root.shortName)
     readonly property bool active: root.family !== ""
                                    && root.game !== null
                                    && root.game !== undefined
@@ -73,7 +73,7 @@ Item {
         transformOrigin: Item.Center
         visible: root.active && root.family === "gba"
         view: root.mode === "tile" ? "front" : root.view
-        labelArt: MediaTemplates.labelUrl(root.assetDetails, root.tileFrontUrl)
+        labelArt: MT.labelUrl(root.assetDetails, root.tileFrontUrl)
         titleText: root.titleText
         fontFamily: root.fontFamily
         inserting: root.inserting
@@ -93,10 +93,10 @@ Item {
         transformOrigin: Item.Center
         visible: root.active && root.family === "ps2"
         view: root.mode === "tile" ? "front" : root.view
-        frontArt: MediaTemplates.caseFaceUrl(root.assetDetails, "front", root.tileFrontUrl)
+        frontArt: MT.caseFaceUrl(root.assetDetails, "front", root.tileFrontUrl)
         spineArt: root.assetDetails ? (root.assetDetails.spine || "") : ""
         backArt: root.assetDetails ? (root.assetDetails.back || "") : ""
-        discArt: MediaTemplates.discUrl(root.assetDetails)
+        discArt: MT.discUrl(root.assetDetails)
         titleText: root.titleText
         fontFamily: root.fontFamily
         lifting: root.lifting
