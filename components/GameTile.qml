@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import "CrystalTheme.js" as T
+import "CrystalAssets.js" as CrystalAssets
 
 // One game tile: box art inside a dark Crystal frame.
 // Selected: warm cream outer frame, dark inner edge, viewfinder corner
@@ -14,12 +15,10 @@ Item {
     property string shortName: ""    // collection shortName, for the fallback
     property string fontFamily: "monospace"
 
-    // Best available cover: boxFront first, then poster. Empty -> fallback.
+    // Best available cover: crystal scraped front first, then Pegasus
+    // boxFront, then poster. Empty -> theme fallback art.
     function artSource() {
-        if (!root.game || !root.game.assets) return ""
-        var a = root.game.assets
-        var s = a.boxFront || a.poster || ""
-        return s || ""
+        return CrystalAssets.tileFront(root.game, root.shortName)
     }
 
     property string title: {

@@ -1,6 +1,7 @@
 import QtQuick 2.12
 import "../components"
 import "../components/CrystalTheme.js" as T
+import "../components/CrystalAssets.js" as CrystalAssets
 
 // Phase 2: per-system game library. 4x2 box-art grid driven by the real
 // Pegasus collection model — no demo content in production.
@@ -11,6 +12,10 @@ Item {
     property var collection: null
     property string shortName: ""
     property string fontFamily: "monospace"
+
+    // Pick up newly scraped artwork when the library opens. The index is
+    // parsed once here; per-tile lookups are hash hits.
+    Component.onCompleted: CrystalAssets.refresh()
 
     // navigation / launch surface used by theme.qml
     function moveLeft()  { grid.moveLeft() }

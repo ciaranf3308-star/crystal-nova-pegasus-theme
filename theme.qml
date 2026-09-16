@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import "components"
+import "components/CrystalAssets.js" as CrystalAssets
 import "screens"
 
 // Crystal Nova -- Phase 1: home / system-selection screen for the
@@ -119,6 +120,11 @@ FocusScope {
     }
 
     Component.onCompleted: {
+        // Scraper asset bridge: point the resolver at the persistent sibling
+        // directory crystal-nova-data/ (written by Crystal Nova Manager).
+        // The directory lives next to the installed theme, never inside it,
+        // so theme updates and rollback cannot touch scraper data.
+        CrystalAssets.configure(Qt.resolvedUrl("../crystal-nova-data/"))
         // Restore the last selected system across restarts. Pegasus reloads
         // the theme after a game exits; if we were inside a library, go
         // straight back there with the game selection intact.
