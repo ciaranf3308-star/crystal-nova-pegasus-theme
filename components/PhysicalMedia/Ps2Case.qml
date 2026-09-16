@@ -1,426 +1,337 @@
 import QtQuick 2.12
 import "MediaTemplates.js" as MT
-import "../CrystalTheme.js" as T
 
-// PS2 keep case: Crystal-owned case template + game face textures.
+// Ps2Case — thin compositor over authored SVG templates.
 //
-// Views: "front" (cover + spine sliver) | "spine" | "back" | "open"
-// (tray + disc + swung cover). The open state is a 2.5D hinge illusion:
-// the cover plane rotates around its left (spine) edge while an
-// interior panel crossfades in past 90 degrees. openAmount animates
-// automatically via a Behavior so parents just set view.
+// The keep case is NEVER drawn here: it comes from
+// assets/physical/ps2/*.svg (original Crystal illustration). QML only
+// layers game artwork into the template's transparent windows and adds
+// small dynamic overlays (disc lift for launch, restrained view dip).
 //
-// lifting: launch-transition state — the disc scales toward the camera
-// and fades while the tray dims; the parent then invokes game.launch().
+// FRONT / SPINE / BACK are views of the SAME object: one shared
+// plastic language, one continuous cover-art set. OPEN is a
+// deliberately composed spread (interior panel + hinge + tray + disc),
+// not a rotated rectangle.
 //
-// Natural size: 300x420 closed (MT.PS2), 600x420 open; the parent
-// scales to fit. No animation lives on browse; all motion is driven
-// from Inspect.
+// view: "front" | "spine" | "back" | "open"
+// discKind: "scan" (real disc art) | "art" (cover art under the disc
+//   template) | "none" (designed fallback disc face)
 Item {
     id: root
+    implicitWidth: isOpen ? MT.PS2.openW
+                          : (isSpine ? MT.PS2.spineW : MT.PS2.caseW)
+    implicitHeight: isOpen ? MT.PS2.openH : MT.PS2.caseH
 
     property string view: "front"
     property string frontArt: ""
     property string spineArt: ""
     property string backArt: ""
     property string discArt: ""
+    property string discKind: "none"
     property string titleText: ""
     property string fontFamily: "monospace"
-    property bool lifting: false
+    property bool lifting: false   // PS2 launch: disc lifts from the tray
 
-    property real openAmount: view === "open" ? 1 : 0
-    Behavior on openAmount { NumberAnimation { duration: 320; easing.type: Easing.InOutQuad } }
+    readonly property string assetBase: "../../assets/physical/ps2/"
+    readonly property bool isOpen: root.view === "open"
+    readonly property bool isSpine: root.view === "spine"
+    // face texture for the current closed view
+    readonly property string faceArt: root.view === "spine" ? root.spineArt
+        : (root.view === "back" ? (root.backArt || root.frontArt) : root.frontArt)
 
-    width: view === "spine" ? 120 : (view === "open" ? 600 : 300)
-    height: MT.PS2.caseH
+    // restrained view-change settle: a 140ms dip, never a spin
+    NumberAnimation {
+        id: viewDip
+        target: root; property: "opacity"
+        from: 0.55; to: 1; duration: 140
+    }
+    onViewChanged: viewDip.restart()
 
-    // Closed-case tilt is applied by PhysicalObject (tile vs inspect);
-    // the hinge carries the open view.
+    // ---- soft shadow (authored, under everything) ----
+    Image {
+        source: root.assetBase + "case-shadow.svg"
+        width: root.isOpen ? 1500 : 820
+        height: root.isOpen ? 300 : 164
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: root.height - (root.isOpen ? 108 : 62)
+        fillMode: Image.PreserveAspectFit
+        smooth: true
+        asynchronous: true
+    }
 
-    // ---- FRONT -------------------------------------------------------------
+    // ---- CLOSED: front / spine / back ----
     Item {
-        id: frontView
         anchors.fill: parent
-        visible: root.view === "front"
+        visible: !root.isOpen
 
-        Rectangle { // shadow
-            x: 8; y: 14; width: parent.width; height: parent.height
-            color: "#000000"; opacity: 0.35
-        }
-        // spine sliver: explicit layered plane, not a texture stretch
+        // game artwork clipped to the template window (QML layering,
+        // never an SVG mask)
         Rectangle {
-            x: 0; y: 6; width: 26; height: parent.height - 6
-            color: "#141c28"
-            border.width: 1; border.color: T.tileBorder
-        }
-        Image {
-            id: spineSliverImg
-            x: 2; y: 10; width: 22; height: parent.height - 14
-            fillMode: Image.PreserveAspectCrop
-            smooth: true; asynchronous: true
-            source: root.spineArt
-            visible: source !== "" && status === Image.Ready
-        }
-        Text {
-            x: 13; y: parent.height / 2
-            width: parent.height - 40; height: 22
-            rotation: -90
-            transformOrigin: Item.Center
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            font.family: root.fontFamily
-            font.pixelSize: 13
-            font.letterSpacing: 2
-            color: T.tileInk
-            elide: Text.ElideRight
-            text: MT.spineText(root.titleText)
-            visible: !spineSliverImg.visible
-        }
+            x: root.isSpine ? MT.PS2.spineArtX : MT.PS2.coverX
+            y: root.isSpine ? MT.PS2.spineArtY : MT.PS2.coverY
+            width: root.isSpine ? MT.PS2.spineArtW : MT.PS2.coverW
+            height: root.isSpine ? MT.PS2.spineArtH : MT.PS2.coverH
+            radius: 6
+            clip: true
+            color: "#101722"   // window backing: visible only if art fails
 
-        // cover
-        Item {
-            x: 26; y: 0; width: parent.width - 26; height: parent.height
-            Rectangle { // clear-sleeve plastic edge
-                anchors.fill: parent
-                color: "#dfe9f1"; opacity: 0.16
-            }
             Image {
-                id: frontImg
                 anchors.fill: parent
-                anchors.margins: MT.PS2.plasticEdge
                 fillMode: Image.PreserveAspectCrop
-                smooth: true; asynchronous: true
-                source: root.frontArt
+                smooth: true
+                asynchronous: true
+                source: root.faceArt !== "" ? root.faceArt : ""
                 visible: source !== "" && status === Image.Ready
             }
-            // generated cover: Crystal tokens only
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: MT.PS2.plasticEdge
-                color: T.tileFill
-                border.width: 2; border.color: T.tileBorder
-                visible: !frontImg.visible
-            }
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 120
-                font.family: root.fontFamily
-                font.pixelSize: 72
-                font.letterSpacing: 4
-                color: T.primaryInk
-                text: MT.abbrFor(root.titleText)
-                visible: !frontImg.visible
-            }
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 44
-                width: parent.width - 40
-                horizontalAlignment: Text.AlignHCenter
-                font.family: root.fontFamily
-                font.pixelSize: 22
-                font.letterSpacing: 2
-                color: T.tileInk
-                wrapMode: Text.WordWrap
-                maximumLineCount: 3
-                elide: Text.ElideRight
-                text: (root.titleText || "UNTITLED").toUpperCase()
-                visible: !frontImg.visible
-            }
-            // sleeve highlight
-            Rectangle {
-                x: MT.PS2.plasticEdge; y: MT.PS2.plasticEdge
-                width: 26; height: parent.height - 2 * MT.PS2.plasticEdge
-                opacity: 0.10
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: "#ffffff" }
-                    GradientStop { position: 1.0; color: "#ffffff00" }
-                }
-            }
-        }
-    }
 
-    // ---- SPINE ---------------------------------------------------------------
-    Item {
-        anchors.fill: parent
-        visible: root.view === "spine"
-
-        Rectangle {
-            x: 24; y: 8; width: parent.width - 24; height: parent.height
-            color: "#000000"; opacity: 0.35
-        }
-        Rectangle {
-            x: 16; width: 64; height: parent.height
-            color: "#141c28"
-            border.width: 2; border.color: T.tileBorder
-        }
-        Image {
-            x: 18; width: 60; height: parent.height
-            fillMode: Image.PreserveAspectCrop
-            smooth: true; asynchronous: true
-            source: root.spineArt
-            visible: source !== "" && status === Image.Ready
-        }
-        Text {
-            x: 48; y: parent.height / 2
-            width: parent.height - 48; height: 30
-            rotation: -90
-            transformOrigin: Item.Center
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            font.family: root.fontFamily
-            font.pixelSize: 20
-            font.letterSpacing: 3
-            color: T.tileInk
-            elide: Text.ElideRight
-            text: MT.spineText(root.titleText)
-            visible: root.spineArt === ""
-        }
-        Rectangle { // steel rules top/bottom, Crystal frame language
-            x: 16; y: 10; width: 64; height: 3; color: T.tileBorder
-        }
-        Rectangle {
-            x: 16; y: parent.height - 13; width: 64; height: 3; color: T.tileBorder
-        }
-    }
-
-    // ---- BACK ------------------------------------------------------------------
-    Item {
-        anchors.fill: parent
-        visible: root.view === "back"
-
-        Rectangle {
-            x: 8; y: 14; width: parent.width; height: parent.height
-            color: "#000000"; opacity: 0.35
-        }
-        Rectangle {
-            anchors.fill: parent
-            color: "#dfe9f1"; opacity: 0.12
-        }
-        Image {
-            id: backImg
-            anchors.fill: parent
-            anchors.margins: MT.PS2.plasticEdge
-            fillMode: Image.PreserveAspectCrop
-            smooth: true; asynchronous: true
-            source: root.backArt
-            visible: source !== "" && status === Image.Ready
-        }
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: MT.PS2.plasticEdge
-            color: T.tileFill
-            border.width: 2; border.color: T.tileBorder
-            visible: !backImg.visible
-        }
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: 150
-            font.family: root.fontFamily
-            font.pixelSize: 60
-            font.letterSpacing: 4
-            color: T.primaryInk
-            text: MT.abbrFor(root.titleText)
-            visible: !backImg.visible
-        }
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 60
-            width: parent.width - 48
-            horizontalAlignment: Text.AlignHCenter
-            font.family: root.fontFamily
-            font.pixelSize: 20
-            font.letterSpacing: 2
-            color: T.tileInk
-            wrapMode: Text.WordWrap
-            maximumLineCount: 3
-            elide: Text.ElideRight
-            text: (root.titleText || "UNTITLED").toUpperCase()
-            visible: !backImg.visible
-        }
-    }
-
-    // ---- OPEN --------------------------------------------------------------------
-    Item {
-        anchors.fill: parent
-        visible: root.view === "open"
-
-        // cover interior (crossfades in as the cover swings past 90 deg)
-        Rectangle {
-            x: 8; y: 0; width: 272; height: parent.height
-            color: "#101823"
-            border.width: 2; border.color: T.tileBorder
-            opacity: root.openAmount < 0.45 ? 0 : 1
-            Behavior on opacity { NumberAnimation { duration: 160 } }
-        }
-        Text {
-            x: 8; width: 272
-            y: parent.height / 2 - 40
-            horizontalAlignment: Text.AlignHCenter
-            font.family: root.fontFamily
-            font.pixelSize: 18
-            font.letterSpacing: 3
-            color: T.tileInk
-            opacity: 0.6
-            text: "INSIDE COVER"
-            visible: root.openAmount >= 0.45
-        }
-
-        // tray
-        Item {
-            x: 300; width: 300; height: parent.height
-            Rectangle {
-                x: 8; y: 14; width: parent.width; height: parent.height
-                color: "#000000"; opacity: 0.35
-            }
-            Rectangle {
-                anchors.fill: parent
-                color: "#0d141d"
-                border.width: 2; border.color: "#2a3646"
-                opacity: root.lifting ? 0.45 : 1
-                Behavior on opacity { NumberAnimation { duration: 300 } }
-            }
-            // disc hub ring
-            Rectangle {
-                x: parent.width / 2 - 34; y: MT.PS2.discY - 34
-                width: 68; height: 68; radius: 34
-                color: "#00000000"
-                border.width: 3; border.color: "#2a3646"
-            }
-
-            // disc: Canvas so the art is truly circular
+            // designed fallback cover (front/back): a real composition
+            // hierarchy from title + Crystal treatment, never a
+            // placeholder card
             Item {
-                id: discLift
-                x: parent.width / 2 - MT.PS2.discD / 2
-                y: MT.PS2.discY - MT.PS2.discD / 2
-                width: MT.PS2.discD; height: MT.PS2.discD
-                transformOrigin: Item.Center
-                scale: root.lifting ? 1.7 : 1
-                opacity: root.lifting ? 0 : 1
-                Behavior on scale { NumberAnimation { duration: 380; easing.type: Easing.InQuad } }
-                Behavior on opacity { NumberAnimation { duration: 380 } }
-
-                Image {
-                    id: discArtImg
-                    source: root.discArt
-                    asynchronous: true
-                    visible: false
-                    onStatusChanged: discCanvas.requestPaint()
-                }
-                Canvas {
-                    id: discCanvas
+                anchors.fill: parent
+                visible: !root.isSpine && root.faceArt === ""
+                Rectangle {
                     anchors.fill: parent
-                    onPaint: {
-                        var ctx = getContext("2d");
-                        ctx.reset();
-                        var c = MT.PS2.discD / 2;
-                        // silver base
-                        var g = ctx.createLinearGradient(0, 0, MT.PS2.discD, MT.PS2.discD);
-                        g.addColorStop(0, "#eef1f5");
-                        g.addColorStop(0.5, "#c6ccd5");
-                        g.addColorStop(1, "#e2e7ed");
-                        ctx.fillStyle = g;
-                        ctx.beginPath();
-                        ctx.arc(c, c, c, 0, Math.PI * 2);
-                        ctx.fill();
-                        var ready = discArtImg.status === Image.Ready;
-                        if (ready) {
-                            ctx.save();
-                            ctx.beginPath();
-                            ctx.arc(c, c, c, 0, Math.PI * 2);
-                            ctx.clip();
-                            ctx.drawImage(discArtImg, 0, 0, MT.PS2.discD, MT.PS2.discD);
-                            ctx.restore();
-                        } else {
-                            // generated disc: data rings + Crystal abbr
-                            ctx.strokeStyle = "rgba(90,99,109,0.35)";
-                            ctx.lineWidth = 2;
-                            var r;
-                            for (r = 46; r < c - 6; r += 14) {
-                                ctx.beginPath();
-                                ctx.arc(c, c, r, 0, Math.PI * 2);
-                                ctx.stroke();
-                            }
-                            ctx.fillStyle = "#5a636d";
-                            ctx.font = "600 44px monospace";
-                            ctx.textAlign = "center";
-                            ctx.textBaseline = "middle";
-                            ctx.fillText(MT.abbrFor(root.titleText), c, c - 24);
-                            ctx.font = "20px monospace";
-                            var t = (root.titleText || "UNTITLED").toUpperCase();
-                            if (t.length > 22) t = t.substring(0, 22);
-                            ctx.fillText(t, c, c + 22);
-                        }
-                        // hub hole + Crystal steel-blue hub ring
-                        ctx.fillStyle = "#0d141d";
-                        ctx.beginPath();
-                        ctx.arc(c, c, 26, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.strokeStyle = T.tileBorder;
-                        ctx.lineWidth = 4;
-                        ctx.beginPath();
-                        ctx.arc(c, c, 26, 0, Math.PI * 2);
-                        ctx.stroke();
-                        // restrained shine: two translucent arcs
-                        ctx.strokeStyle = "rgba(255,255,255,0.35)";
-                        ctx.lineWidth = 18;
-                        ctx.beginPath();
-                        ctx.arc(c, c, c - 30, Math.PI * 1.15, Math.PI * 1.45);
-                        ctx.stroke();
-                        ctx.lineWidth = 10;
-                        ctx.beginPath();
-                        ctx.arc(c, c, c - 52, Math.PI * 1.2, Math.PI * 1.4);
-                        ctx.stroke();
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#16304a" }
+                        GradientStop { position: 1.0; color: "#0a1626" }
                     }
-                    Component.onCompleted: requestPaint()
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 40
+                    color: "transparent"
+                    border.width: 2
+                    border.color: "#7ba7d9"
+                    opacity: 0.45
+                }
+                Text {
+                    anchors.centerIn: parent
+                    width: parent.width - 120
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideRight
+                    maximumLineCount: 4
+                    font.family: root.fontFamily
+                    font.pixelSize: 46
+                    font.letterSpacing: 6
+                    lineHeight: 1.4
+                    color: "#d7e3ec"
+                    text: root.titleText.toUpperCase()
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 64
+                    font.family: root.fontFamily
+                    font.pixelSize: 18
+                    font.letterSpacing: 5
+                    color: "#7ba7d9"
+                    text: "CRYSTAL EDITION"
                 }
             }
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: MT.PS2.discY + MT.PS2.discD / 2 + 26
-                font.family: root.fontFamily
-                font.pixelSize: 16
-                font.letterSpacing: 3
-                color: T.tileInk
-                opacity: 0.55
-                text: "COMPACT DISC"
+            // designed fallback spine: narrow band, vertical title
+            Item {
+                anchors.fill: parent
+                visible: root.isSpine && root.spineArt === ""
+                Rectangle {
+                    anchors.fill: parent
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#1b2a40" }
+                        GradientStop { position: 1.0; color: "#101a2a" }
+                    }
+                }
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: 40; width: 26; height: 26
+                    color: "#7ba7d9"
+                    opacity: 0.8
+                }
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: parent.height - 66; width: 26; height: 26
+                    color: "#7ba7d9"
+                    opacity: 0.8
+                }
+                Text {
+                    width: parent.height - 160
+                    height: parent.width
+                    anchors.centerIn: parent
+                    rotation: -90
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    font.family: root.fontFamily
+                    font.pixelSize: 30
+                    font.letterSpacing: 4
+                    color: "#d7e3ec"
+                    text: MT.spineText(root.titleText)
+                }
             }
         }
 
-        // swinging cover: rotates around the spine (left) edge
-        Item {
-            id: swingCover
-            x: 300; width: 300; height: parent.height
-            visible: root.openAmount < 0.55
-            transform: Rotation {
-                axis { x: 0; y: 1; z: 0 }
-                angle: -150 * root.openAmount
-                origin.x: 0
-                origin.y: MT.PS2.caseH / 2
-            }
-            Rectangle {
-                anchors.fill: parent
-                color: "#dfe9f1"; opacity: 0.16
-            }
+        // authored case: draws the keep case AROUND the art window
+        Image {
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            asynchronous: true
+            source: root.assetBase + (root.isSpine ? "case-spine.svg"
+                : (root.view === "back" ? "case-back.svg" : "case-front.svg"))
+        }
+    }
+
+    // ---- OPEN: composed spread (interior + hinge + tray + disc) ----
+    Item {
+        anchors.fill: parent
+        visible: root.isOpen
+
+        // authored open-case base: panels, hinge barrels, tray, hub post
+        Image {
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            asynchronous: true
+            source: root.assetBase + "case-open.svg"
+        }
+
+        // interior artwork, clipped to the left-panel window
+        Rectangle {
+            x: MT.PS2.innerX; y: MT.PS2.innerY
+            width: MT.PS2.innerW; height: MT.PS2.innerH
+            radius: 6
+            clip: true
+            color: "#101722"
             Image {
                 anchors.fill: parent
-                anchors.margins: MT.PS2.plasticEdge
                 fillMode: Image.PreserveAspectCrop
-                smooth: true; asynchronous: true
-                source: root.frontArt
+                smooth: true
+                asynchronous: true
+                source: (root.backArt || root.frontArt) !== ""
+                        ? (root.backArt || root.frontArt) : ""
                 visible: source !== "" && status === Image.Ready
             }
+            // fallback interior: quiet navy + title, no placeholder text
+            Item {
+                anchors.fill: parent
+                visible: (root.backArt || root.frontArt) === ""
+                Rectangle {
+                    anchors.fill: parent
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#14283e" }
+                        GradientStop { position: 1.0; color: "#0a1626" }
+                    }
+                }
+                Text {
+                    anchors.centerIn: parent
+                    width: parent.width - 80
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideRight
+                    maximumLineCount: 3
+                    font.family: root.fontFamily
+                    font.pixelSize: 34
+                    font.letterSpacing: 5
+                    lineHeight: 1.5
+                    color: "#d7e3ec"
+                    opacity: 0.85
+                    text: root.titleText.toUpperCase()
+                }
+            }
+        }
+
+        // the disc: game texture under the authored disc template.
+        // Lifts off the hub post for the launch transition.
+        Item {
+            id: discGroup
+            x: MT.PS2.discX - MT.PS2.discD / 2
+            y: MT.PS2.discY - MT.PS2.discD / 2 + (root.lifting ? -230 : 0)
+            width: MT.PS2.discD
+            height: MT.PS2.discD
+            transformOrigin: Item.Center
+            scale: root.lifting ? 1.03 : 1
+            Behavior on y {
+                NumberAnimation { duration: 420; easing.type: Easing.OutQuad }
+            }
+            Behavior on scale {
+                NumberAnimation { duration: 420; easing.type: Easing.OutQuad }
+            }
+
             Rectangle {
                 anchors.fill: parent
-                anchors.margins: MT.PS2.plasticEdge
-                color: T.tileFill
-                border.width: 2; border.color: T.tileBorder
-                visible: root.frontArt === ""
+                radius: width / 2
+                clip: true
+                color: "#9fb4c9"   // disc backing: visible only if art fails
+
+                // "scan": genuine disc artwork
+                Image {
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectCrop
+                    smooth: true
+                    asynchronous: true
+                    source: root.discKind === "scan" ? root.discArt : ""
+                    visible: source !== "" && status === Image.Ready
+                }
+                // "art": cover art under the disc treatment
+                Image {
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectCrop
+                    smooth: true
+                    asynchronous: true
+                    opacity: 0.92
+                    source: root.discKind === "art" ? root.frontArt : ""
+                    visible: source !== "" && status === Image.Ready
+                }
+                // "none": designed disc face — tonal, ringed, titled
+                Item {
+                    anchors.fill: parent
+                    visible: root.discKind === "none"
+                    Rectangle {
+                        anchors.fill: parent
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: "#e6eef6" }
+                            GradientStop { position: 1.0; color: "#a9bfd4" }
+                        }
+                    }
+                    Repeater {
+                        model: 3
+                        Rectangle {
+                            width: 300 + index * 70
+                            height: 300 + index * 70
+                            radius: width / 2
+                            anchors.centerIn: parent
+                            color: "transparent"
+                            border.width: 2
+                            border.color: "#ffffff"
+                            opacity: 0.28
+                        }
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: parent.height * 0.72
+                        width: parent.width * 0.7
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                        font.family: root.fontFamily
+                        font.pixelSize: 26
+                        font.letterSpacing: 4
+                        color: "#24344a"
+                        text: root.titleText.toUpperCase()
+                    }
+                }
+            }
+
+            // authored disc template: hub, sheen, edge — over the art
+            Image {
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                asynchronous: true
+                source: root.assetBase + "disc.svg"
             }
         }
     }
 
+    Component.onCompleted: viewDip.restart()
 }

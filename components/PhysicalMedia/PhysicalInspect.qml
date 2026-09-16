@@ -1,24 +1,31 @@
 import QtQuick 2.12
 import ".."
 import "../CrystalTheme.js" as T
-import "../CrystalAssets.js" as CrystalAssets
 import "MediaTemplates.js" as MT
 
 // PhysicalInspect — the focused physical-media view for one game.
 //
-// Still unmistakably Crystal: dark navy dim over the live library,
-// a tileFill panel in the open-corner frame language, Departure Mono,
-// the footer keycap prompt language. Only the object itself is
-// richly rendered.
+// The physical object is the hero: it floats large over the dimmed
+// library with only a title, an understated view indicator, and
+// minimal controller hints. Still unmistakably Crystal: the dark navy
+// dim, Departure Mono, the footer keycap prompt language. Nothing here
+// proves the implementation — no provenance lines, no debug labels,
+// no explanatory paragraphs.
 //
 // Controller: LEFT/RIGHT cycles views (PS2: FRONT/SPINE/BACK/OPEN —
 // opening is a view, no extra button to discover; GBA: FRONT/BACK),
 // A launches (tactile transition, then the existing game.launch()
 // path), B returns to the exact same grid tile.
 //
-// Grid -> inspect reads as "brought forward": the object animates
-// from the selected tile's rect to its panel slot; closing reverses
-// it. The grid selection underneath never moves.
+// Grid -> inspect reads as "brought forward": the object travels from
+// the selected tile's rect to its hero slot while the library dims;
+// the grid selection underneath never moves.
+//
+// INPUT SAFETY (do not weaken): open() reports success/failure and
+// never throws; every transition is backed by the 900ms busyWatchdog;
+// beginClose() jump-cuts out of busy/launching so B always escapes;
+// no animation-completion callback is the single point of failure for
+// input recovery.
 Item {
     id: root
     visible: false
@@ -36,21 +43,16 @@ Item {
     property int viewIndex: 0
     readonly property string view: root.views.length > 0
                                      ? root.views[root.viewIndex % root.views.length] : "front"
-    property string sourceLine: ""
     property bool busy: false        // transition running: ignore keys
     property bool launching: false
     property bool liftStarted: false
     property bool slotGraphicOn: false
 
-    // panel geometry (derived from the theme's 1280x960 canvas)
-    readonly property int panelX: 140
-    readonly property int panelY: 110
-    readonly property int panelW: 1000
-    readonly property int panelH: 700
-    readonly property int slotX: 180
-    readonly property int slotY: 220
-    readonly property int slotW: 540
-    readonly property int slotH: 500
+    // hero slot geometry, set from the family in open()
+    property int slotX: 0
+    property int slotY: 140
+    property int slotW: 600
+    property int slotH: 620
 
     function setView(v) {
         var i = root.views.indexOf(v)
@@ -63,6 +65,17 @@ Item {
     function nextView() {
         if (root.busy || root.launching || root.views.length === 0) return
         root.viewIndex = (root.viewIndex + 1) % root.views.length
+    }
+
+    // Hero slot for a family: the object gets a large, stable, centered
+    // stage with room to breathe. PS2 sizes for the OPEN spread (the
+    // largest view) so FRONT/SPINE/BACK share the same hero position.
+    function slotFor(fam) {
+        var nw = fam === "gba" ? MT.GBA.w : MT.PS2.openW
+        var nh = fam === "gba" ? MT.GBA.h : MT.PS2.openH
+        var s = Math.min(1000 / nw, 620 / nh)
+        var w = Math.round(nw * s), h = Math.round(nh * s)
+        return { x: Math.round((1280 - w) / 2), y: 140, w: w, h: h }
     }
 
     // Returns true when Inspect actually opened. Never throws and never
@@ -80,9 +93,11 @@ Item {
             root.launching = false
             root.liftStarted = false
             root.slotGraphicOn = false
-            root.sourceLine = artworkSource()
-            // start the object exactly on the selected tile, then bring it
-            // forward into the panel slot
+            var sl = slotFor(root.family)
+            root.slotX = sl.x; root.slotY = sl.y
+            root.slotW = sl.w; root.slotH = sl.h
+            // start the object exactly on the selected tile, then bring
+            // it forward into the hero slot
             objectWrap.x = fromRect.x
             objectWrap.y = fromRect.y
             objectWrap.width = fromRect.w
@@ -102,17 +117,6 @@ Item {
             hardReset()
             return false
         }
-    }
-
-    function artworkSource() {
-        try {
-            var d = CrystalAssets.details(root.game, root.shortName)
-            for (var k in d) { if (d[k]) return "SCRAPED" }
-            var g = root.game
-            if (g && g.assets && (g.assets.boxFront || g.assets.poster))
-                return "SCRAPED"
-        } catch (e) { /* fall through */ }
-        return "GENERATED"
     }
 
     // B must always escape: when a transition is stuck (or a launch is
@@ -142,7 +146,7 @@ Item {
         if (root.launching || root.busy) return
         root.launching = true
         if (root.family === "ps2" && root.view !== "open") {
-            setView("open")            // hinge swings open first
+            setView("open")            // the tray reveals itself first
             launchTimer.interval = 520
         } else {
             beginLift()
@@ -269,171 +273,128 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 160 } }
     }
 
-    // ---- panel ------------------------------------------------------------------
+    // ---- chrome: title, view indicator, hints (transparent container) -----------
+    // The object is the hero; this fades/scales in around it. No panel
+    // box, no info column — the composition breathes.
     Item {
         id: panel
-        x: root.panelX; y: root.panelY
-        width: root.panelW; height: root.panelH
+        anchors.fill: parent
         opacity: 0
         scale: 0.97
         transformOrigin: Item.Center
 
-        Rectangle {
-            anchors.fill: parent
-            color: T.tileFill
-        }
-        TileFrame { anchors.fill: parent }
-
         Text {
-            x: 40; y: 28
-            width: parent.width - 80; height: 40
+            x: 40; y: 44
+            width: parent.width - 80; height: 44
+            horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
             font.family: root.fontFamily
-            font.pixelSize: T.libTitlePx
-            font.letterSpacing: 2
+            font.pixelSize: 34
+            font.letterSpacing: 5
             color: T.primaryInk
             text: {
                 var t = ""
                 try { t = root.game ? (root.game.title || "") : "" } catch (e) {}
-                return (t === "" ? "UNTITLED" : t).toUpperCase()
+                return t.toUpperCase()
             }
         }
-        Rectangle { // header hairline, footer-divider language
-            x: 40; y: 76
-            width: parent.width - 80; height: T.footerDividerH
+        // quiet divider under the title
+        Rectangle {
+            x: (parent.width - 120) / 2; y: 104
+            width: 120; height: T.footerDividerH
             color: T.divider
+            opacity: 0.7
         }
 
-        // info column
-        Text {
-            x: 620; y: 110
-            font.family: root.fontFamily
-            font.pixelSize: 20
-            font.letterSpacing: 3
-            color: T.tileInk
-            text: T.displayNameFor(root.shortName, "")
-        }
-        Text {
-            x: 620; y: 168
-            font.family: root.fontFamily
-            font.pixelSize: 16
-            font.letterSpacing: 3
-            color: T.tileInk
-            opacity: 0.7
-            text: "VIEW"
-        }
-        Text {
-            x: 620; y: 194
-            font.family: root.fontFamily
-            font.pixelSize: 40
-            font.letterSpacing: 4
-            color: T.primaryInk
-            text: MT.viewLabel(root.view)
-        }
-        // view cycle readout: current view lit, rest dim
+        // understated view indicator: current view lit, rest dim
         Row {
-            x: 620; y: 262
-            spacing: 14
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 814
+            spacing: 22
             Repeater {
                 model: root.views
                 Text {
                     font.family: root.fontFamily
-                    font.pixelSize: 16
-                    font.letterSpacing: 2
+                    font.pixelSize: 18
+                    font.letterSpacing: 3
                     color: index === root.viewIndex ? T.primaryInk : T.tileInk
-                    opacity: index === root.viewIndex ? 1 : 0.45
+                    opacity: index === root.viewIndex ? 1 : 0.4
                     text: MT.viewLabel(modelData)
                 }
             }
         }
-        Text {
-            x: 620; y: 330
-            font.family: root.fontFamily
-            font.pixelSize: 16
-            font.letterSpacing: 2
-            color: T.tileInk
-            opacity: 0.6
-            text: "ARTWORK  " + root.sourceLine
-        }
-        Text {
-            x: 620; y: 560
-            width: 340
-            wrapMode: Text.WordWrap
-            font.family: root.fontFamily
-            font.pixelSize: 16
-            font.letterSpacing: 1
-            color: T.tileInk
-            opacity: 0.55
-            lineHeight: 1.5
-            text: root.family === "ps2"
-                  ? "BROWSE THE VIEWS. OPEN REVEALS THE DISC."
-                  : "BROWSE THE VIEWS. A SLOTS THE CARTRIDGE."
+
+        // minimal controller hints in the footer keycap language
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 862
+            spacing: 40
+            Row {
+                spacing: 10
+                Keycap { fontFamily: root.fontFamily; text: "<" }
+                Keycap { fontFamily: root.fontFamily; text: ">" }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.family: root.fontFamily
+                    font.pixelSize: T.fontFooterPx
+                    font.letterSpacing: T.footerLetterSpacing
+                    color: T.tileInk
+                    text: root.family === "gba" ? "ROTATE" : "VIEWS"
+                }
+            }
+            Row {
+                spacing: 10
+                Keycap { fontFamily: root.fontFamily; text: "A" }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.family: root.fontFamily
+                    font.pixelSize: T.fontFooterPx
+                    font.letterSpacing: T.footerLetterSpacing
+                    color: T.tileInk
+                    text: "LAUNCH"
+                }
+            }
+            Row {
+                spacing: 10
+                Keycap { fontFamily: root.fontFamily; text: "B" }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.family: root.fontFamily
+                    font.pixelSize: T.fontFooterPx
+                    font.letterSpacing: T.footerLetterSpacing
+                    color: T.tileInk
+                    text: "BACK"
+                }
+            }
         }
 
-        // footer prompts: the footer keycap language, in-panel
-        Keycap { x: 40;  y: root.panelH - 74; fontFamily: root.fontFamily; text: "<" }
-        Keycap { x: 132; y: root.panelH - 74; fontFamily: root.fontFamily; text: ">" }
-        Text {
-            x: 227; y: root.panelH - 74
-            font.family: root.fontFamily
-            font.pixelSize: T.fontFooterPx
-            font.letterSpacing: T.footerLetterSpacing
-            color: T.tileInk
-            text: root.family === "gba" ? "ROTATE" : "VIEWS"
-        }
-        Keycap { x: 470; y: root.panelH - 74; fontFamily: root.fontFamily; text: "A" }
-        Text {
-            x: 565; y: root.panelH - 74
-            font.family: root.fontFamily
-            font.pixelSize: T.fontFooterPx
-            font.letterSpacing: T.footerLetterSpacing
-            color: T.tileInk
-            text: "LAUNCH"
-        }
-        Keycap { x: 770; y: root.panelH - 74; fontFamily: root.fontFamily; text: "B" }
-        Text {
-            x: 865; y: root.panelH - 74
-            font.family: root.fontFamily
-            font.pixelSize: T.fontFooterPx
-            font.letterSpacing: T.footerLetterSpacing
-            color: T.tileInk
-            text: "BACK"
-        }
-
-        // GBA cartridge slot: fades in for the launch insertion
+        // GBA cartridge slot: a quiet Crystal target that fades in for
+        // the launch insertion. Pure chrome — no labels.
         Item {
             id: slotGraphic
-            x: (parent.width - 380) / 2
-            y: root.panelH - 130
-            width: 380; height: 30
+            visible: root.family === "gba"
+            x: (1280 - 380) / 2; y: 778
+            width: 380; height: 24
             opacity: root.slotGraphicOn ? 1 : 0
-            visible: opacity > 0.01
             Behavior on opacity { NumberAnimation { duration: 200 } }
             Rectangle {
                 anchors.fill: parent
+                radius: 12
                 color: "#050c14"
                 border.width: 2
                 border.color: T.tileBorder
-            }
-            Text {
-                anchors.centerIn: parent
-                font.family: root.fontFamily
-                font.pixelSize: 14
-                font.letterSpacing: 3
-                color: T.tileInk
-                text: "CARTRIDGE SLOT"
             }
         }
 
         NumberAnimation { id: panelIn; target: panel; property: "opacity"; to: 1; duration: 200 }
         NumberAnimation { id: panelOut; target: panel; property: "opacity"; to: 0; duration: 180 }
     }
-    // panel scale settles with the fade
+    // chrome settles with the fade
     NumberAnimation { id: panelZoomIn; target: panel; property: "scale"; to: 1; duration: 220;
                       easing.type: Easing.OutQuad }
 
-    // ---- the object: tile rect -> panel slot --------------------------------------
+    // ---- the object: tile rect -> hero slot ---------------------------------------
     Item {
         id: objectWrap
         PhysicalObject {
@@ -443,7 +404,6 @@ Item {
             shortName: root.shortName
             artEpoch: root.artEpoch
             fontFamily: root.fontFamily
-            mode: "inspect"
             view: root.view
         }
     }
@@ -476,6 +436,4 @@ Item {
             }
         }
     }
-
-
 }

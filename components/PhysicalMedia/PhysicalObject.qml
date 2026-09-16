@@ -2,28 +2,22 @@ import QtQuick 2.12
 import "MediaTemplates.js" as MT
 import "../CrystalAssets.js" as CrystalAssets
 
-// PhysicalObject — the single entry point the library uses to render a
+// PhysicalObject — the single entry point Inspect uses to render a
 // game as a physical object. Platform checks live in MediaTemplates.js;
-// callers only ask `active`.
+// callers only ask `active` and set `view`.
 //
-// mode "tile": static 2.5D pose for the selected grid tile (front view,
-// slight tilt toward the user, no animation — the tile contract is
-// colour-only on browse).
-// mode "inspect": larger, view-driven (front/spine/back/open), tilt off —
-// the Inspect screen owns the interaction.
-//
-// All artwork resolves through the existing CrystalAssets bridge with
-// the same artEpoch dependency the tiles use, so covers upgrade when
-// the async index (re)load completes. Missing assets degrade to the
-// generated Crystal faces inside each renderer — never a broken image.
+// Thin by design: it resolves artwork through the existing
+// CrystalAssets bridge (same artEpoch dependency the tiles use, so art
+// upgrades when the async index finishes) and hands the game-owned
+// textures to the platform-owned template renderers (GbaCartridge /
+// Ps2Case). It draws nothing itself.
 Item {
     id: root
 
     property var game: null
     property string shortName: ""
     property int artEpoch: 0
-    property string mode: "tile"        // "tile" | "inspect"
-    property string view: "front"       // inspect view; tile forces front
+    property string view: "front"       // inspect view: front/spine/back/open
     property string fontFamily: "monospace"
     property bool lifting: false        // PS2 launch transition
     property bool inserting: false      // GBA launch transition
@@ -49,10 +43,13 @@ Item {
         try { return root.game.title || "" } catch (e) { return "" }
     }
 
+    // Natural template size for the current view; the parent scales to
+    // fit. PS2 sizes the slot for the OPEN spread (the largest view) so
+    // every view shares one stable hero position.
     readonly property int naturalW: {
         if (root.family === "gba") return MT.GBA.w
-        if (root.view === "spine") return 120
-        if (root.view === "open") return 600
+        if (root.view === "spine") return MT.PS2.spineW
+        if (root.view === "open") return MT.PS2.openW
         return MT.PS2.caseW
     }
     readonly property int naturalH: {
@@ -67,44 +64,30 @@ Item {
 
     GbaCartridge {
         anchors.centerIn: parent
-        width: root.naturalW
-        height: root.naturalH
         scale: root.fitScale()
         transformOrigin: Item.Center
         visible: root.active && root.family === "gba"
-        view: root.mode === "tile" ? "front" : root.view
+        view: root.view
         labelArt: MT.labelUrl(root.assetDetails, root.tileFrontUrl)
+        labelKind: MT.labelKind(root.assetDetails, root.tileFrontUrl)
         titleText: root.titleText
         fontFamily: root.fontFamily
         inserting: root.inserting
-        transform: Rotation {
-            axis { x: 0; y: 1; z: 0 }
-            angle: root.mode === "tile" ? -8 : 0
-            origin.x: MT.GBA.w / 2
-            origin.y: MT.GBA.h / 2
-        }
     }
 
     Ps2Case {
         anchors.centerIn: parent
-        width: root.naturalW
-        height: root.naturalH
         scale: root.fitScale()
         transformOrigin: Item.Center
         visible: root.active && root.family === "ps2"
-        view: root.mode === "tile" ? "front" : root.view
+        view: root.view
         frontArt: MT.caseFaceUrl(root.assetDetails, "front", root.tileFrontUrl)
         spineArt: root.assetDetails ? (root.assetDetails.spine || "") : ""
         backArt: root.assetDetails ? (root.assetDetails.back || "") : ""
         discArt: MT.discUrl(root.assetDetails)
+        discKind: MT.discKind(root.assetDetails, root.tileFrontUrl)
         titleText: root.titleText
         fontFamily: root.fontFamily
         lifting: root.lifting
-        transform: Rotation {
-            axis { x: 0; y: 1; z: 0 }
-            angle: root.mode === "tile" ? -8 : 0
-            origin.x: root.naturalW / 2
-            origin.y: MT.PS2.caseH / 2
-        }
     }
 }

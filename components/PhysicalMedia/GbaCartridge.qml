@@ -1,228 +1,221 @@
 import QtQuick 2.12
 import "MediaTemplates.js" as MT
-import "../CrystalTheme.js" as T
 
-// GBA cartridge: Crystal-owned shell template + game label texture.
+// GbaCartridge — thin compositor over authored SVG templates.
 //
-// 2.5D is a static pose — a slight Y-axis tilt applied by PhysicalObject
-// plus a layered drop shadow. No animation lives here: the tile contract
-// is colour-only on browse, and Inspect drives view changes from above.
+// The cartridge shell is NEVER drawn here: it comes from
+// assets/physical/gba/*.svg (original Crystal illustration). QML only
+// layers game artwork into the template's transparent label window and
+// adds small dynamic overlays (sheen pulse, launch insertion).
 //
-// view: "front" (label) | "back" (embossed moulding).
-// Natural size 300x320 (MT.GBA); the parent scales to fit.
+// view: "front" | "back"
+// labelKind: "scan" (real cart art, shown as-is) | "art" (cover art is
+//   source material for a deliberate Crystal label composition) |
+//   "none" (designed fallback sticker — never a placeholder card)
 Item {
     id: root
-    width: MT.GBA.w
-    height: MT.GBA.h
+    implicitWidth: MT.GBA.w
+    implicitHeight: MT.GBA.h
 
     property string view: "front"
-    property string labelArt: ""     // resolved label texture URL ("" = generated)
-    property string titleText: ""   // for generated faces
+    property string labelArt: ""
+    property string labelKind: "none"
+    property string titleText: ""
     property string fontFamily: "monospace"
-    property bool inserting: false   // launch transition: slides toward the slot
+    property bool inserting: false   // GBA launch: slide into the slot
 
-    // Inner slide wrapper: the parent centers this root with anchors,
-    // which would override a y animation placed on root itself.
+    readonly property string assetBase: "../../assets/physical/gba/"
+
+    // restrained view-change settle: a 140ms dip, never a spin
+    NumberAnimation {
+        id: viewDip
+        target: root; property: "opacity"
+        from: 0.55; to: 1; duration: 140
+    }
+    onViewChanged: { viewDip.restart(); sheenPulse.restart() }
+
+    // sheen breathes once per view change (parallax hint, then rests)
+    NumberAnimation {
+        id: sheenPulse
+        target: sheen; property: "opacity"
+        from: 0; to: 0.65; duration: 420
+        easing.type: Easing.OutQuad
+    }
+
+    // launch insertion: the cart slides down toward the Crystal slot.
+    // The shift lives on an inner wrapper — the root is anchored by its
+    // parent, so it must not set y itself. The shadow stays put.
     Item {
-        id: slide
+        id: cartBody
         anchors.fill: parent
         y: root.inserting ? 170 : 0
-        opacity: root.inserting ? 0 : 1
-        Behavior on y { NumberAnimation { duration: 380; easing.type: Easing.InQuad } }
-        Behavior on opacity { NumberAnimation { duration: 380 } }
-
-    // ---- drop shadow: two stacked translucent slabs read as a soft
-    // edge without needing QtGraphicalEffects (unavailable in Pegasus).
-    Rectangle {
-        x: 6; y: 16
-        width: parent.width; height: parent.height
-        radius: MT.GBA.bodyRadius
-        color: "#000000"; opacity: 0.22
-    }
-    Rectangle {
-        x: 3; y: 9
-        width: parent.width; height: parent.height
-        radius: MT.GBA.bodyRadius
-        color: "#000000"; opacity: 0.22
-    }
-
-    // ---- shell ---------------------------------------------------------
-    Rectangle {
-        id: body
-        anchors.fill: parent
-        radius: MT.GBA.bodyRadius
-        border.width: 2
-        border.color: "#5f666e"
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#b2b8c0" }
-            GradientStop { position: 0.45; color: "#9aa1a9" }
-            GradientStop { position: 1.0; color: "#7e858d" }
+        Behavior on y {
+            NumberAnimation { duration: 380; easing.type: Easing.InQuad }
         }
+
+    // ---- soft shadow (authored, under everything) ----
+    Image {
+        source: root.assetBase + "shadow.svg"
+        width: 700; height: 240
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: root.height - 128
+        fillMode: Image.PreserveAspectFit
+        smooth: true
+        asynchronous: true
     }
 
-    // top edge ridge (the cart's upper lip)
-    Rectangle {
-        x: 18; y: 10
-        width: parent.width - 36; height: 8
-        radius: 4
-        color: "#c6ccd3"
-        opacity: 0.85
-    }
-
-    // ---- front: label ----------------------------------------------------
+    // ---- FRONT ----
     Item {
-        id: labelZone
-        x: MT.GBA.labelX; y: MT.GBA.labelY
-        width: MT.GBA.labelW; height: MT.GBA.labelH
-        visible: root.view === "front"
+        id: frontView
+        anchors.fill: parent
+        visible: root.view !== "back"
 
-        // label well: recessed dark edge under the artwork
+        // game label artwork, clipped to the label well; the shell
+        // template draws the recess AROUND this window (QML layering,
+        // never an SVG mask)
         Rectangle {
-            anchors.fill: parent
+            x: MT.GBA.labelX; y: MT.GBA.labelY
+            width: MT.GBA.labelW; height: MT.GBA.labelH
             radius: 10
-            color: "#3c4249"
-        }
-        Item {
-            anchors.fill: parent
-            anchors.margins: 3
             clip: true
+            color: "#7ba3cc"   // well backing: visible only if art fails
 
-            Rectangle {
-                anchors.fill: parent
-                radius: 7
-                color: "#00000000"
-            }
-
+            // "scan": genuine cartridge artwork, shown as-is
             Image {
-                id: labelImg
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
                 smooth: true
                 asynchronous: true
-                source: root.labelArt
+                source: root.labelKind === "scan" ? root.labelArt : ""
                 visible: source !== "" && status === Image.Ready
             }
 
-            // generated label: Crystal tokens, never a broken image
+            // "art": cover art as SOURCE MATERIAL for a deliberate
+            // Crystal sticker composition — treated, never a blind crop
+            Image {
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectCrop
+                smooth: true
+                asynchronous: true
+                opacity: 0.92
+                source: root.labelKind === "art" ? root.labelArt : ""
+                visible: source !== "" && status === Image.Ready
+            }
+
+            // "none": designed fallback sticker face
             Rectangle {
                 anchors.fill: parent
-                color: T.creamInk
-                border.width: 2
-                border.color: T.tileBorder
-                visible: !labelImg.visible
+                visible: root.labelKind === "none"
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#b9d4ea" }
+                    GradientStop { position: 1.0; color: "#7ba3cc" }
+                }
             }
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 26
-                font.family: root.fontFamily
-                font.pixelSize: 64
-                font.letterSpacing: 4
-                color: T.primaryInk
-                text: MT.abbrFor(root.titleText)
-                visible: !labelImg.visible
-            }
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 18
-                width: parent.width - 24
-                horizontalAlignment: Text.AlignHCenter
-                font.family: root.fontFamily
-                font.pixelSize: 20
-                font.letterSpacing: 2
-                color: T.tileInk
-                elide: Text.ElideRight
-                text: (root.titleText || "UNTITLED").toUpperCase()
-                visible: !labelImg.visible
+            // sticker treatment over art-sourced or fallback labels
+            // (real scans stay untouched above)
+            Item {
+                anchors.fill: parent
+                visible: root.labelKind !== "scan"
+                // micro brand pill
+                Rectangle {
+                    x: 16; y: 14; width: 118; height: 26
+                    radius: 13
+                    color: "#0e2236"
+                    opacity: 0.92
+                    Text {
+                        anchors.centerIn: parent
+                        font.family: root.fontFamily
+                        font.pixelSize: 13
+                        font.letterSpacing: 3
+                        color: "#7ba7d9"
+                        text: "CRYSTAL"
+                    }
+                }
+                // title band
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: 64
+                    color: "#0c1c30"
+                    opacity: 0.94
+                }
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 64
+                    height: 3
+                    color: "#7ba7d9"
+                }
+                Text {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.leftMargin: 18
+                    anchors.rightMargin: 18
+                    anchors.bottomMargin: 14
+                    height: 36
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    font.family: root.fontFamily
+                    font.pixelSize: 24
+                    font.letterSpacing: 3
+                    color: "#d7e3ec"
+                    text: root.titleText.toUpperCase()
+                }
             }
         }
 
-        // plastic gloss over the label: restrained, static
-        Rectangle {
+        // authored shell: draws the cartridge AROUND the label window
+        Image {
             anchors.fill: parent
-            anchors.margins: 3
-            radius: 7
-            opacity: 0.10
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: "#ffffff" }
-                GradientStop { position: 0.5; color: "#ffffff" }
-                GradientStop { position: 0.51; color: "#ffffff00" }
-                GradientStop { position: 1.0; color: "#ffffff00" }
-            }
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            asynchronous: true
+            source: root.assetBase + "shell-front.svg"
+        }
+        // crisp frame ring at the art/shell boundary
+        Image {
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            asynchronous: true
+            source: root.assetBase + "label-frame.svg"
+        }
+        // animated sheen overlay
+        Image {
+            id: sheen
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            asynchronous: true
+            opacity: 0
+            source: root.assetBase + "sheen.svg"
         }
     }
 
-    // ---- back: embossed moulding -------------------------------------------
+    // ---- BACK ----
     Item {
         anchors.fill: parent
         visible: root.view === "back"
-
-        Rectangle {
-            x: 34; y: 40
-            width: parent.width - 68; height: 150
-            radius: 8
-            color: "#000000"
-            opacity: 0.14
+        Image {
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            asynchronous: true
+            source: root.assetBase + "shell-back.svg"
         }
-        // mould lines
-        Repeater {
-            model: 4
-            Rectangle {
-                x: 52; y: 66 + index * 30
-                width: parent.width - 104; height: 3
-                radius: 1
-                color: "#6e747c"
-                opacity: 0.8
-            }
-        }
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: 196
-            font.family: root.fontFamily
-            font.pixelSize: 15
-            font.letterSpacing: 3
-            color: "#5f666e"
-            text: "GAME BOY ADVANCE"
-        }
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 66
-            width: parent.width - 60
-            horizontalAlignment: Text.AlignHCenter
-            font.family: root.fontFamily
-            font.pixelSize: 16
-            font.letterSpacing: 1
-            color: "#5f666e"
-            elide: Text.ElideRight
-            text: (root.titleText || "UNTITLED").toUpperCase()
+        Image {
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            asynchronous: true
+            opacity: 0.5
+            source: root.assetBase + "sheen.svg"
         }
     }
+    } // cartBody
 
-    // grip grooves along the bottom edge (both views)
-    Repeater {
-        model: 3
-        Rectangle {
-            x: 70; y: 272 + index * 12
-            width: parent.width - 140; height: 4
-            radius: 2
-            color: "#5f666e"
-            opacity: 0.75
-        }
-    }
-
-    // shell sheen: one restrained diagonal highlight over the plastic
-    Rectangle {
-        anchors.fill: body
-        radius: MT.GBA.bodyRadius
-        opacity: 0.07
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: "#ffffff00" }
-            GradientStop { position: 0.35; color: "#ffffff" }
-            GradientStop { position: 0.55; color: "#ffffff00" }
-            GradientStop { position: 1.0; color: "#ffffff00" }
-        }
-    }
-    } // slide
+    Component.onCompleted: sheenPulse.restart()
 }

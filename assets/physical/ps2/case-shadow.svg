@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="300" viewBox="0 0 1500 300">
+  <defs>
+    <radialGradient id="sh2">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="750" cy="150" rx="720" ry="130" fill="url(#sh2)"/>
+</svg>

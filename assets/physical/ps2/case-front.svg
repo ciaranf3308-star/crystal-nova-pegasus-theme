@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="950" viewBox="0 0 680 950">
+  <defs>
+    <linearGradient id="caseF" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2330"/>
+      <stop offset="1" stop-color="#101722"/>
+    </linearGradient>
+    <linearGradient id="thickF" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.35"/>
+    </linearGradient>
+  </defs>
+
+  <!-- outer case -->
+  <rect x="0" y="0" width="680" height="950" rx="20" fill="url(#caseF)"/>
+
+  <!-- inner bevel -->
+  <rect x="10" y="10" width="660" height="930" rx="14" fill="none" stroke="#2c3a4e" stroke-width="3"/>
+
+  <!-- edge catchlights -->
+  <line x1="20" y1="14" x2="660" y2="14" stroke="#9fc3e8" stroke-width="3" opacity="0.45"/>
+  <line x1="14" y1="20" x2="14" y2="930" stroke="#9fc3e8" stroke-width="3" opacity="0.45"/>
+
+  <!-- sleeve groove + catchlight (cover window left empty) -->
+  <rect x="26" y="26" width="628" height="898" rx="6" fill="none" stroke="#0a0f16" stroke-width="8" opacity="0.6"/>
+  <rect x="26" y="26" width="628" height="898" rx="6" fill="none" stroke="#cfe2f5" stroke-width="2" opacity="0.5"/>
+
+  <!-- right thickness hint -->
+  <rect x="640" y="40" width="14" height="870" fill="url(#thickF)"/>
+  <line x1="638" y1="40" x2="638" y2="910" stroke="#9fc3e8" stroke-width="2" opacity="0.3"/>
+
+  <!-- top finger notch -->
+  <rect x="310" y="0" width="60" height="14" rx="7" fill="#0a0f16" opacity="0.8"/>
+  <line x1="312" y1="15" x2="368" y2="15" stroke="#9fc3e8" stroke-width="2" opacity="0.3"/>
+
+  <!-- bottom ridge -->
+  <line x1="40" y1="936" x2="640" y2="936" stroke="#2c3a4e" stroke-width="2" opacity="0.6"/>
+</svg>

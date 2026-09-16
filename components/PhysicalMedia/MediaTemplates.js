@@ -101,11 +101,30 @@ function labelUrl(details, tileFrontUrl) {
     return tileFrontUrl || "";
 }
 
+// How the GBA label should be rendered:
+//   "scan" — real cartridge/media artwork: shown as-is in the label well
+//   "art"  — cover art only: the renderer builds a deliberate Crystal
+//            label composition from it (never a blind crop)
+//   "none" — no artwork: the renderer draws a designed fallback sticker
+function labelKind(details, tileFrontUrl) {
+    if (details && details.media) return "scan";
+    return labelUrl(details, tileFrontUrl) ? "art" : "none";
+}
+
 // PS2 disc texture: the disc-art scan ("media" slot), "" when absent —
 // the renderer draws a generated Crystal disc instead.
 function discUrl(details) {
     if (details && details.media) return details.media;
     return "";
+}
+
+// How the PS2 disc face should be rendered: "scan" for real disc art,
+// "art" when only cover art exists (dimmed under the disc template),
+// "none" for the fully authored fallback face.
+function discKind(details, tileFrontUrl) {
+    if (details && details.media) return "scan";
+    if (caseFaceUrl(details, "front", tileFrontUrl)) return "art";
+    return "none";
 }
 
 // PS2 case faces: crystal slot first, then the library tile chain for
@@ -152,21 +171,30 @@ function abbrFor(title) {
 // Template geometry (design units; renderers scale to fit)
 // ---------------------------------------------------------------------------
 //
-// Kept here so tile, inspect, and tests share one set of proportions.
-// GBA cart: near-square (real carts ~57x60mm). PS2 keep case: DVD
-// proportions (~135x190mm).
+// Template geometry (design units; renderers scale to fit)
+//
+// Kept here so inspect and tests share one set of proportions. These
+// match the authored SVG templates in assets/physical/ exactly:
+// label/disc windows are the transparent areas the renderers fill with
+// game artwork UNDERNEATH the template layers.
+//
+// GBA cart: 580x600 (real carts ~57x60mm). Label well at (70,150).
+// PS2 keep case: 680x950 closed (~135x190mm DVD proportions),
+// 150x950 spine, 1400x950 open spread, 560 disc on a (1080,475) hub.
 
 var GBA = {
-    w: 300, h: 320,
-    labelX: 34, labelY: 40, labelW: 232, labelH: 168,
-    bodyRadius: 26
+    w: 580, h: 600,
+    labelX: 70, labelY: 150, labelW: 440, labelH: 300
 };
 
 var PS2 = {
-    caseW: 300, caseH: 420,
-    spineW: 64,
-    discD: 252, discY: 150,   // disc diameter / centre-Y inside the open tray
-    plasticEdge: 7            // clear-sleeve edge around cover art
+    caseW: 680, caseH: 950,
+    spineW: 150,
+    openW: 1400, openH: 950,
+    discD: 560, discX: 1080, discY: 475,   // disc art box + hub centre in open units
+    coverX: 26, coverY: 26, coverW: 628, coverH: 898,  // front/back window
+    spineArtX: 30, spineArtY: 26, spineArtW: 90, spineArtH: 898,
+    innerX: 34, innerY: 34, innerW: 572, innerH: 882    // open left-panel window
 };
 
 // Node.js export for the test harness (harmless under QML).
@@ -180,7 +208,9 @@ try {
             nextView: nextView,
             prevView: prevView,
             labelUrl: labelUrl,
+            labelKind: labelKind,
             discUrl: discUrl,
+            discKind: discKind,
             caseFaceUrl: caseFaceUrl,
             spineText: spineText,
             abbrFor: abbrFor,

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="560" viewBox="0 0 560 560">
+  <defs>
+    <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- disc face left empty for art; outer rim -->
+  <circle cx="280" cy="280" r="273" fill="none" stroke="#0a0f16" stroke-width="3"/>
+  <circle cx="280" cy="280" r="268" fill="none" stroke="#dfe9f3" stroke-width="10"/>
+
+  <!-- light arc -->
+  <path d="M60,180 A220,220 0 0 1 200,55" fill="none" stroke="url(#arcGrad)" stroke-width="16" opacity="0.55"/>
+
+  <!-- static sheen band -->
+  <polygon points="120,60 220,40 440,500 340,520" fill="#ffffff" opacity="0.10"/>
+
+  <!-- track rings -->
+  <circle cx="280" cy="280" r="150" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.12"/>
+  <circle cx="280" cy="280" r="190" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.12"/>
+  <circle cx="280" cy="280" r="230" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.12"/>
+
+  <!-- hub -->
+  <circle cx="280" cy="280" r="92" fill="#cfdae6" opacity="0.92"/>
+  <circle cx="280" cy="280" r="92" fill="none" stroke="#8fa3b8" stroke-width="4"/>
+  <circle cx="280" cy="280" r="60" fill="#b9c8d8" opacity="0.9"/>
+
+  <!-- center hole (left empty; rim only) -->
+  <circle cx="280" cy="280" r="30" fill="none" stroke="#5a6f86" stroke-width="5"/>
+</svg>

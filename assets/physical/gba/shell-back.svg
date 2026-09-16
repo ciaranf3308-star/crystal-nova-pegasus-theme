@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="580" height="600" viewBox="0 0 580 600">
+  <defs>
+    <linearGradient id="shellB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b8d2e8"/>
+      <stop offset="0.45" stop-color="#8fb2d4"/>
+      <stop offset="1" stop-color="#6b93bd"/>
+    </linearGradient>
+    <radialGradient id="contactShadowB">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- contact shadows -->
+  <ellipse cx="90" cy="560" rx="70" ry="26" fill="url(#contactShadowB)"/>
+  <ellipse cx="490" cy="560" rx="70" ry="26" fill="url(#contactShadowB)"/>
+
+  <!-- shell silhouette -->
+  <path d="M52,120 H150 V96 H275 V110 H305 V96 H430 V120 H528 Q554,120 554,146 V546 Q554,572 528,572 H400 Q290,540 180,572 H52 Q26,572 26,546 V146 Q26,120 52,120 Z"
+        fill="url(#shellB)"/>
+
+  <!-- moulded center panel -->
+  <rect x="110" y="180" width="360" height="240" rx="12" fill="none" stroke="#4a6c8e" stroke-width="4" opacity="0.5"/>
+  <line x1="130" y1="210" x2="470" y2="210" stroke="#54749a" stroke-width="2" opacity="0.4"/>
+  <line x1="130" y1="238" x2="470" y2="238" stroke="#54749a" stroke-width="2" opacity="0.4"/>
+  <line x1="130" y1="266" x2="470" y2="266" stroke="#54749a" stroke-width="2" opacity="0.4"/>
+  <line x1="130" y1="294" x2="470" y2="294" stroke="#54749a" stroke-width="2" opacity="0.4"/>
+  <line x1="130" y1="322" x2="470" y2="322" stroke="#54749a" stroke-width="2" opacity="0.4"/>
+  <line x1="130" y1="350" x2="470" y2="350" stroke="#54749a" stroke-width="2" opacity="0.4"/>
+
+  <!-- screw heads -->
+  <g>
+    <circle cx="150" cy="150" r="16" fill="#8fa9c4"/>
+    <circle cx="150" cy="150" r="16" fill="none" stroke="#3d5f80" stroke-width="3"/>
+    <line x1="141" y1="150" x2="159" y2="150" stroke="#3d5f80" stroke-width="4"/>
+    <line x1="150" y1="141" x2="150" y2="159" stroke="#3d5f80" stroke-width="4"/>
+    <circle cx="430" cy="150" r="16" fill="#8fa9c4"/>
+    <circle cx="430" cy="150" r="16" fill="none" stroke="#3d5f80" stroke-width="3"/>
+    <line x1="421" y1="150" x2="439" y2="150" stroke="#3d5f80" stroke-width="4"/>
+    <line x1="430" y1="141" x2="430" y2="159" stroke="#3d5f80" stroke-width="4"/>
+  </g>
+
+  <!-- lower grip ribs -->
+  <g>
+    <rect x="140" y="446" width="300" height="12" rx="6" fill="#5f87ad"/>
+    <line x1="146" y1="447" x2="434" y2="447" stroke="#ffffff" stroke-width="2" opacity="0.35"/>
+    <rect x="140" y="470" width="300" height="12" rx="6" fill="#5f87ad"/>
+    <line x1="146" y1="471" x2="434" y2="471" stroke="#ffffff" stroke-width="2" opacity="0.35"/>
+    <rect x="140" y="494" width="300" height="12" rx="6" fill="#5f87ad"/>
+    <line x1="146" y1="495" x2="434" y2="495" stroke="#ffffff" stroke-width="2" opacity="0.35"/>
+    <rect x="140" y="518" width="300" height="12" rx="6" fill="#5f87ad"/>
+    <line x1="146" y1="519" x2="434" y2="519" stroke="#ffffff" stroke-width="2" opacity="0.35"/>
+  </g>
+
+  <!-- embossed triangle on plateau -->
+  <polygon points="278,132 302,132 290,112" fill="none" stroke="#4a6c8e" stroke-width="3" opacity="0.6"/>
+
+  <!-- edge lighting -->
+  <path d="M40,160 L40,530" stroke="#f2f8fd" stroke-width="5" opacity="0.6" fill="none"/>
+  <path d="M540,160 L540,530" stroke="#3d5f80" stroke-width="6" opacity="0.5" fill="none"/>
+</svg>

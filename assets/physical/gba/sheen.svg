@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="580" height="600" viewBox="0 0 580 600">
+  <defs>
+    <linearGradient id="sheenBand" gradientUnits="userSpaceOnUse" x1="180" y1="0" x2="340" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <polygon points="180,0 340,0 120,600 -40,600" fill="url(#sheenBand)"/>
+  <polygon points="400,0 440,0 220,600 180,600" fill="#ffffff" opacity="0.12"/>
+</svg>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="950" viewBox="0 0 1400 950">
+  <defs>
+    <linearGradient id="leftPanel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c2534"/>
+      <stop offset="1" stop-color="#121924"/>
+    </linearGradient>
+    <linearGradient id="hinge" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0b0f16"/>
+      <stop offset="0.5" stop-color="#232f40"/>
+      <stop offset="1" stop-color="#0b0f16"/>
+    </linearGradient>
+    <linearGradient id="hingeShade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#000000" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="rightTray" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232f40"/>
+      <stop offset="1" stop-color="#161e2a"/>
+    </linearGradient>
+    <radialGradient id="hingeWash">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- shadow wash under hinge -->
+  <ellipse cx="700" cy="900" rx="120" ry="36" fill="url(#hingeWash)"/>
+
+  <!-- left interior panel -->
+  <rect x="8" y="8" width="624" height="934" rx="14" fill="url(#leftPanel)"/>
+  <rect x="18" y="18" width="604" height="914" rx="10" fill="none" stroke="#2c3a4e" stroke-width="3"/>
+  <!-- interior art window (left empty) -->
+  <rect x="34" y="34" width="572" height="882" fill="none" stroke="#0a0f16" stroke-width="8" opacity="0.6"/>
+  <rect x="34" y="34" width="572" height="882" fill="none" stroke="#cfe2f5" stroke-width="2" opacity="0.5"/>
+
+  <!-- hinge -->
+  <rect x="640" y="8" width="120" height="934" fill="url(#hinge)"/>
+  <rect x="648" y="60" width="104" height="240" rx="8" fill="#1a2330" stroke="#2c3a4e" stroke-width="2.5"/>
+  <rect x="648" y="340" width="104" height="270" rx="8" fill="#1a2330" stroke="#2c3a4e" stroke-width="2.5"/>
+  <rect x="648" y="650" width="104" height="240" rx="8" fill="#1a2330" stroke="#2c3a4e" stroke-width="2.5"/>
+  <rect x="690" y="8" width="20" height="934" fill="url(#hingeShade)"/>
+  <line x1="644" y1="14" x2="644" y2="936" stroke="#9fc3e8" stroke-width="2.5" opacity="0.4"/>
+  <line x1="756" y1="14" x2="756" y2="936" stroke="#9fc3e8" stroke-width="2.5" opacity="0.4"/>
+
+  <!-- right disc tray -->
+  <rect x="768" y="8" width="624" height="934" rx="14" fill="url(#rightTray)"/>
+  <rect x="778" y="18" width="604" height="914" rx="10" fill="none" stroke="#2c3a4e" stroke-width="3"/>
+
+  <!-- disc recess -->
+  <circle cx="1080" cy="475" r="272" fill="#101722" stroke="#2c3a4e" stroke-width="4"/>
+  <circle cx="1080" cy="475" r="240" fill="none" stroke="#000000" stroke-width="2" opacity="0.4"/>
+  <circle cx="1080" cy="475" r="200" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.15"/>
+  <circle cx="1080" cy="475" r="160" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.15"/>
+
+  <!-- hub post -->
+  <circle cx="1080" cy="475" r="48" fill="#2b3748"/>
+  <path d="M1046,445 A48,48 0 0 1 1072,430" fill="none" stroke="#9fc3e8" stroke-width="4" opacity="0.6"/>
+  <circle cx="1080" cy="475" r="16" fill="#0a0f16"/>
+
+  <!-- mould dots -->
+  <circle cx="830" cy="120" r="6" fill="#2c3a4e"/>
+  <circle cx="1330" cy="120" r="6" fill="#2c3a4e"/>
+  <circle cx="830" cy="830" r="6" fill="#2c3a4e"/>
+  <circle cx="1330" cy="830" r="6" fill="#2c3a4e"/>
+</svg>

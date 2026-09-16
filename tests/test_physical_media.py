@@ -9,6 +9,11 @@ Runs the Node.js driver (tests/media_templates_driver.js), which asserts:
   - template geometry sanity (label inside shell, disc inside tray)
 
 Plus static architecture guards (no QML runtime needed):
+  - authored SVG templates exist, parse, and avoid QtSvg-unsafe features
+    (no filters/turbulence/masks/text elements)
+  - renderers compose the templates (referenced paths resolve); the
+    cartridge/case is never drawn from QML primitives
+  - GameTile is pure box-art again (no PhysicalObject, no PhysicalMedia)
   - platform checks live only in MediaTemplates.js (no "gba"/"ps2"
     literals scattered through GameLibrary.qml, GameTile.qml, theme.qml)
   - new QML uses only existing CrystalTheme.js tokens (no invented colors)
@@ -30,10 +35,25 @@ import re
 import shutil
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DRIVER = os.path.join(REPO, "tests", "media_templates_driver.js")
 PM = os.path.join(REPO, "components", "PhysicalMedia")
+PHYS = os.path.join(REPO, "assets", "physical")
+
+# Authored template inventory: platform-owned artwork the renderers
+# compose. Game textures are layered UNDER these; the renderers must
+# never draw the objects from QML primitives instead.
+EXPECTED_TEMPLATES = {
+    "gba": ["shell-front.svg", "shell-back.svg", "shadow.svg",
+            "label-frame.svg", "sheen.svg"],
+    "ps2": ["case-front.svg", "case-back.svg", "case-spine.svg",
+            "case-open.svg", "disc.svg", "case-shadow.svg"],
+}
+
+# SVG features QtSvg (Pegasus Qt 5.15) handles unreliably or not at all.
+BANNED_SVG = ("<filter", "fegaussianblur", "feturbulence", "<mask", "<text")
 
 EXPECTED_PM_FILES = {
     "MediaTemplates.js",
@@ -54,6 +74,61 @@ NO_PLATFORM_LITERAL_FILES = [
 def read(p):
     with open(p, encoding="utf-8") as f:
         return f.read()
+
+
+def check_authored_templates():
+    # The authored-template visual method: every expected SVG exists,
+    # parses as XML, and avoids SVG features QtSvg cannot render
+    # (filters, turbulence, masks, text elements).
+    count = 0
+    for family, files in EXPECTED_TEMPLATES.items():
+        for name in files:
+            p = os.path.join(PHYS, family, name)
+            assert os.path.isfile(p), "missing template asset: %s" % p
+            try:
+                ET.parse(p)
+            except ET.ParseError as e:
+                raise AssertionError("unparseable SVG %s: %s" % (p, e))
+            low = read(p).lower()
+            for banned in BANNED_SVG:
+                assert banned not in low, \
+                    "%s uses banned SVG feature %s" % (name, banned)
+            count += 1
+    print("ok - %d authored SVG templates (parse + QtSvg-safe)" % count)
+
+
+def check_renderers_compose_templates():
+    # Renderers must compose the authored templates — the visual method
+    # forbids drawing cartridges/cases from QML rectangles. Proxy: each
+    # renderer references its platform's template files, and template
+    # asset paths referenced in QML resolve to real files.
+    refs = {
+        "GbaCartridge.qml": ("gba", ["shell-front.svg", "shell-back.svg",
+                                     "label-frame.svg", "sheen.svg",
+                                     "shadow.svg"]),
+        "Ps2Case.qml": ("ps2", ["case-front.svg", "case-back.svg",
+                                "case-spine.svg", "case-open.svg",
+                                "disc.svg", "case-shadow.svg"]),
+    }
+    for qml, (family, files) in refs.items():
+        src = read(os.path.join(PM, qml))
+        for name in files:
+            assert name in src, \
+                "%s does not compose template %s" % (qml, name)
+            assert os.path.isfile(os.path.join(PHYS, family, name)), \
+                "%s references missing asset %s" % (qml, name)
+    print("ok - renderers compose authored templates (no primitive-drawn objects)")
+
+
+def check_tile_no_physical():
+    # The 4x2 grid is pure production box-art again: no physical object
+    # in tiles, selected or otherwise.
+    src = read(os.path.join(REPO, "components", "GameTile.qml"))
+    assert "PhysicalObject" not in src, \
+        "GameTile still renders a physical object"
+    assert "PhysicalMedia" not in src, \
+        "GameTile still imports PhysicalMedia"
+    print("ok - GameTile is pure box-art (no physical layer)")
 
 
 def check_module_layout():
@@ -227,6 +302,9 @@ def run_node_driver():
 
 def main():
     check_module_layout()
+    check_authored_templates()
+    check_renderers_compose_templates()
+    check_tile_no_physical()
     check_no_scattered_platform_checks()
     check_theme_tokens_only()
     check_no_true3d_no_socket()

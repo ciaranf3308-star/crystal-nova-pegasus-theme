@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="580" height="600" viewBox="0 0 580 600">
+  <defs>
+    <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9dfee"/>
+      <stop offset="0.45" stop-color="#a4c4e2"/>
+      <stop offset="1" stop-color="#7ba3cc"/>
+    </linearGradient>
+    <radialGradient id="contactShadow">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dith" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="#000000" opacity="0.05"/>
+    </pattern>
+  </defs>
+
+  <!-- contact shadows -->
+  <ellipse cx="90" cy="560" rx="70" ry="26" fill="url(#contactShadow)"/>
+  <ellipse cx="490" cy="560" rx="70" ry="26" fill="url(#contactShadow)"/>
+
+  <!-- shell silhouette -->
+  <path d="M52,120 H150 V96 H275 V110 H305 V96 H430 V120 H528 Q554,120 554,146 V546 Q554,572 528,572 H400 Q290,540 180,572 H52 Q26,572 26,546 V146 Q26,120 52,120 Z"
+        fill="url(#shell)"/>
+
+  <!-- label window groove + lip (window left empty for game art) -->
+  <rect x="62" y="142" width="456" height="316" rx="14" fill="none" stroke="#4a6c8e" stroke-width="10" opacity="0.55"/>
+  <rect x="70" y="150" width="440" height="300" rx="10" fill="none" stroke="#eef5fb" stroke-width="3" opacity="0.8"/>
+
+  <!-- edge lighting -->
+  <path d="M40,160 L40,530" stroke="#f2f8fd" stroke-width="5" opacity="0.6" fill="none"/>
+  <path d="M540,160 L540,530" stroke="#3d5f80" stroke-width="6" opacity="0.5" fill="none"/>
+
+  <!-- plateau top highlight -->
+  <path d="M155,96 L270,96" stroke="#ffffff" stroke-width="4" opacity="0.5" fill="none"/>
+  <path d="M310,96 L425,96" stroke="#ffffff" stroke-width="4" opacity="0.5" fill="none"/>
+
+  <!-- plateau mould marks -->
+  <path d="M180,100 L180,112" stroke="#4a6c8e" stroke-width="3" opacity="0.5" fill="none"/>
+  <path d="M400,100 L400,112" stroke="#4a6c8e" stroke-width="3" opacity="0.5" fill="none"/>
+
+  <!-- subtle dither over lower half -->
+  <rect x="0" y="300" width="580" height="300" fill="url(#dith)"/>
+</svg>

@@ -113,15 +113,29 @@ eq("abbr empty", M.abbrFor(""), "??");
 eq("abbr null", M.abbrFor(null), "??");
 
 // --- 5. template geometry sanity -----------------------------------------------
-check("gba template portrait-ish", M.GBA.w === 300 && M.GBA.h === 320);
+// Geometry matches the authored SVG templates in assets/physical/:
+// windows are the transparent areas renderers fill with game artwork.
+check("gba template portrait-ish", M.GBA.w === 580 && M.GBA.h === 600);
 check("gba label inside shell",
     M.GBA.labelX > 0 && M.GBA.labelY > 0 &&
     M.GBA.labelX + M.GBA.labelW < M.GBA.w &&
     M.GBA.labelY + M.GBA.labelH < M.GBA.h);
 check("ps2 case dvd proportions",
     Math.abs(M.PS2.caseW / M.PS2.caseH - 0.714) < 0.02);
-check("ps2 disc fits tray",
-    M.PS2.discD < M.PS2.caseW && M.PS2.discY + M.PS2.discD / 2 < M.PS2.caseH);
+check("ps2 disc fits open tray",
+    M.PS2.discD < M.PS2.openW && M.PS2.discD < M.PS2.openH);
+check("ps2 spine narrower than case", M.PS2.spineW < M.PS2.caseW);
+check("ps2 cover window inside case",
+    M.PS2.coverX + M.PS2.coverW < M.PS2.caseW &&
+    M.PS2.coverY + M.PS2.coverH < M.PS2.caseH);
+
+// --- 6. label/disc render-kind classification ----------------------------------
+check("gba label kind scan", M.labelKind({ media: "u" }, "") === "scan");
+check("gba label kind art", M.labelKind({ front: "u" }, "") === "art");
+check("gba label kind none", M.labelKind({}, "") === "none");
+check("ps2 disc kind scan", M.discKind({ media: "u" }, "") === "scan");
+check("ps2 disc kind art", M.discKind({ front: "u" }, "") === "art");
+check("ps2 disc kind none", M.discKind({}, "") === "none");
 
 if (failures.length > 0) {
     console.error("\nFAILURES (" + failures.length + "):");
