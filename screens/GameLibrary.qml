@@ -1,10 +1,13 @@
 import QtQuick 2.12
 import "../components"
 import "../components/CrystalTheme.js" as T
+import "../components/PhysicalMedia"
+import "../components/PhysicalMedia/MediaTemplates.js" as MediaTemplates
 
 // Phase 2: per-system game library. 4x2 box-art grid driven by the real
 // Pegasus collection model — no demo content in production.
 // A launches the selected game via game.launch(); B returns home.
+// Y (Details) opens the physical-media Inspect view on GBA/PS2 systems.
 Item {
     id: root
 
@@ -27,6 +30,41 @@ Item {
     function moveDown()  { grid.moveDown() }
     function reset()     { grid.reset() }
     function setGameIndex(i) { grid.setIndex(i) }
+
+    // ---- physical-media Inspect -------------------------------------------
+    // Available only for the GBA/PS2 families and only when Pegasus
+    // exposes the Details key; every other system keeps the production
+    // library untouched. The platform check lives in MediaTemplates —
+    // this file never names a system.
+    readonly property bool inspectAvailable: {
+        if (root.isEmpty) return false
+        if (typeof api === "undefined" || !api.keys) return false
+        if (typeof api.keys.isDetails !== "function") return false
+        return MediaTemplates.supportsPhysical(root.shortName)
+    }
+    property bool inspecting: false
+
+    function tileRectFor(i) {
+        var ps = Math.floor(i / T.libPageSize) * T.libPageSize
+        var slot = i - ps
+        return {
+            x: T.libTileX(slot % T.libCols),
+            y: T.libTileY(Math.floor(slot / T.libCols)),
+            w: T.libCoverW,
+            h: T.libCoverH
+        }
+    }
+
+    function openInspect() {
+        if (!inspectAvailable || root.inspecting) return
+        root.inspecting = true
+        inspectView.open(grid.currentGame, root.shortName,
+                         tileRectFor(grid.currentIndex))
+    }
+    function closeInspect()  { inspectView.beginClose() }
+    function inspectLeft()   { inspectView.prevView() }
+    function inspectRight()  { inspectView.nextView() }
+    function inspectLaunch() { inspectView.launch() }
 
     // The real Pegasus launch mechanism: the game's own launch() method.
     // Pegasus owns emulator selection via its metadata; the theme only
@@ -61,6 +99,21 @@ Item {
         fontFamily: root.fontFamily
         artEpoch: root.artEpoch
         visible: !root.isEmpty
+    }
+
+    // Physical-media Inspect overlay. The grid selection underneath never
+    // moves, so closing returns to the exact same tile; launching goes
+    // through the unchanged launchCurrent() path below.
+    PhysicalInspect {
+        id: inspectView
+        objectName: "physicalInspect"
+        anchors.fill: parent
+        fontFamily: root.fontFamily
+        artEpoch: root.artEpoch
+        onClosed: root.inspecting = false
+        onLaunchRequested: {
+            if (!root.launchCurrent()) inspectView.resetLaunch()
+        }
     }
 
     // ---- empty collection -------------------------------------------------

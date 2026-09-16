@@ -1,10 +1,17 @@
 import QtQuick 2.12
 import "CrystalTheme.js" as T
 import "CrystalAssets.js" as CrystalAssets
+import "PhysicalMedia"
 
 // One game tile: box art inside a dark Crystal frame.
 // Selected: warm cream outer frame, dark inner edge, viewfinder corner
 // brackets. 90ms colour response only — no zoom, bounce, glow, or motion.
+//
+// GBA/PS2 tiles gain a physical layer: the selected tile renders the
+// game as a 2.5D cartridge/case (static pose, Crystal focus decoration
+// intact) instead of the flat cover. The platform check lives in
+// MediaTemplates — this file only asks PhysicalObject whether it has
+// something to show.
 Item {
     id: root
     width: T.libCoverW
@@ -72,7 +79,7 @@ Item {
             root.artEpoch
             return artSource()
         }
-        visible: source !== "" && status === Image.Ready
+        visible: source !== "" && status === Image.Ready && !physical.activeNow
     }
 
     GameFallbackArt {
@@ -81,6 +88,23 @@ Item {
         shortName: root.shortName
         title: root.title
         fontFamily: root.fontFamily
-        visible: art.source === "" || art.status !== Image.Ready
+        visible: (art.source === "" || art.status !== Image.Ready) && !physical.activeNow
+    }
+
+    // Physical layer: the selected GBA/PS2 tile shows the game as a
+    // tactile 2.5D object. Static pose — browsing stays instant.
+    PhysicalObject {
+        id: physical
+        anchors.fill: parent
+        anchors.margins: root.selected ? 16 : 12
+        game: root.game
+        shortName: root.shortName
+        artEpoch: root.artEpoch
+        fontFamily: root.fontFamily
+        mode: "tile"
+        view: "front"
+        // one binding so the flat art and this stay mutually exclusive
+        readonly property bool activeNow: root.selected && active
+        visible: activeNow
     }
 }

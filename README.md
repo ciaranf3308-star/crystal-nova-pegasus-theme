@@ -275,6 +275,24 @@ game (not the first).
 Render (screenshot valid at 1280×960): GBA library, selected game, PS2
 library, page 2, missing-art fallback, empty state, long title.
 
+`python3 tests/test_physical_media.py` — 64 node-driver assertions plus
+static architecture guards (no QML runtime needed):
+
+Logic (`components/PhysicalMedia/MediaTemplates.js`, driven under node):
+exactly two platform families (`gba`, `ps2` — everything else keeps the
+flat library), inspect view cycles (GBA front/back; PS2
+front/spine/back/open with wraparound), artwork slot fallback chains
+(label/disc/case faces), generated-face helpers (spine text, abbr), and
+template geometry sanity.
+
+Guards: no `gba`/`ps2` literals outside `MediaTemplates.js`; new QML uses
+only existing `CrystalTheme.js` tokens; no 3D imports; no Socket
+references; no new audio subsystem; launch still flows through
+`GameLibrary.launchCurrent`; brace balance on new/modified QML.
+
+See `docs/PHYSICAL_MEDIA.md` for the architecture, controller mapping,
+and the real-Nova verification list.
+
 ## What has NOT been validated yet
 
 - **Real Pegasus runtime, especially game launching.** All verification

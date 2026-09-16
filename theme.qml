@@ -58,6 +58,7 @@ FocusScope {
         page: sysScreen.page
         pageCount: sysScreen.pageCount
         showPlay: !sysScreen.isEmpty
+        showInspect: sysScreen.inspectAvailable
         visible: root.screen === "system"
     }
 
@@ -156,6 +157,21 @@ FocusScope {
 
     Keys.onPressed: {
         if (root.screen === "system") {
+            // Physical-media Inspect owns the keys while open: the grid
+            // underneath never moves, so B returns to the same tile.
+            if (sysScreen.inspecting) {
+                if (event.key === Qt.Key_Left)       { event.accepted = true; sysScreen.inspectLeft() }
+                else if (event.key === Qt.Key_Right) { event.accepted = true; sysScreen.inspectRight() }
+                else if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                    event.accepted = true
+                    sysScreen.inspectLaunch()
+                }
+                else if (!event.isAutoRepeat && api.keys.isCancel(event)) {
+                    event.accepted = true
+                    sysScreen.closeInspect()
+                }
+                return
+            }
             // Directional input uses standard QML KeyEvent values — real
             // Pegasus does NOT expose api.keys.isLeft/isRight/isUp/isDown.
             if (event.key === Qt.Key_Left)       { event.accepted = true; sysScreen.moveLeft() }
@@ -169,6 +185,13 @@ FocusScope {
             else if (!event.isAutoRepeat && api.keys.isCancel(event)) {
                 event.accepted = true
                 leaveSystem()
+            }
+            // Details/Inspect: GBA/PS2 only (GameLibrary.inspectAvailable
+            // already guards the key's existence and the empty library).
+            else if (!event.isAutoRepeat && sysScreen.inspectAvailable
+                     && api.keys.isDetails(event)) {
+                event.accepted = true
+                sysScreen.openInspect()
             }
             return
         }

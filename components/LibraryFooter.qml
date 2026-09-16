@@ -4,6 +4,7 @@ import "CrystalTheme.js" as T
 // Library footer: same divider/keycap geometry as the Phase 1.7 home
 // footer. Left: [B] BACK. Right: [A] PLAY. A quiet page indicator sits
 // centred, visible only when the library spans more than one page.
+// GBA/PS2 libraries add [Y] INSPECT between BACK and the centre.
 Item {
     id: root
     // spans from the footer divider to the bottom of the screen
@@ -14,6 +15,8 @@ Item {
     property int pageCount: 1
     // Hidden on the empty-collection state — there is nothing to play.
     property bool showPlay: true
+    // Physical-media Inspect prompt: GBA/PS2 libraries only.
+    property bool showInspect: false
 
     Rectangle {
         x: T.margin
@@ -38,6 +41,25 @@ Item {
         font.letterSpacing: T.footerLetterSpacing
         color: T.tileInk
         text: "BACK"
+    }
+
+    Keycap {
+        x: 360
+        y: T.keycapY
+        fontFamily: root.fontFamily
+        text: "Y"
+        visible: root.showInspect
+    }
+
+    Text {
+        x: 455
+        y: T.keycapY
+        font.family: root.fontFamily
+        font.pixelSize: T.fontFooterPx
+        font.letterSpacing: T.footerLetterSpacing
+        color: T.tileInk
+        text: "INSPECT"
+        visible: root.showInspect
     }
 
     Keycap {
