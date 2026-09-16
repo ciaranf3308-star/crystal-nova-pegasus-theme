@@ -115,6 +115,98 @@ function configure(baseUrl) {
     _notifyChanged();
 }
 
+// ---------------------------------------------------------------------------
+// Media bridge — Manager-configured external media library.
+//
+// The Manager (never the theme) may write a tiny `crystal-media-bridge.json`
+// into the themes root (beside the theme directory) declaring a canonical
+// *filesystem* path for the external media library:
+//
+//   {"version":1,"mediaRoot":"/storage/XXXX-XXXX/CrystalNova/Media","updated":<epochSeconds>}
+//
+// configureFromBridge() reads that file first and falls back to the legacy
+// sibling directory (crystal-nova-data/) when the bridge is absent or
+// invalid. A bridge problem must never break the library screen: every
+// failure path ends in configure(fallbackUrl).
+//
+// Security: mediaRoot is validated against a strict whitelist — an absolute
+// Unix path of safe characters only, capped at 256 chars, with no "." or
+// ".." segments — before it is ever combined into a file:// URL. Anything
+// else (relative paths, "..", content:// URIs, over-long or odd-character
+// strings) is rejected and treated as "bridge invalid".
+// ---------------------------------------------------------------------------
+
+var MEDIA_ROOT_MAX_LEN = 256;
+var MEDIA_ROOT_RE = /^\/[A-Za-z0-9_.\-]+(\/[A-Za-z0-9_.\-]+)*$/;
+
+// Strict whitelist check for a bridge mediaRoot. Returns true only for an
+// absolute Unix path of safe characters. Exported for the test driver.
+function validMediaRoot(root) {
+    if (typeof root !== "string" || root.length === 0) return false;
+    if (root.length > MEDIA_ROOT_MAX_LEN) return false;
+    if (!MEDIA_ROOT_RE.test(root)) return false;
+    // "." and ".." pass the character class above as segments; reject them.
+    var segs = root.split("/");
+    for (var i = 1; i < segs.length; i++) {
+        if (segs[i] === "." || segs[i] === "..") return false;
+    }
+    return true;
+}
+
+// Parse + validate a bridge document. Returns the file:// base URL on
+// success, "" on any failure — never throws.
+function _bridgeBaseUrl(text) {
+    try {
+        if (!text) return "";
+        var doc = JSON.parse(text);
+        if (!doc || doc.version !== 1) return "";
+        if (!validMediaRoot(doc.mediaRoot)) return "";
+        return "file://" + doc.mediaRoot + "/";
+    } catch (e) {
+        return "";
+    }
+}
+
+// Resolve the scraper asset base URL through the Manager's media bridge,
+// falling back to `fallbackUrl` (the legacy ../crystal-nova-data/) when the
+// bridge is absent or invalid. Outside QML (no XMLHttpRequest) this is a
+// plain configure(fallbackUrl). Async: configure() happens when the bridge
+// request completes, so first paint always uses Pegasus fallback art.
+function configureFromBridge(bridgeUrl, fallbackUrl) {
+    if (typeof XMLHttpRequest === "undefined") {
+        configure(fallbackUrl);
+        return;
+    }
+    var b = String(bridgeUrl === undefined || bridgeUrl === null ? "" : bridgeUrl);
+    if (!b) {
+        configure(fallbackUrl);
+        return;
+    }
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", b, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) return;
+            var text = "";
+            var ok = false;
+            try {
+                ok = (xhr.status === 200 || xhr.status === 0);
+                if (ok) text = xhr.responseText || "";
+            } catch (e) { ok = false; }
+            var base = ok ? _bridgeBaseUrl(text) : "";
+            if (base) {
+                configure(base); // configure() normalizes the trailing slash
+                refresh();       // kick off the normal async index load path
+            } else {
+                configure(fallbackUrl);
+            }
+        };
+        xhr.send();
+    } catch (e) {
+        configure(fallbackUrl);
+    }
+}
+
 // QML registers a change-notification callback here. It is invoked on the
 // GUI thread whenever the installed index changes (including "cleared"),
 // so tile art bindings can re-evaluate. Never throws into the caller.
@@ -366,6 +458,8 @@ try {
             platformSlug: platformSlug,
             parseIndex: parseIndex,
             configure: configure,
+            configureFromBridge: configureFromBridge,
+            validMediaRoot: validMediaRoot,
             loadFromText: loadFromText,
             refresh: refresh,
             setIndexChangedHandler: setIndexChangedHandler,

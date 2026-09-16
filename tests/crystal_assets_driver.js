@@ -261,8 +261,9 @@ FakeXHR.prototype.open = function (method, url, async) {
     this._url = url;
     this._async = async;
     this.readyState = 1;
-    check("refresh opens index.json asynchronously",
-        url === BASE + "index.json" && async === true);
+    check("open is async GET of index.json or the bridge file",
+        async === true && (url.slice(-10) === "index.json" ||
+            url.slice(-25) === "crystal-media-bridge.json"));
 };
 FakeXHR.prototype.send = function () { /* completed manually below */ };
 function completeXHR(xhr, status, text) {
@@ -321,6 +322,84 @@ check("stale overlapping response ignored",
     A.tileFront(mg, "gba") ===
         BASE + "games/gba/mario-golf-advance-tour/front.png");
 A.setIndexChangedHandler(null);
+
+// --- 15. media bridge resolution ------------------------------------------------
+var BRIDGE_URL = "file:///themes/crystal-media-bridge.json";
+var SD_BASE = "file:///storage/1234-ABCD/CrystalNova/Media/";
+
+// validMediaRoot: strict whitelist
+[["/storage/1234-ABCD/CrystalNova/Media", true],
+ ["/sdcard", true],
+ ["/storage/1234-ABCD/CrystalNova/.thumbcache", true],
+ ["", false],
+ ["/", false],
+ ["crystal-nova-data", false],
+ ["../crystal-nova-data", false],
+ ["content://com.example/files", false],
+ ["file:///storage/x", false],
+ ["/storage/../etc", false],
+ ["/storage/..", false],
+ ["/storage/./media", false],
+ ["/storage/my dir", false],
+ ["/storage/evil;rm -rf", false],
+ ["/storage/\"quoted\"", false],
+ ["/storage/a".repeat(40), false], // > 256 chars
+ ["/a/", false],
+ [null, false],
+ ["/storage/1234_abc-DEF.ghi", true]
+].forEach(function (c, i) {
+    eq("validMediaRoot[" + i + "] " + JSON.stringify(c[0]), A.validMediaRoot(c[0]), c[1]);
+});
+
+// Helper: resolve the configured base URL by loading the sample index and
+// reading a known asset URL back (no getter for the base itself).
+function resolvedFront() {
+    A.loadFromText(sampleIndex);
+    return A.front(mg, "gba");
+}
+
+var bridgeDoc = JSON.stringify({
+    version: 1, mediaRoot: "/storage/1234-ABCD/CrystalNova/Media", updated: 1700000000
+});
+
+// valid bridge -> SD base, then index loads from it
+A.configureFromBridge(BRIDGE_URL, BASE);
+check("bridge request issued", xhrLog.length > 0 && xhrLog[xhrLog.length - 1]._url === BRIDGE_URL);
+completeXHR(xhrLog[xhrLog.length - 1], 200, bridgeDoc);
+check("bridge index request targets SD base",
+    xhrLog[xhrLog.length - 1]._url === SD_BASE + "index.json");
+eq("valid bridge resolves assets under mediaRoot",
+    resolvedFront(), SD_BASE + "games/gba/mario-golf-advance-tour/front.png");
+
+// missing bridge -> legacy fallback
+A.configureFromBridge(BRIDGE_URL, BASE);
+completeXHR(xhrLog[xhrLog.length - 1], 404, "");
+eq("missing bridge falls back to legacy base", resolvedFront(),
+    BASE + "games/gba/mario-golf-advance-tour/front.png");
+
+// each invalid bridge document -> legacy fallback
+[["garbage (parse error)", "not json at all"],
+ ["version mismatch (number)", '{"version":2,"mediaRoot":"/storage/x","updated":1}'],
+ ["version mismatch (string)", '{"version":"1","mediaRoot":"/storage/x","updated":1}'],
+ ["missing mediaRoot", '{"version":1,"updated":1}'],
+ ["content:// URI", '{"version":1,"mediaRoot":"content://com.x/y","updated":1}'],
+ ["relative path", '{"version":1,"mediaRoot":"crystal-nova-data","updated":1}'],
+ ["dot-dot traversal", '{"version":1,"mediaRoot":"/storage/../etc","updated":1}'],
+ ["over-long path", JSON.stringify({ version: 1, mediaRoot: "/x".repeat(200), updated: 1 })]
+].forEach(function (c) {
+    A.configureFromBridge(BRIDGE_URL, BASE);
+    completeXHR(xhrLog[xhrLog.length - 1], 200, c[1]);
+    eq("invalid bridge -> fallback [" + c[0] + "]", resolvedFront(),
+        BASE + "games/gba/mario-golf-advance-tour/front.png");
+});
+
+// no XMLHttpRequest (non-QML / Node) -> plain fallback configure
+delete global.XMLHttpRequest;
+A.configureFromBridge(BRIDGE_URL, BASE);
+eq("no-XHR environment configures fallback", resolvedFront(),
+    BASE + "games/gba/mario-golf-advance-tour/front.png");
+global.XMLHttpRequest = FakeXHR;
+A.configure(BASE); // restore default state for the report
 
 // --- report --------------------------------------------------------------------
 if (failures.length > 0) {

@@ -127,11 +127,14 @@ FocusScope {
     }
 
     Component.onCompleted: {
-        // Scraper asset bridge: point the resolver at the persistent sibling
-        // directory crystal-nova-data/ (written by Crystal Nova Manager).
-        // The directory lives next to the installed theme, never inside it,
-        // so theme updates and rollback cannot touch scraper data.
-        CrystalAssets.configure(Qt.resolvedUrl("../crystal-nova-data/"))
+        // Scraper asset bridge: prefer the Manager-written crystal-media-bridge.json
+        // (themes root; canonical external-media path) when it is present and
+        // valid, else fall back to the legacy sibling directory
+        // crystal-nova-data/. Both live next to the installed theme, never
+        // inside it, so theme updates and rollback cannot touch scraper data.
+        CrystalAssets.configureFromBridge(
+            Qt.resolvedUrl("../crystal-media-bridge.json"),
+            Qt.resolvedUrl("../crystal-nova-data/"))
         // Whenever the asynchronous index (re)load completes, bump the
         // library's art epoch so tile cover bindings re-evaluate.
         CrystalAssets.setIndexChangedHandler(function() { sysScreen.bumpArtEpoch() })
