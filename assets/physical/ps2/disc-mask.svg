@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="560" viewBox="0 0 560 560">
+  <!-- Circular mask for disc artwork (OpacityMask maskSource).
+       White filled circle r=273 matches the outer rim of disc.svg;
+       artwork rendered through this can never escape the disc boundary. -->
+  <circle cx="280" cy="280" r="273" fill="#ffffff"/>
+</svg>

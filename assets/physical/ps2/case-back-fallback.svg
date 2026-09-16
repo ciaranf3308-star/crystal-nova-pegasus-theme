@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="628" height="898" viewBox="0 0 628 898">
+  <defs>
+    <linearGradient id="backBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#182a42"/>
+      <stop offset="1" stop-color="#0a1420"/>
+    </linearGradient>
+    <linearGradient id="artWell" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Deliberate Crystal back-cover composition (fallback when no real
+       back art exists). Opaque base with a REAL transparent art window
+       at (48,48,532,320) via evenodd — QML layers dimmed front art
+       (source material only) underneath; the front cover never appears
+       as the back cover. Title hierarchy is placed by QML in the zones
+       the rules below define. -->
+
+  <!-- opaque base, transparent art window -->
+  <path d="M0,0H628V898H0Z M48,48H580V368H48Z"
+        fill-rule="evenodd" fill="url(#backBase)"/>
+
+  <!-- art window: frame + inner keyline + faint wash -->
+  <rect x="48" y="48" width="532" height="320" fill="none"
+        stroke="#7ba7d9" stroke-width="2" opacity="0.5"/>
+  <rect x="54" y="54" width="520" height="308" fill="none"
+        stroke="#05090e" stroke-width="4" opacity="0.65"/>
+  <rect x="48" y="48" width="532" height="320" fill="url(#artWell)"/>
+
+  <!-- title zone: hairline above, rule below -->
+  <line x1="48" y1="452" x2="580" y2="452"
+        stroke="#7ba7d9" stroke-width="2" opacity="0.45"/>
+  <line x1="48" y1="648" x2="580" y2="648"
+        stroke="#2c3a4e" stroke-width="2" opacity="0.8"/>
+
+  <!-- edition strip -->
+  <rect x="48" y="796" width="150" height="8" fill="#7ba7d9" opacity="0.45"/>
+  <rect x="48" y="812" width="90" height="8" fill="#7ba7d9" opacity="0.25"/>
+
+  <!-- corner registration marks -->
+  <circle cx="20" cy="20" r="4" fill="#7ba7d9" opacity="0.4"/>
+  <circle cx="608" cy="20" r="4" fill="#7ba7d9" opacity="0.4"/>
+  <circle cx="20" cy="878" r="4" fill="#7ba7d9" opacity="0.4"/>
+  <circle cx="608" cy="878" r="4" fill="#7ba7d9" opacity="0.4"/>
+</svg>

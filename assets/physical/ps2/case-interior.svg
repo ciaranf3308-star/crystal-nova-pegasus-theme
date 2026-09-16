@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="572" height="882" viewBox="0 0 572 882">
+  <defs>
+    <linearGradient id="panelBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#222d3f"/>
+      <stop offset="1" stop-color="#121924"/>
+    </linearGradient>
+    <linearGradient id="ribShade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0b0f16" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#0b0f16" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="clipFace" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b3648"/>
+      <stop offset="1" stop-color="#141b26"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Authored PS2 case interior: moulded plastic panel with booklet
+       retaining clips, moulding ribs and a debossed manual well.
+       572x882 — fills the open left-panel window exactly. No game
+       artwork lives here; QML adds only a small etched-feel title. -->
+
+  <rect x="0" y="0" width="572" height="882" fill="url(#panelBase)"/>
+
+  <!-- edge moulding ribs -->
+  <rect x="12" y="18" width="10" height="846" fill="url(#ribShade)"/>
+  <rect x="550" y="18" width="10" height="846" fill="url(#ribShade)"/>
+  <rect x="32" y="18" width="5" height="846" fill="#0b0f16" opacity="0.4"/>
+  <rect x="535" y="18" width="5" height="846" fill="#0b0f16" opacity="0.4"/>
+
+  <!-- inner panel keyline -->
+  <rect x="44" y="30" width="484" height="822" fill="none"
+        stroke="#0b0f16" stroke-width="3" opacity="0.55"/>
+  <rect x="48" y="34" width="476" height="814" fill="none"
+        stroke="#cfe2f5" stroke-width="1.5" opacity="0.10"/>
+
+  <!-- booklet retaining clips (top pair) -->
+  <polygon points="76,128 196,128 176,182 76,182"
+           fill="url(#clipFace)" stroke="#2c3a4e" stroke-width="2"/>
+  <polygon points="76,182 176,182 166,192 76,192"
+           fill="#0b0f16" opacity="0.5"/>
+  <polygon points="496,128 376,128 396,182 496,182"
+           fill="url(#clipFace)" stroke="#2c3a4e" stroke-width="2"/>
+  <polygon points="496,182 396,182 406,192 496,192"
+           fill="#0b0f16" opacity="0.5"/>
+  <!-- clip screw dots -->
+  <circle cx="106" cy="152" r="6" fill="#0b0f16" opacity="0.7"/>
+  <circle cx="106" cy="152" r="2.5" fill="#5a6f86" opacity="0.8"/>
+  <circle cx="466" cy="152" r="6" fill="#0b0f16" opacity="0.7"/>
+  <circle cx="466" cy="152" r="2.5" fill="#5a6f86" opacity="0.8"/>
+
+  <!-- debossed manual well -->
+  <rect x="110" y="250" width="352" height="400" rx="10" fill="none"
+        stroke="#0b0f16" stroke-width="4" opacity="0.55"/>
+  <rect x="118" y="258" width="336" height="384" rx="7" fill="none"
+        stroke="#ffffff" stroke-width="1.5" opacity="0.08"/>
+  <!-- well corner ticks -->
+  <path d="M110,290 v-40 h40" fill="none" stroke="#7ba7d9" stroke-width="2" opacity="0.35"/>
+  <path d="M462,290 v-40 h-40" fill="none" stroke="#7ba7d9" stroke-width="2" opacity="0.35"/>
+  <path d="M110,610 v40 h40" fill="none" stroke="#7ba7d9" stroke-width="2" opacity="0.35"/>
+  <path d="M462,610 v40 h-40" fill="none" stroke="#7ba7d9" stroke-width="2" opacity="0.35"/>
+
+  <!-- bottom retaining lip -->
+  <rect x="70" y="724" width="432" height="30" rx="7"
+        fill="url(#clipFace)" stroke="#2c3a4e" stroke-width="2"/>
+  <rect x="70" y="748" width="432" height="6" fill="#0b0f16" opacity="0.5"/>
+  <!-- lip notches -->
+  <rect x="150" y="724" width="8" height="30" fill="#0b0f16" opacity="0.55"/>
+  <rect x="414" y="724" width="8" height="30" fill="#0b0f16" opacity="0.55"/>
+
+  <!-- etched crystal mark -->
+  <polygon points="286,796 308,818 286,840 264,818" fill="none"
+           stroke="#7ba7d9" stroke-width="2" opacity="0.45"/>
+  <polygon points="286,806 298,818 286,830 274,818" fill="#7ba7d9" opacity="0.25"/>
+</svg>

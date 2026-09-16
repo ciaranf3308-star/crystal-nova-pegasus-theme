@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import QtGraphicalEffects 1.12
 import "MediaTemplates.js" as MT
 
 // Ps2Case — thin compositor over authored SVG templates.
@@ -35,9 +36,14 @@ Item {
     readonly property string assetBase: "../../assets/physical/ps2/"
     readonly property bool isOpen: root.view === "open"
     readonly property bool isSpine: root.view === "spine"
-    // face texture for the current closed view
+    // face texture for the current closed view. BACK shows real back
+    // artwork only — never the front cover again; when backArt is
+    // absent the renderer builds a deliberate Crystal back composition
+    // (backComposed) instead of re-showing the front.
     readonly property string faceArt: root.view === "spine" ? root.spineArt
-        : (root.view === "back" ? (root.backArt || root.frontArt) : root.frontArt)
+        : (root.view === "back" ? root.backArt : root.frontArt)
+    readonly property bool backComposed: root.view === "back"
+                                         && root.backArt === ""
 
     // restrained view-change settle: a 140ms dip, never a spin
     NumberAnimation {
@@ -84,12 +90,14 @@ Item {
                 visible: source !== "" && status === Image.Ready
             }
 
-            // designed fallback cover (front/back): a real composition
+            // designed fallback cover (front only): a real composition
             // hierarchy from title + Crystal treatment, never a
-            // placeholder card
+            // placeholder card. (Back has its own composed fallback
+            // below; the front cover is never re-shown as the back.)
             Item {
                 anchors.fill: parent
-                visible: !root.isSpine && root.faceArt === ""
+                visible: !root.isSpine && root.view !== "back"
+                         && root.faceArt === ""
                 Rectangle {
                     anchors.fill: parent
                     gradient: Gradient {
@@ -125,6 +133,58 @@ Item {
                     anchors.bottomMargin: 64
                     font.family: root.fontFamily
                     font.pixelSize: 18
+                    font.letterSpacing: 5
+                    color: "#7ba7d9"
+                    text: "CRYSTAL EDITION"
+                }
+            }
+
+            // BACK fallback: a deliberate Crystal back-cover composition.
+            // Front art is used only as dimmed source material inside the
+            // authored art window — the front cover never reappears as
+            // the back cover. Title hierarchy sits in the guided zones.
+            Item {
+                anchors.fill: parent
+                visible: root.backComposed
+                Image {
+                    id: backAccentArt
+                    x: 48; y: 48; width: 532; height: 320
+                    fillMode: Image.PreserveAspectCrop
+                    smooth: true
+                    asynchronous: true
+                    opacity: 0.5
+                    source: root.frontArt
+                    visible: source !== "" && status === Image.Ready
+                }
+                Rectangle {
+                    x: 48; y: 48; width: 532; height: 320
+                    color: "#16304a"
+                    visible: !backAccentArt.visible
+                }
+                Image {
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    asynchronous: true
+                    source: root.assetBase + "case-back-fallback.svg"
+                }
+                Text {
+                    x: 48; y: 486
+                    width: 532
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideRight
+                    maximumLineCount: 3
+                    font.family: root.fontFamily
+                    font.pixelSize: 42
+                    font.letterSpacing: 5
+                    lineHeight: 1.35
+                    color: "#d7e3ec"
+                    text: root.titleText.toUpperCase()
+                }
+                Text {
+                    x: 48; y: 824
+                    font.family: root.fontFamily
+                    font.pixelSize: 17
                     font.letterSpacing: 5
                     color: "#7ba7d9"
                     text: "CRYSTAL EDITION"
@@ -196,48 +256,32 @@ Item {
             source: root.assetBase + "case-open.svg"
         }
 
-        // interior artwork, clipped to the left-panel window
-        Rectangle {
+        // authored case interior: moulded panel, booklet retaining
+        // clips, ribs, debossed manual well — a real inside of the
+        // case. Exterior cover art is never wallpapered in here; QML
+        // adds only a small etched-feel title.
+        Item {
             x: MT.PS2.innerX; y: MT.PS2.innerY
             width: MT.PS2.innerW; height: MT.PS2.innerH
-            radius: 6
-            clip: true
-            color: "#101722"
             Image {
                 anchors.fill: parent
-                fillMode: Image.PreserveAspectCrop
+                fillMode: Image.PreserveAspectFit
                 smooth: true
                 asynchronous: true
-                source: (root.backArt || root.frontArt) !== ""
-                        ? (root.backArt || root.frontArt) : ""
-                visible: source !== "" && status === Image.Ready
+                source: root.assetBase + "case-interior.svg"
             }
-            // fallback interior: quiet navy + title, no placeholder text
-            Item {
-                anchors.fill: parent
-                visible: (root.backArt || root.frontArt) === ""
-                Rectangle {
-                    anchors.fill: parent
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#14283e" }
-                        GradientStop { position: 1.0; color: "#0a1626" }
-                    }
-                }
-                Text {
-                    anchors.centerIn: parent
-                    width: parent.width - 80
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.WordWrap
-                    elide: Text.ElideRight
-                    maximumLineCount: 3
-                    font.family: root.fontFamily
-                    font.pixelSize: 34
-                    font.letterSpacing: 5
-                    lineHeight: 1.5
-                    color: "#d7e3ec"
-                    opacity: 0.85
-                    text: root.titleText.toUpperCase()
-                }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: 52
+                width: parent.width - 140
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                font.family: root.fontFamily
+                font.pixelSize: 23
+                font.letterSpacing: 6
+                color: "#d7e3ec"
+                opacity: 0.5
+                text: root.titleText.toUpperCase()
             }
         }
 
@@ -258,12 +302,17 @@ Item {
                 NumberAnimation { duration: 420; easing.type: Easing.OutQuad }
             }
 
-            Rectangle {
+            // disc artwork composite — invisible; rendered only through
+            // the circular mask below. Real scans, art-derived faces and
+            // the designed fallback share this one clipping path.
+            Item {
+                id: discArtSource
                 anchors.fill: parent
-                radius: width / 2
-                clip: true
-                color: "#9fb4c9"   // disc backing: visible only if art fails
-
+                visible: false
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#9fb4c9"   // disc backing: visible only if art fails
+                }
                 // "scan": genuine disc artwork
                 Image {
                     anchors.fill: parent
@@ -319,6 +368,21 @@ Item {
                         color: "#24344a"
                         text: root.titleText.toUpperCase()
                     }
+                }
+            }
+
+            // genuine circular mask: artwork can never show outside the
+            // disc boundary — no square corners, ever. One masked item
+            // is cheap; no per-frame Canvas work.
+            OpacityMask {
+                anchors.fill: parent
+                source: discArtSource
+                maskSource: Image {
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    asynchronous: true
+                    source: root.assetBase + "disc-mask.svg"
                 }
             }
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="392" height="188" viewBox="0 0 392 188">
+  <defs>
+    <radialGradient id="vig" cx="0.5" cy="0.46" r="0.75">
+      <stop offset="0.52" stop-color="#060c14" stop-opacity="0"/>
+      <stop offset="0.85" stop-color="#060c14" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#060c14" stop-opacity="0.55"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Center-weighted vignette for the label art window (392x188).
+       Layered directly over the art, under the composition frame:
+       keeps the art's center legible while seating its edges into
+       the sticker. -->
+  <rect x="0" y="0" width="392" height="188" fill="url(#vig)"/>
+</svg>

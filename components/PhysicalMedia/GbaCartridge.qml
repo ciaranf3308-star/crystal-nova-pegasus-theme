@@ -91,15 +91,66 @@ Item {
             }
 
             // "art": cover art as SOURCE MATERIAL for a deliberate
-            // Crystal sticker composition — treated, never a blind crop
-            Image {
+            // Crystal sticker composition — intentionally framed in the
+            // authored window, center-vignetted, with its own title
+            // zone. Never a blind crop of the cover.
+            Item {
                 anchors.fill: parent
-                fillMode: Image.PreserveAspectCrop
-                smooth: true
-                asynchronous: true
-                opacity: 0.92
-                source: root.labelKind === "art" ? root.labelArt : ""
-                visible: source !== "" && status === Image.Ready
+                visible: root.labelKind === "art"
+                Image {
+                    id: artCropArt
+                    x: 24; y: 24; width: 392; height: 188
+                    fillMode: Image.PreserveAspectCrop
+                    smooth: true
+                    asynchronous: true
+                    source: root.labelArt
+                    visible: source !== "" && status === Image.Ready
+                }
+                Rectangle {
+                    x: 24; y: 24; width: 392; height: 188
+                    color: "#16304a"
+                    visible: !artCropArt.visible
+                }
+                // center-weighted vignette: seats the art into the sticker
+                Image {
+                    x: 24; y: 24; width: 392; height: 188
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    asynchronous: true
+                    source: root.assetBase + "label-art-vignette.svg"
+                }
+                // authored sticker layout: frame, rules, title guides
+                Image {
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    asynchronous: true
+                    source: root.assetBase + "label-art-composition.svg"
+                }
+                // title, clearly readable in its own guided zone
+                Text {
+                    x: 24; y: 232
+                    width: 290; height: 44
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    font.family: root.fontFamily
+                    font.pixelSize: 26
+                    font.letterSpacing: 3
+                    color: "#e8f1f8"
+                    text: root.titleText.toUpperCase()
+                }
+                // micro brand mark: subtle supporting treatment
+                Text {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 24
+                    y: 276
+                    font.family: root.fontFamily
+                    font.pixelSize: 11
+                    font.letterSpacing: 4
+                    color: "#7ba7d9"
+                    opacity: 0.85
+                    text: "CRYSTAL"
+                }
             }
 
             // "none": designed fallback sticker face
@@ -111,11 +162,12 @@ Item {
                     GradientStop { position: 1.0; color: "#7ba3cc" }
                 }
             }
-            // sticker treatment over art-sourced or fallback labels
-            // (real scans stay untouched above)
+            // sticker treatment for the "none" fallback sticker only
+            // (real scans stay untouched; the "art" path has its own
+            // composed layout above)
             Item {
                 anchors.fill: parent
-                visible: root.labelKind !== "scan"
+                visible: root.labelKind === "none"
                 // micro brand pill
                 Rectangle {
                     x: 16; y: 14; width: 118; height: 26
