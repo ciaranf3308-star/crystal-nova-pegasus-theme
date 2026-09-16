@@ -12,6 +12,10 @@ Item {
     property string shortName: ""
     property string fontFamily: "monospace"
 
+    // Crystal index epoch from GameLibrary: when the asynchronous index
+    // (re)load completes, tiles re-resolve their cover art.
+    property int artEpoch: 0
+
     property int currentIndex: 0
 
     readonly property int count: {
@@ -73,6 +77,7 @@ Item {
             game: root.gameAt(root.pageStart + index)
             shortName: root.shortName
             fontFamily: root.fontFamily
+            artEpoch: root.artEpoch
             visible: root.gameAt(root.pageStart + index) !== null
         }
     }

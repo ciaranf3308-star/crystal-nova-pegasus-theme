@@ -161,6 +161,167 @@ A.configure(BASE);
 A.refresh();
 check("refresh() no-op outside QML", true);
 
+// --- 13. entries with missing fields are skipped safely ----------------------
+// An entry without platform/gameId (or with a null assets list) must not
+// break the parse and must not resolve; the game falls back to Pegasus art.
+const missingFieldsIndex = JSON.stringify({ version: 1, games: {
+    "gba/ok-game":   { platform: "gba", gameId: "ok-game",
+                       title: "Ok Game", assets: ["front"] },
+    "bad/noplat":    { gameId: "noplat", title: "No Platform",
+                       assets: ["front"] },
+    "bad/nogid":     { platform: "gba", title: "No GameId", assets: ["front"] },
+    "bad/nullentry": null,
+    "bad/notobject":  "just a string",
+    "gba/nullassets":{ platform: "gba", gameId: "nullassets",
+                       title: "Null Assets", assets: null },
+    "bad/numfields": { platform: 42, gameId: "numfields",
+                       title: "Numeric Platform", assets: ["front"] }
+}});
+A.configure(BASE);
+A.loadFromText(missingFieldsIndex);
+const mf = (t, n) => ({ title: t, files: [{ name: n }] });
+eq("valid entry beside broken ones still resolves",
+    A.front(mf("Ok Game", "Ok Game.gba"), "gba"),
+    BASE + "games/gba/ok-game/front.png");
+eq("missing platform -> Pegasus fallback",
+    A.tileFront(mf("No Platform", "Noplat.gba"), "gba"), "");
+eq("missing gameId -> Pegasus fallback",
+    A.tileFront(mf("No GameId", "Nogid.gba"), "gba"), "");
+eq("null assets -> no slots resolve",
+    A.front(mf("Null Assets", "Nullassets.gba"), "gba"), "");
+eq("numeric platform -> skipped",
+    A.tileFront(mf("Numeric Platform", "Numfields.gba"), "gba"), "");
+A.loadFromText(sampleIndex); // restore
+
+// --- 14. platform/gameId are validated, never trusted verbatim --------------
+// The platform goes through the theme's platformSlug() mapping; anything
+// that is not a clean [a-z0-9-] slug on either side is skipped so it can
+// never land verbatim in a lookup key or file:// URL.
+const untrustedIndex = JSON.stringify({ version: 1, games: {
+    "x/padded":   { platform: "GBA ", gameId: "padded-game",
+                    title: "Padded", assets: ["front"] },
+    "x/unknown":  { platform: "novaland", gameId: "unknown-game",
+                    title: "Unknown", assets: ["front"] },
+    "x/spaced":   { platform: "gba", gameId: "spaced game",
+                    title: "Spaced", assets: ["front"] },
+    "x/slashed":  { platform: "gba", gameId: "a/b",
+                    title: "Slashed", assets: ["front"] },
+    "x/aliased":  { platform: "gc", gameId: "aliased-game",
+                    title: "Aliased", assets: ["front"] }
+}});
+A.configure(BASE);
+A.loadFromText(untrustedIndex);
+eq("padded platform normalizes through platformSlug",
+    A.front(mf("Padded", "Padded Game.gba"), "gba"),
+    BASE + "games/gba/padded-game/front.png");
+eq("unknown platform skipped",
+    A.tileFront(mf("Unknown", "Unknown Game.gba"), "novaland"), "");
+eq("gameId with space skipped",
+    A.tileFront(mf("Spaced", "Spaced Game.gba"), "gba"), "");
+eq("gameId with slash skipped",
+    A.tileFront(mf("Slashed", "A-B.gba"), "gba"), "");
+eq("platform alias resolves to canonical slug",
+    A.front(mf("Aliased", "Aliased Game.gba"), "gamecube"),
+    BASE + "games/gamecube/aliased-game/front.png");
+A.loadFromText(sampleIndex); // restore
+
+// --- 15. duplicate gameIds: last-wins in both maps ---------------------------
+// Matches the JSON.parse key semantics the Manager applies when writing
+// index.json; byId and byTitle must agree on the same canonical entry.
+const dupIndex = JSON.stringify({ version: 1, games: {
+    "gba/dup-game": { platform: "gba", gameId: "dup-game",
+                      title: "Dup Game", assets: ["front"] },
+    "gba/dup-game-duplicate-key": { platform: "gba", gameId: "dup-game",
+                      title: "Dup Game", assets: ["front", "back"] }
+}});
+A.configure(BASE);
+A.loadFromText(dupIndex);
+eq("byId duplicate last-wins",
+    A.front(mf("Dup Game", "Dup Game.gba"), "gba"),
+    BASE + "games/gba/dup-game/front.png");
+eq("byTitle duplicate last-wins (back slot only in second entry)",
+    A.back({ title: "Dup Game" }, "gba"),
+    BASE + "games/gba/dup-game/back.png");
+A.loadFromText(sampleIndex); // restore
+
+// --- 16. async refresh() -----------------------------------------------------
+// Fake XMLHttpRequest: requests are captured and completed manually so the
+// async load path is deterministic under node.
+var xhrLog = [];
+function FakeXHR() {
+    this.readyState = 0;
+    this.status = 0;
+    this.responseText = "";
+    this.onreadystatechange = null;
+    this._url = "";
+    this._async = false;
+    xhrLog.push(this);
+}
+FakeXHR.prototype.open = function (method, url, async) {
+    this._url = url;
+    this._async = async;
+    this.readyState = 1;
+    check("refresh opens index.json asynchronously",
+        url === BASE + "index.json" && async === true);
+};
+FakeXHR.prototype.send = function () { /* completed manually below */ };
+function completeXHR(xhr, status, text) {
+    xhr.status = status;
+    xhr.responseText = text;
+    xhr.readyState = 4;
+    if (typeof xhr.onreadystatechange === "function") xhr.onreadystatechange();
+}
+global.XMLHttpRequest = FakeXHR;
+
+var notified = 0;
+A.configure(BASE);
+A.setIndexChangedHandler(function () { notified++; });
+var epoch0 = A.indexEpoch();
+A.refresh();
+check("refresh() returns with request in flight", xhrLog.length === 1);
+eq("fallback art while async load is pending",
+    A.tileFront(mg, "gba"), "pegasus/mg-box.png");
+completeXHR(xhrLog[0], 200, sampleIndex);
+eq("async load installs the index",
+    A.tileFront(mg, "gba"),
+    BASE + "games/gba/mario-golf-advance-tour/front.png");
+check("change handler fired on completion", notified === 1);
+check("index epoch bumped on completion", A.indexEpoch() === epoch0 + 1);
+// Unchanged file: same text length -> re-parse and notification skipped.
+var epoch1 = A.indexEpoch();
+A.refresh();
+completeXHR(xhrLog[1], 200, sampleIndex);
+check("unchanged index skips re-parse (no notify)",
+    A.indexEpoch() === epoch1 && notified === 1);
+// Changed file: re-parse installs and notifies; art still resolves.
+A.refresh();
+completeXHR(xhrLog[2], 200, sampleIndex + " ");
+check("changed index re-parses and notifies",
+    A.indexEpoch() === epoch1 + 1 && notified === 2);
+eq("art still resolves after re-parse",
+    A.tileFront(mg, "gba"),
+    BASE + "games/gba/mario-golf-advance-tour/front.png");
+// Failed re-read: stale index is cleared, tiles fall back, still notifies.
+A.refresh();
+completeXHR(xhrLog[3], 404, "");
+eq("failed re-read clears stale art", A.front(mg, "gba"), "");
+eq("failed re-read falls back to Pegasus", A.tileFront(mg, "gba"),
+    "pegasus/mg-box.png");
+check("failed re-read notifies", notified === 3);
+// Overlapping refreshes: only the latest completion installs.
+A.refresh();
+var staleReq = xhrLog[xhrLog.length - 1];
+A.refresh(); // supersedes the previous request
+var latestReq = xhrLog[xhrLog.length - 1];
+completeXHR(latestReq, 200, sampleIndex);
+var notifiedAfterLatest = notified;
+completeXHR(staleReq, 200, "not json"); // must be ignored
+check("stale overlapping response ignored",
+    notified === notifiedAfterLatest &&
+    A.tileFront(mg, "gba") ===
+        BASE + "games/gba/mario-golf-advance-tour/front.png");
+A.setIndexChangedHandler(null);
+
 // --- report --------------------------------------------------------------------
 if (failures.length > 0) {
     console.error("\nFAILURES (" + failures.length + "):");

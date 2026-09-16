@@ -1,7 +1,6 @@
 import QtQuick 2.12
 import "../components"
 import "../components/CrystalTheme.js" as T
-import "../components/CrystalAssets.js" as CrystalAssets
 
 // Phase 2: per-system game library. 4x2 box-art grid driven by the real
 // Pegasus collection model — no demo content in production.
@@ -13,9 +12,13 @@ Item {
     property string shortName: ""
     property string fontFamily: "monospace"
 
-    // Pick up newly scraped artwork when the library opens. The index is
-    // parsed once here; per-tile lookups are hash hits.
-    Component.onCompleted: CrystalAssets.refresh()
+    // Bumped whenever the crystal index finishes (re)loading. Tile art
+    // bindings depend on it, so covers upgrade without blocking first
+    // paint. The refresh itself is triggered by theme.qml's enterSystem();
+    // the one-shot onCompleted refresh that used to live here fired before
+    // CrystalAssets.configure() and was a guaranteed no-op.
+    property int artEpoch: 0
+    function bumpArtEpoch() { artEpoch++ }
 
     // navigation / launch surface used by theme.qml
     function moveLeft()  { grid.moveLeft() }
@@ -56,6 +59,7 @@ Item {
         games: root.collection ? root.collection.games : null
         shortName: root.shortName
         fontFamily: root.fontFamily
+        artEpoch: root.artEpoch
         visible: !root.isEmpty
     }
 

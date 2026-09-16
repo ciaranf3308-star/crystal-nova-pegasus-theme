@@ -126,12 +126,32 @@ sibling of the installed theme directory, never inside it).
 }
 ```
 
-The theme loads this file **once** (lazy on first lookup, explicit
-`CrystalAssets.refresh()` when entering the library) and builds two
-in-memory maps:
+The theme re-reads this file on **every library entry**
+(`theme.qml` `enterSystem()` calls `CrystalAssets.refresh()`), so games
+scraped in the Manager while Pegasus is open appear without a theme
+restart. The fetch is asynchronous: the grid paints immediately with
+Pegasus fallback art and tiles upgrade when the parse completes (the
+theme observes completion through an index-epoch counter —
+`GameLibrary.artEpoch` — that tile art bindings depend on). A re-read
+whose text length matches the last installed index skips the re-parse
+entirely, so entering a system is cheap when nothing was scraped. The
+previously installed index is kept until a request completes; a failed
+or deleted `index.json` clears it (tiles fall back) rather than
+resurrecting stale art.
+
+The theme builds two in-memory maps:
 
 - `byId`: `"<platform>/<gameId>"` → entry (filename-derived; primary)
 - `byTitle`: `"<platform>/<slugify(title)>"` → entry (title fallback)
+
+Duplicate policy: **last-wins in both maps**, matching the `JSON.parse`
+key semantics the Manager already applies when writing `index.json`.
+
+Never trust the writer: the platform field is normalized through the
+theme's `platformSlug()` mapping and any entry whose platform or
+`gameId` is not a clean `[a-z0-9-]+` slug is skipped. A malformed entry
+drops just that entry — never the whole index, and never verbatim into
+a lookup key or `file://` URL.
 
 Per-tile lookups are hash hits — the JSON is never parsed per tile.
 
@@ -183,6 +203,7 @@ No scraper data is ever bundled into the theme release ZIP
   the filename lookup misses and the title fallback is used.
 - The Pegasus "Game files" API is marked experimental upstream; if it
   is ever removed, resolution degrades to the title-fallback path.
-- The theme reads a snapshot of `index.json`; games scraped while the
-  library is open appear after the next `refresh()` (library entry
-  triggers one).
+- The theme reads a snapshot of `index.json`; games scraped while
+  Pegasus is open appear the next time a system library is entered
+  (`enterSystem()` re-reads the file asynchronously). If the library is
+  already open, leave and re-enter the system.

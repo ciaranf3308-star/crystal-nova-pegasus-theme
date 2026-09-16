@@ -101,6 +101,12 @@ FocusScope {
     function enterSystem(restoreGame) {
         var coll = grid.currentCollection()
         if (!coll) return
+        // Re-read the scraper index: artwork scraped in the Manager while
+        // Pegasus is open appears without a theme restart. The fetch is
+        // asynchronous — the grid paints immediately with Pegasus fallback
+        // art and tiles upgrade when the parse completes (see
+        // GameLibrary.artEpoch). Unchanged index.json is skipped cheaply.
+        CrystalAssets.refresh()
         var sn = coll.shortName || coll.name || ""
         api.memory.set("crystalNova.lastSystem", sn)
         api.memory.set("crystalNova.lastScreen", "system")
@@ -125,6 +131,9 @@ FocusScope {
         // The directory lives next to the installed theme, never inside it,
         // so theme updates and rollback cannot touch scraper data.
         CrystalAssets.configure(Qt.resolvedUrl("../crystal-nova-data/"))
+        // Whenever the asynchronous index (re)load completes, bump the
+        // library's art epoch so tile cover bindings re-evaluate.
+        CrystalAssets.setIndexChangedHandler(function() { sysScreen.bumpArtEpoch() })
         // Restore the last selected system across restarts. Pegasus reloads
         // the theme after a game exits; if we were inside a library, go
         // straight back there with the game selection intact.

@@ -99,6 +99,10 @@ var SLOT_FILES = {
 var _baseUrl = "";
 var _index = null;   // { byId: {}, byTitle: {} } or null
 var _loaded = false;
+var _epoch = 0;              // bumped whenever the installed index changes
+var _onIndexChanged = null;  // optional QML change-notification callback
+var _lastTextLen = -1;       // responseText.length of the last installed index
+var _requestSeq = 0;         // guards against overlapping async refreshes
 
 function configure(baseUrl) {
     var u = String(baseUrl === undefined || baseUrl === null ? "" : baseUrl);
@@ -106,12 +110,35 @@ function configure(baseUrl) {
     _baseUrl = u;
     _loaded = false;
     _index = null;
+    _lastTextLen = -1;
+    _requestSeq++; // invalidate any in-flight refresh against the old URL
+    _notifyChanged();
+}
+
+// QML registers a change-notification callback here. It is invoked on the
+// GUI thread whenever the installed index changes (including "cleared"),
+// so tile art bindings can re-evaluate. Never throws into the caller.
+function setIndexChangedHandler(fn) {
+    _onIndexChanged = (typeof fn === "function") ? fn : null;
+}
+
+// Monotonic counter of installed-index changes; lets QML/tests observe
+// updates without a callback.
+function indexEpoch() { return _epoch; }
+
+function _notifyChanged() {
+    _epoch++;
+    var cb = _onIndexChanged;
+    if (typeof cb === "function") {
+        try { cb(); } catch (e) { /* a QML handler must never break resolution */ }
+    }
 }
 
 // Test/manual hook: install a parsed index directly.
 function loadFromText(text) {
     _index = parseIndex(text);
     _loaded = true;
+    _notifyChanged();
 }
 
 // Parse index.json into lookup maps. Returns null when missing,
@@ -128,9 +155,14 @@ function parseIndex(text) {
         Object.keys(games).forEach(function (key) {
             var e = games[key];
             if (!e || typeof e !== "object") return;
-            var plat = e.platform ? String(e.platform) : "";
+            // Never trust the writer: normalize the platform through the
+            // same mapping used for lookups, and reject any entry whose
+            // platform or gameId is not a clean slug. A bad field must
+            // drop just that entry — never poison the whole index, and
+            // never end up verbatim in a lookup key or file:// URL.
+            var plat = platformSlug(e.platform);
             var gid = e.gameId ? String(e.gameId) : "";
-            if (!plat || !gid) return;
+            if (!/^[a-z0-9-]+$/.test(plat) || !/^[a-z0-9-]+$/.test(gid)) return;
             var assets = {};
             var list = e.assets;
             if (list && typeof list.length === "number") {
@@ -143,9 +175,11 @@ function parseIndex(text) {
                 assets: assets,
                 completeness: e.completeness ? String(e.completeness) : ""
             };
+            // Duplicate policy: last-wins in BOTH maps, matching the
+            // JSON.parse key semantics the Manager already applies when
+            // it writes index.json.
             byId[plat + "/" + gid] = entry;
-            var tkey = plat + "/" + slugify(entry.title);
-            if (!byTitle[tkey]) byTitle[tkey] = entry;
+            byTitle[plat + "/" + slugify(entry.title)] = entry;
         });
         return { byId: byId, byTitle: byTitle };
     } catch (err) {
@@ -153,21 +187,50 @@ function parseIndex(text) {
     }
 }
 
-// (Re)load index.json from the configured data directory. Safe no-op
-// outside QML (no XMLHttpRequest) or when unconfigured.
+// (Re)load index.json from the configured data directory.
+//
+// Asynchronous: returns immediately — the library renders with Pegasus
+// fallback art on first paint and tiles upgrade when the parse completes
+// (QML observes this via setIndexChangedHandler / indexEpoch). Safe
+// no-op outside QML (no XMLHttpRequest) or when unconfigured.
+//
+// The previously installed index is kept until the request completes,
+// so a re-read never flashes tiles to fallback art. Completion installs
+// whatever the request returned — including null on failure — so a
+// deleted index.json clears stale art instead of resurrecting it. When
+// the fetched text has the same length as the last installed index the
+// re-parse (and the change notification) is skipped: entering a system
+// re-reads cheaply in the common no-scrape-happened case. Overlapping
+// refreshes are guarded by a sequence number; only the latest wins.
 function refresh() {
-    _index = null;
-    _loaded = true;
-    try {
-        if (typeof XMLHttpRequest === "undefined" || !_baseUrl) return;
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", _baseUrl + "index.json", false);
-        xhr.send();
-        if (xhr.status === 200 || xhr.status === 0) {
-            _index = parseIndex(xhr.responseText);
-        }
-    } catch (e) {
+    if (typeof XMLHttpRequest === "undefined" || !_baseUrl) {
         _index = null;
+        _loaded = true;
+        _lastTextLen = -1;
+        _notifyChanged();
+        return;
+    }
+    var seq = ++_requestSeq;
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", _baseUrl + "index.json", true);
+        _loaded = true;
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4 || seq !== _requestSeq) return;
+            var text = "";
+            var ok = false;
+            try {
+                ok = (xhr.status === 200 || xhr.status === 0);
+                if (ok) text = xhr.responseText || "";
+            } catch (e) { ok = false; }
+            if (ok && text.length === _lastTextLen) return; // unchanged
+            _index = ok ? parseIndex(text) : null;
+            _lastTextLen = ok ? text.length : -1;
+            _notifyChanged();
+        };
+        xhr.send();
+    } catch (e) {
+        // Keep the previous index; the next refresh() retries.
     }
 }
 
@@ -305,6 +368,8 @@ try {
             configure: configure,
             loadFromText: loadFromText,
             refresh: refresh,
+            setIndexChangedHandler: setIndexChangedHandler,
+            indexEpoch: indexEpoch,
             romFileName: romFileName,
             gameKey: gameKey,
             assetUrl: assetUrl,

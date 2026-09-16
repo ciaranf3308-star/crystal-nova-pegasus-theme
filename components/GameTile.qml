@@ -15,6 +15,12 @@ Item {
     property string shortName: ""    // collection shortName, for the fallback
     property string fontFamily: "monospace"
 
+    // Crystal index epoch: re-resolve cover art whenever the asynchronous
+    // index (re)load completes. Reading it here registers the binding
+    // dependency; first paint still uses Pegasus fallback art and never
+    // blocks on the index fetch.
+    property int artEpoch: 0
+
     // Best available cover: crystal scraped front first, then Pegasus
     // boxFront, then poster. Empty -> theme fallback art.
     function artSource() {
@@ -59,7 +65,13 @@ Item {
         fillMode: Image.PreserveAspectFit
         smooth: true
         asynchronous: true
-        source: artSource()
+        source: {
+            // Depend on the crystal index epoch so covers upgrade when the
+            // async index (re)load finishes; game/shortName are tracked
+            // through artSource() as before.
+            root.artEpoch
+            return artSource()
+        }
         visible: source !== "" && status === Image.Ready
     }
 
