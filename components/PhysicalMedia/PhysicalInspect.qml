@@ -65,31 +65,43 @@ Item {
         root.viewIndex = (root.viewIndex + 1) % root.views.length
     }
 
+    // Returns true when Inspect actually opened. Never throws and never
+    // leaves input ownership half-taken: any failure resets to
+    // hidden/idle and reports false, so the caller can keep the grid
+    // in charge of the keys.
     function open(game, shortName, fromRect) {
-        if (!game || !MT.supportsPhysical(shortName || "")) return
-        root.game = game
-        root.shortName = shortName || ""
-        root.returnRect = fromRect
-        root.viewIndex = 0
-        root.launching = false
-        root.liftStarted = false
-        root.slotGraphicOn = false
-        root.sourceLine = artworkSource()
-        // start the object exactly on the selected tile, then bring it
-        // forward into the panel slot
-        objectWrap.x = fromRect.x
-        objectWrap.y = fromRect.y
-        objectWrap.width = fromRect.w
-        objectWrap.height = fromRect.h
-        root.visible = true
-        root.busy = true
-        dim.opacity = 0.88
-        panel.scale = 0.97
-        panelIn.start()
-        panelZoomIn.start()
-        wrapX.to = root.slotX; wrapY.to = root.slotY
-        wrapW.to = root.slotW; wrapH.to = root.slotH
-        wrapX.start(); wrapY.start(); wrapW.start(); wrapH.start()
+        if (root.visible) return true
+        try {
+            if (!game || !MT.supportsPhysical(shortName || "")) return false
+            root.game = game
+            root.shortName = shortName || ""
+            root.returnRect = fromRect
+            root.viewIndex = 0
+            root.launching = false
+            root.liftStarted = false
+            root.slotGraphicOn = false
+            root.sourceLine = artworkSource()
+            // start the object exactly on the selected tile, then bring it
+            // forward into the panel slot
+            objectWrap.x = fromRect.x
+            objectWrap.y = fromRect.y
+            objectWrap.width = fromRect.w
+            objectWrap.height = fromRect.h
+            root.visible = true
+            root.busy = true
+            dim.opacity = 0.88
+            panel.scale = 0.97
+            panelIn.start()
+            panelZoomIn.start()
+            wrapX.to = root.slotX; wrapY.to = root.slotY
+            wrapW.to = root.slotW; wrapH.to = root.slotH
+            wrapX.start(); wrapY.start(); wrapW.start(); wrapH.start()
+            armWatchdog("open")
+            return true
+        } catch (e) {
+            hardReset()
+            return false
+        }
     }
 
     function artworkSource() {
@@ -103,9 +115,19 @@ Item {
         return "GENERATED"
     }
 
+    // B must always escape: when a transition is stuck (or a launch is
+    // mid-flight), jump-cut closed instead of waiting on an animation
+    // that may never finish. The animated path is only for the healthy
+    // idle case, and it is watchdog-backed too.
     function beginClose() {
-        if (!root.visible || root.busy || root.launching) return
+        if (!root.visible) return
+        if (root.busy || root.launching) {
+            resetLaunch()
+            hardClose()
+            return
+        }
         root.busy = true
+        armWatchdog("close")
         // return the object to its tile, then hide
         wrapX.to = returnRect.x; wrapY.to = returnRect.y
         wrapW.to = returnRect.w; wrapH.to = returnRect.h
@@ -158,6 +180,82 @@ Item {
             } else {
                 root.launchRequested()
             }
+        }
+    }
+
+    // ---- input-safety net ---------------------------------------------------
+    // No animation-completion callback is the single point of failure for
+    // input recovery: every transition arms the watchdog below, and any
+    // path that cannot afford to wait (B during a stuck transition, an
+    // exception inside open()) jump-cuts to a known-good state instead.
+    property string pendingTransition: ""
+
+    function armWatchdog(which) {
+        root.pendingTransition = which
+        busyWatchdog.restart()
+    }
+
+    function stopAllMotion() {
+        busyWatchdog.stop()
+        launchTimer.stop()
+        wrapX.stop(); wrapY.stop(); wrapW.stop(); wrapH.stop()
+        panelIn.stop(); panelOut.stop(); panelZoomIn.stop()
+        root.pendingTransition = ""
+    }
+
+    // Snap to the fully-open state: the watchdog path for a stuck open.
+    function forceSettleOpen() {
+        stopAllMotion()
+        objectWrap.x = root.slotX; objectWrap.y = root.slotY
+        objectWrap.width = root.slotW; objectWrap.height = root.slotH
+        dim.opacity = 0.88
+        panel.opacity = 1
+        panel.scale = 1
+        root.busy = false
+    }
+
+    // Snap fully shut and hand input back: the watchdog path for a stuck
+    // close, and the B-during-busy / B-during-launch escape path.
+    function hardClose() {
+        stopAllMotion()
+        objectWrap.x = returnRect.x; objectWrap.y = returnRect.y
+        objectWrap.width = returnRect.w; objectWrap.height = returnRect.h
+        dim.opacity = 0
+        panel.opacity = 0
+        panel.scale = 0.97
+        phys.inserting = false
+        phys.lifting = false
+        root.launching = false
+        root.liftStarted = false
+        root.slotGraphicOn = false
+        root.busy = false
+        root.visible = false
+        root.closed()
+    }
+
+    // Same end state as hardClose but silent: a failed open() never took
+    // input ownership, so there is nothing to hand back.
+    function hardReset() {
+        stopAllMotion()
+        dim.opacity = 0
+        panel.opacity = 0
+        phys.inserting = false
+        phys.lifting = false
+        root.launching = false
+        root.liftStarted = false
+        root.slotGraphicOn = false
+        root.busy = false
+        root.visible = false
+    }
+
+    Timer {
+        id: busyWatchdog
+        interval: 900
+        repeat: false
+        onTriggered: {
+            if (!root.visible) { root.busy = false; return }
+            if (root.pendingTransition === "open") forceSettleOpen()
+            else hardClose()
         }
     }
 
@@ -357,6 +455,9 @@ Item {
         id: wrapH; target: objectWrap; property: "height"; duration: 240
         easing.type: Easing.InOutQuad
         onFinished: {
+            // Fast path only: the watchdog above is the real guarantee.
+            busyWatchdog.stop()
+            root.pendingTransition = ""
             if (root.visible && root.busy) {
                 // open finished: settle; close finished: hide + notify
                 if (panel.opacity > 0.5) {

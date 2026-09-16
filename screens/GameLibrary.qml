@@ -57,9 +57,12 @@ Item {
 
     function openInspect() {
         if (!inspectAvailable || root.inspecting) return
-        root.inspecting = true
-        inspectView.open(grid.currentGame, root.shortName,
-                         tileRectFor(grid.currentIndex))
+        // open() reports success: only take input ownership when the
+        // overlay actually opened, so a failed open can never trap keys.
+        if (inspectView.open(grid.currentGame, root.shortName,
+                             tileRectFor(grid.currentIndex))) {
+            root.inspecting = true
+        }
     }
     function closeInspect()  { inspectView.beginClose() }
     function inspectLeft()   { inspectView.prevView() }

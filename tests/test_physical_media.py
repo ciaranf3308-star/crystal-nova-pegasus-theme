@@ -18,6 +18,8 @@ Plus static architecture guards (no QML runtime needed):
   - QML brace balance on new/modified files
   - JS import aliases match their uses (regression: the 74b8868 Nova
     freeze was a MediaTemplates-vs-MT alias mismatch)
+  - Inspect input safety net: open() success flag, transition watchdog,
+    B escape while busy/launching (regression: the stuck-busy freeze)
 
 Run:
     python3 tests/test_physical_media.py
@@ -157,8 +159,7 @@ def check_qml_imports_sane():
     print("ok - PhysicalMedia imports are QtQuick/local only")
 
 
-def check_js_import_alias_consistent():
-    # Regression guard for the 74b8868 Nova freeze: PhysicalInspect.qml
+def check_js_import_alias_consistent():    # Regression guard for the 74b8868 Nova freeze: PhysicalInspect.qml
     # and PhysicalObject.qml imported MediaTemplates.js "as MT" but
     # referenced it as bare "MediaTemplates." — an undeclared identifier
     # under Pegasus Qt 5.15. Bindings threw ReferenceError (tile object
@@ -187,6 +188,30 @@ def check_js_import_alias_consistent():
     print("ok - JS import aliases match their uses")
 
 
+def check_inspect_input_safety():
+    # Regression guard for the Nova Inspect freeze: entering Inspect must
+    # never permanently trap input. The safety net is structural —
+    # asserted statically here because no QML runtime exists in CI:
+    #  - open() reports success/failure; GameLibrary only takes input
+    #    ownership (inspecting=true) on success
+    #  - a watchdog backs every transition; no animation-completion
+    #    callback is the single point of failure for input recovery
+    #  - beginClose() escapes even while busy/launching (B always exits)
+    src = read(os.path.join(PM, "PhysicalInspect.qml"))
+    assert "function open(game, shortName, fromRect)" in src
+    assert "return false" in src and "return true" in src, \
+        "open() must report success/failure"
+    assert "busyWatchdog" in src, "transition watchdog missing"
+    assert "hardClose()" in src, "jump-cut close path missing"
+    m = re.search(r"function beginClose\(\) \{(.*?)\n    \}", src, re.S)
+    assert m and "root.busy || root.launching" in m.group(1), \
+        "beginClose must escape while busy/launching"
+    lib = read(os.path.join(REPO, "screens", "GameLibrary.qml"))
+    assert "if (inspectView.open(" in lib, \
+        "GameLibrary must gate inspecting on open() success"
+    print("ok - Inspect input safety net (watchdog + B escape + open() flag)")
+
+
 def run_node_driver():
     node = shutil.which("node") or shutil.which("nodejs")
     if not node:
@@ -210,6 +235,7 @@ def main():
     check_braces()
     check_qml_imports_sane()
     check_js_import_alias_consistent()
+    check_inspect_input_safety()
     run_node_driver()
     print("\nphysical-media tests passed")
 
