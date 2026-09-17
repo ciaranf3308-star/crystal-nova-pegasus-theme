@@ -22,6 +22,10 @@ Item {
     implicitWidth: isOpen ? MT.PS2.openW
                           : (isSpine ? MT.PS2.spineW : MT.PS2.caseW)
     implicitHeight: isOpen ? MT.PS2.openH : MT.PS2.caseH
+    // Explicit size: children use anchors.fill on this root, so it must
+    // have a real size (not just implicit) for them to lay out.
+    width: implicitWidth
+    height: implicitHeight
 
     property string view: "front"
     property string frontArt: ""

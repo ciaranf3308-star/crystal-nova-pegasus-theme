@@ -11,6 +11,9 @@ Item {
 
     property string fontFamily: "monospace"
     property string fixedClock: ""
+    // Library screens set this to e.g. "PLAY MORE GAMES"; the home
+    // screen keeps it empty (plain CRYSTAL brand).
+    property string subtitle: ""
     // Library screens set this to e.g. "CRYSTAL / GBA"; the home screen
     // keeps the plain "CRYSTAL" brand.
     property string title: "CRYSTAL"
@@ -58,6 +61,57 @@ Item {
         y: T.batteryY
         width: T.batteryW
         height: T.batteryH
+    }
+
+    // Centered subtitle with side rules (library screens). The rules run
+    // from the brand to the battery, each ending in a small square node.
+    Item {
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: 30
+        width: 760
+        height: 44
+        visible: root.subtitle !== ""
+
+        Text {
+            id: subText
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 0
+            font.family: root.fontFamily
+            font.pixelSize: 24
+            font.letterSpacing: 4
+            color: T.primaryInk
+            text: root.subtitle
+        }
+        Rectangle {  // left rule
+            x: parent.width / 2 - 330
+            y: 15
+            width: 330 - subText.implicitWidth / 2 - 34
+            height: 2
+            color: T.divider
+            opacity: 0.55
+        }
+        Rectangle {  // left node
+            x: parent.width / 2 - subText.implicitWidth / 2 - 30
+            y: 11
+            width: 8; height: 8
+            color: T.divider
+            opacity: 0.8
+        }
+        Rectangle {  // right rule
+            x: parent.width / 2 + subText.implicitWidth / 2 + 22
+            y: 15
+            width: 330 - subText.implicitWidth / 2 - 34
+            height: 2
+            color: T.divider
+            opacity: 0.55
+        }
+        Rectangle {  // right node
+            x: parent.width / 2 + subText.implicitWidth / 2 + 22
+            y: 11
+            width: 8; height: 8
+            color: T.divider
+            opacity: 0.8
+        }
     }
 
     Rectangle {

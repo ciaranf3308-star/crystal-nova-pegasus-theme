@@ -33,9 +33,8 @@ FocusScope {
         anchors.left: parent.left
         anchors.right: parent.right
         fontFamily: root.fontFamily
-        title: root.screen === "system"
-               ? "CRYSTAL / " + (sysScreen.shortName || "").toUpperCase()
-               : "CRYSTAL"
+        title: "CRYSTAL"
+        subtitle: root.screen === "system" ? "PLAY MORE GAMES" : ""
     }
 
     FooterHints {
@@ -55,8 +54,6 @@ FocusScope {
         anchors.left: parent.left
         anchors.right: parent.right
         fontFamily: root.fontFamily
-        page: sysScreen.page
-        pageCount: sysScreen.pageCount
         showPlay: !sysScreen.isEmpty
         showInspect: sysScreen.inspectAvailable
         visible: root.screen === "system"
@@ -138,6 +135,9 @@ FocusScope {
         // Whenever the asynchronous index (re)load completes, bump the
         // library's art epoch so tile cover bindings re-evaluate.
         CrystalAssets.setIndexChangedHandler(function() { sysScreen.bumpArtEpoch() })
+        // Whenever a selected game's manifest metadata arrives, bump the
+        // meta epoch so the hero's meta line / description re-evaluate.
+        CrystalAssets.setMetaChangedHandler(function() { sysScreen.bumpMetaEpoch() })
         // Restore the last selected system across restarts. Pegasus reloads
         // the theme after a game exits; if we were inside a library, go
         // straight back there with the game selection intact.

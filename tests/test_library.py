@@ -87,7 +87,7 @@ STATE_SCENARIOS = [
     # down moves between rows
     ("lib-down",
      ["--enter", "--keys", "Down"],
-     {"gameIndex": "4", "gamePage": "0"},
+     {"gameIndex": "3", "gamePage": "0"},
      []),
     # up at the top row holds position
     ("lib-up-edge",
@@ -102,24 +102,24 @@ STATE_SCENARIOS = [
     # down on the last row holds position
     ("lib-down-edge",
      ["--enter", "--keys", "Down,Down"],
-     {"gameIndex": "4", "gamePage": "0"},
+     {"gameIndex": "6", "gamePage": "0"},
      []),
     # next page: 10-game library, right across the page boundary
     ("lib-next-page",
      ["--gameset", "ten", "--enter", "--keys",
-      "Right,Right,Right,Right,Right,Right,Right,Right"],
-     {"gameIndex": "8", "gamePage": "1", "gameCount": "10"},
+      "Right,Right,Right,Right,Right,Right,Right,Right,Right"],
+     {"gameIndex": "9", "gamePage": "1", "gameCount": "10"},
      []),
     # previous page: back across the boundary
     ("lib-prev-page",
      ["--gameset", "ten", "--enter", "--keys",
-      "Right,Right,Right,Right,Right,Right,Right,Right,Left"],
-     {"gameIndex": "7", "gamePage": "0"},
+      "Right,Right,Right,Right,Right,Right,Right,Right,Right,Left"],
+     {"gameIndex": "8", "gamePage": "0"},
      []),
     # partial final page: down lands on the last two slots
     ("lib-partial-page",
-     ["--gameset", "ten", "--enter", "--keys", "Down,Down"],
-     {"gameIndex": "8", "gamePage": "1", "gameCount": "10"},
+     ["--gameset", "ten", "--enter", "--keys", "Down,Down,Down"],
+     {"gameIndex": "9", "gamePage": "1", "gameCount": "10"},
      []),
     # down past the end of a partial page holds position
     ("lib-partial-down-edge",

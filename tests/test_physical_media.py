@@ -192,7 +192,7 @@ def check_gba_label_composition():
 
 
 def check_tile_no_physical():
-    # The 4x2 grid is pure production box-art again: no physical object
+    # The 3x3 grid is pure production box-art again: no physical object
     # in tiles, selected or otherwise.
     src = read(os.path.join(REPO, "components", "GameTile.qml"))
     assert "PhysicalObject" not in src, \

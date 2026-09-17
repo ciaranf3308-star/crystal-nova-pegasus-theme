@@ -11,8 +11,12 @@
     </linearGradient>
   </defs>
 
-  <!-- outer case -->
-  <rect x="0" y="0" width="680" height="950" rx="20" fill="url(#caseF)"/>
+  <!-- outer case frame with transparent window for the art:
+       four rects around the 26,26 628x898 window (no mask element) -->
+  <rect x="0" y="0" width="680" height="26" fill="url(#caseF)"/>
+  <rect x="0" y="924" width="680" height="26" fill="url(#caseF)"/>
+  <rect x="0" y="26" width="26" height="898" fill="url(#caseF)"/>
+  <rect x="654" y="26" width="26" height="898" fill="url(#caseF)"/>
 
   <!-- inner bevel -->
   <rect x="10" y="10" width="660" height="930" rx="14" fill="none" stroke="#2c3a4e" stroke-width="3"/>

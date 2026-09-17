@@ -4,9 +4,9 @@ import "../components/CrystalTheme.js" as T
 import "../components/PhysicalMedia"
 import "../components/PhysicalMedia/MediaTemplates.js" as MediaTemplates
 
-// Phase 2: per-system game library. 4x2 box-art grid driven by the real
-// Pegasus collection model — no demo content in production.
-// A launches the selected game via game.launch(); B returns home.
+// Library hero: selected-game detail panel on the left, 3x3 box-art
+// grid in a framed panel on the right. A launches the selected game
+// via game.launch(); B returns home.
 // Y (Details) opens the physical-media Inspect view on GBA/PS2 systems.
 Item {
     id: root
@@ -17,11 +17,12 @@ Item {
 
     // Bumped whenever the crystal index finishes (re)loading. Tile art
     // bindings depend on it, so covers upgrade without blocking first
-    // paint. The refresh itself is triggered by theme.qml's enterSystem();
-    // the one-shot onCompleted refresh that used to live here fired before
-    // CrystalAssets.configure() and was a guaranteed no-op.
+    // paint. The refresh itself is triggered by theme.qml's enterSystem().
     property int artEpoch: 0
     function bumpArtEpoch() { artEpoch++ }
+    // Bumped when a selected game's manifest metadata arrives.
+    property int metaEpoch: 0
+    function bumpMetaEpoch() { metaEpoch++ }
 
     // navigation / launch surface used by theme.qml
     function moveLeft()  { grid.moveLeft() }
@@ -50,8 +51,8 @@ Item {
         return {
             x: T.libTileX(slot % T.libCols),
             y: T.libTileY(Math.floor(slot / T.libCols)),
-            w: T.libCoverW,
-            h: T.libCoverH
+            w: T.gtileArtW,
+            h: T.gtileArtH + T.gtileTitleH
         }
     }
 
@@ -92,6 +93,116 @@ Item {
     readonly property int page: grid.page
     readonly property int pageCount: grid.pageCount
     readonly property int gameIndex: grid.currentIndex
+
+    // ---- left: selected-game detail hero ----
+    LibraryHero {
+        id: hero
+        x: 0; y: 0
+        width: 740; height: 844
+        collection: root.collection
+        game: grid.currentGame
+        shortName: root.shortName
+        fontFamily: root.fontFamily
+        artEpoch: root.artEpoch
+        metaEpoch: root.metaEpoch
+        visible: !root.isEmpty
+    }
+
+    // ---- right: framed grid panel ----
+    Item {
+        id: panel
+        x: T.panelX; y: T.panelY
+        width: T.panelW; height: T.panelH
+        visible: !root.isEmpty
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 16
+            color: "#0c2036"
+            border.width: 2
+            border.color: "#26456a"
+        }
+
+        // open corner brackets over the panel corners
+        Item {  // top-left
+            x: -7; y: -7; width: 32; height: 32
+            Rectangle { x: 0; y: 0; width: 32; height: 5; color: "#7ba7d9" }
+            Rectangle { x: 0; y: 0; width: 5; height: 32; color: "#7ba7d9" }
+        }
+        Item {  // top-right
+            x: parent.width - 25; y: -7; width: 32; height: 32
+            Rectangle { x: 0; y: 0; width: 32; height: 5; color: "#7ba7d9" }
+            Rectangle { x: 27; y: 0; width: 5; height: 32; color: "#7ba7d9" }
+        }
+        Item {  // bottom-left
+            x: -7; y: parent.height - 25; width: 32; height: 32
+            Rectangle { x: 0; y: 27; width: 32; height: 5; color: "#7ba7d9" }
+            Rectangle { x: 0; y: 0; width: 5; height: 32; color: "#7ba7d9" }
+        }
+        Item {  // bottom-right
+            x: parent.width - 25; y: parent.height - 25; width: 32; height: 32
+            Rectangle { x: 0; y: 27; width: 32; height: 5; color: "#7ba7d9" }
+            Rectangle { x: 27; y: 0; width: 5; height: 32; color: "#7ba7d9" }
+        }
+
+        // top row: L1 / SORT / R1
+        Rectangle {  // L1 mini keycap
+            x: 25; y: T.panelTopY - T.panelY
+            width: 46; height: 28
+            radius: 6
+            color: T.keycapFill
+            Text {
+                anchors.centerIn: parent
+                font.family: root.fontFamily
+                font.pixelSize: 16
+                color: T.keycapInk
+                text: "L1"
+            }
+        }
+        Rectangle {  // R1 mini keycap
+            x: parent.width - 25 - 46; y: T.panelTopY - T.panelY
+            width: 46; height: 28
+            radius: 6
+            color: T.keycapFill
+            Text {
+                anchors.centerIn: parent
+                font.family: root.fontFamily
+                font.pixelSize: 16
+                color: T.keycapInk
+                text: "R1"
+            }
+        }
+        Text {
+            x: 85
+            y: T.panelTopY - T.panelY + 1
+            font.family: root.fontFamily
+            font.pixelSize: 18
+            font.letterSpacing: 2
+            color: "#9fb2c2"
+            text: "SORT: NAME"
+        }
+        Text {
+            anchors.right: parent.right
+            anchors.rightMargin: 85
+            y: T.panelTopY - T.panelY + 1
+            font.family: root.fontFamily
+            font.pixelSize: 18
+            font.letterSpacing: 2
+            color: "#9fb2c2"
+            text: "FILTER: ALL"
+        }
+
+        // page indicator
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: T.pageY - T.panelY
+            font.family: root.fontFamily
+            font.pixelSize: 20
+            font.letterSpacing: 2
+            color: "#9fb2c2"
+            text: "\u25C0  " + (grid.page + 1) + " / " + grid.pageCount + "  \u25B6"
+        }
+    }
 
     GameGrid {
         id: grid
@@ -141,33 +252,6 @@ Item {
             font.letterSpacing: 2
             color: T.tileInk
             text: "ADD GAMES TO THIS COLLECTION"
-        }
-    }
-
-    // ---- selected game title ----------------------------------------------
-    // One clean elided line: predictable, firmware-like, never a metadata
-    // wall. (QML elide wins over wrapMode in this Qt build, so the title
-    // is deliberately single-line rather than a ragged two-line clip.)
-    Text {
-        id: gameTitle
-        objectName: "libraryGameTitle"
-        x: T.libGridX
-        y: T.libTitleY
-        width: T.canvasW - 2 * T.libGridX
-        height: T.libTitleH
-        verticalAlignment: Text.AlignVCenter
-        elide: Text.ElideRight
-        font.family: root.fontFamily
-        font.pixelSize: T.libTitlePx
-        font.letterSpacing: 2
-        color: T.primaryInk
-        visible: !root.isEmpty
-        text: {
-            var g = grid.currentGame
-            if (!g) return ""
-            var t = g.title || ""
-            if (t === "") return "UNTITLED"
-            return t.toUpperCase()
         }
     }
 }

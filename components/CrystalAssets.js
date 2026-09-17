@@ -181,6 +181,8 @@ function configure(baseUrl) {
     _index = null;
     _lastTextLen = -1;
     _requestSeq++; // invalidate any in-flight refresh against the old URL
+    _metaCache = {}; // manifests belong to the old media root
+    _bumpMeta();
     _notifyChanged();
 }
 
@@ -503,6 +505,76 @@ function tileFront(game, shortName) {
     return "";
 }
 
+// ---------------------------------------------------------------------------
+// Per-game editorial metadata.
+//
+// The scraper writes games/<platform>/<gameId>/manifest.json carrying
+// description/genre/players/releaseYear (see the Manager's ScraperJson).
+// The theme fetches the SELECTED game's manifest lazily — one small
+// request per newly selected game, cached by game key — and notifies
+// QML through the meta epoch (mirrors the art index pattern).
+// ---------------------------------------------------------------------------
+
+var _metaCache = {};       // gameKey -> {genre,players,year,description} ({} while in flight)
+var _metaEpoch = 0;
+var _onMetaChanged = null; // optional QML change-notification callback
+
+function setMetaChangedHandler(fn) {
+    _onMetaChanged = (typeof fn === "function") ? fn : null;
+}
+
+function metaEpoch() { return _metaEpoch; }
+
+function _bumpMeta() {
+    _metaEpoch++;
+    try { if (_onMetaChanged) _onMetaChanged(); } catch (e) { /* never break paint */ }
+}
+
+// Editorial metadata for a game: {} when unknown or still loading (the
+// fetch completes asynchronously and bumps the meta epoch, so QML
+// re-reads). Never throws; never blocks first paint.
+function gameMeta(game, shortName) {
+    var key = "";
+    try { key = gameKey(game, shortName); } catch (e) { return {}; }
+    if (!key) return {};
+    if (_metaCache.hasOwnProperty(key)) return _metaCache[key];
+    _metaCache[key] = {}; // placeholder: fetch in flight (or unavailable)
+    if (typeof XMLHttpRequest === "undefined" || !_baseUrl) {
+        _bumpMeta();
+        return _metaCache[key];
+    }
+    (function (k, url) {
+        try {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", url, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4) return;
+                var m = {};
+                try {
+                    if (xhr.status === 200 || xhr.status === 0) {
+                        var root = JSON.parse(xhr.responseText || "{}");
+                        if (root && typeof root === "object") {
+                            m = {
+                                genre: root.genre ? String(root.genre) : "",
+                                players: root.players ? String(root.players) : "",
+                                year: (root.releaseYear !== undefined && root.releaseYear !== null)
+                                      ? String(root.releaseYear) : "",
+                                description: root.description ? String(root.description) : ""
+                            };
+                        }
+                    }
+                } catch (e) { m = {}; }
+                _metaCache[k] = m;
+                _bumpMeta();
+            };
+            xhr.send();
+        } catch (e) {
+            _bumpMeta();
+        }
+    })(key, _baseUrl + "games/" + key + "/manifest.json");
+    return _metaCache[key];
+}
+
 // Detail-layer accessor for the future physical-case renderer: every
 // resolved crystal asset URL for a game ("") when absent. Provenance is
 // not exposed — display treats all assets identically.
@@ -542,6 +614,9 @@ try {
             logo: logo, screenshot: screenshot,
             tileFront: tileFront,
             details: details,
+            gameMeta: gameMeta,
+            setMetaChangedHandler: setMetaChangedHandler,
+            metaEpoch: metaEpoch,
             SLOT_FILES: SLOT_FILES
         };
     }

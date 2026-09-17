@@ -1,8 +1,8 @@
 import QtQuick 2.12
 import "CrystalTheme.js" as T
 
-// 4x2 box-art grid with clean paging. Renders only the current page
-// (8 tiles); D-pad navigation crosses page boundaries. Never lands on
+// 3x3 box-art grid with clean paging. Renders only the current page
+// (9 tiles); D-pad navigation crosses page boundaries. Never lands on
 // an invalid slot. Works from 0 to N games.
 Item {
     id: root
@@ -70,7 +70,7 @@ Item {
 
     Repeater {
         model: T.libPageSize
-        GameTile {
+        LibraryGameTile {
             x: T.libTileX(index % T.libCols)
             y: T.libTileY(Math.floor(index / T.libCols))
             selected: root.pageStart + index === root.currentIndex

@@ -116,27 +116,62 @@ var footerLetterSpacing = 3;
 var labelLetterSpacing  = 2;
 
 // ----------------------------------------------------------------
-// Phase 2: game library geometry (measured against the Phase 1.7 home
-// screen so the library reads as the next screen of the same firmware).
-// 4 columns x 2 rows of box art; selected-game title above the footer;
-// footer keeps the Phase 1.7 divider/keycap geometry.
-var libCoverW = 248;
-var libCoverH = 290;
-var libGridX  = 60;
-var libGridY  = 116;
-var libColGap = 56;
-var libRowGap = 34;
-var libCols   = 4;
-var libRows   = 2;
-var libPageSize = 8;
+// Library hero (measured from the 2026-09-18 library hero, 1448x1086
+// normalized to 1280x960 @0.884). Two-panel library: selected-game
+// detail hero on the left, 3x3 game grid in a framed panel right.
+// ----------------------------------------------------------------
+// Left hero panel
+var heroLeftX = 28;
+var heroLeftW = 672;             // 28..700
+var heroTopY  = 100;
+var heroKickerPx = 18;
+var heroKickerY  = 108;
+var sysTitlePx = 54;
+var sysTitleY  = 132;
+var sysSubPx   = 22;
+var sysSubY    = 195;
+var taglinePx  = 22;
+var compY      = 225;            // physical-media composition zone
+var compH      = 350;
+var selKickerY = 628;
+var selTitlePx = 42;
+var selTitleY  = 660;
+var metaPx     = 20;
+var metaY      = 726;
+var descPx     = 18;
+var descY      = 758;
+var descW      = 340;
+var shotsX     = 420;
+var shotsY     = 726;
+var shotSize   = 76;
 
-function libTileX(col) { return libGridX + col * (libCoverW + libColGap); }
-function libTileY(row) { return libGridY + row * (libCoverH + libRowGap); }
+// Right grid panel (framed)
+var panelX = 745;
+var panelY = 108;
+var panelW = 480;
+var panelH = 728;                // 108..836
+var panelTopY = 124;             // L1 / SORT / R1 row
 
-// Selected-game title area: sits between the grid and the footer divider.
-var libTitleY = 742;
-var libTitleH = 58;              // room for two lines at 26px
-var libTitlePx = 26;
+// Grid: 3x3 tiles; each tile is box art with the title set below it.
+var libCols   = 3;
+var libRows   = 3;
+var libPageSize = 9;
+var gtileArtW = 128;
+var gtileArtH = 160;
+var gtileTitleH = 34;
+var gtileColGap = 18;
+var gtileRowGap = 14;
+var libGridX  = 775;
+var libGridY  = 176;
+
+function libTileX(col) { return libGridX + col * (gtileArtW + gtileColGap); }
+function libTileY(row) { return libGridY + row * (gtileArtH + gtileTitleH + gtileRowGap); }
+
+var pageY = 800;                 // page indicator baseline row
+
+// Library footer divider sits lower than the home one (hero-measured:
+// divider y955/1086 -> 844).
+var libFooterDividerY = 844;
 
 // Game tile frame: dark inner edge + cream outer frame on selection,
 // with the same viewfinder corner-bracket language as the system tiles.

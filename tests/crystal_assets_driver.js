@@ -261,9 +261,10 @@ FakeXHR.prototype.open = function (method, url, async) {
     this._url = url;
     this._async = async;
     this.readyState = 1;
-    check("open is async GET of index.json or the bridge file",
+    check("open is async GET of index.json, bridge file, or manifest",
         async === true && (url.slice(-10) === "index.json" ||
-            url.slice(-25) === "crystal-media-bridge.json"));
+            url.slice(-25) === "crystal-media-bridge.json" ||
+            url.slice(-13) === "manifest.json"));
 };
 FakeXHR.prototype.send = function () { /* completed manually below */ };
 function completeXHR(xhr, status, text) {
@@ -438,6 +439,28 @@ const goldenGame = { title: "Mario Golf: Advance Tour",
     eq("fixture index.json exists",
         fs.existsSync(path.join(treeRoot, "index.json")), true);
 });
+A.configure(BASE); // restore
+
+// --- 13. per-game manifest metadata (gameMeta) ---------------------------------
+// gameMeta() reads <media-root>/games/<platform>/<gameId>/manifest.json
+// lazily, caches per game key, and bumps metaEpoch on completion.
+// Missing manifests degrade to {} without throwing.
+(function () {
+    var game = { title: "Mario Golf: Advance Tour",
+        files: [{ name: "Mario Golf - Advance Tour (USA).gba" }] };
+    // prime the index so gameKey resolves
+    A.configure(BASE);
+    // gameMeta with no manifest fetched yet returns {} (placeholder)
+    var m1 = A.gameMeta(game, "gba");
+    eq("gameMeta missing manifest -> object", typeof m1, "object");
+    // metaEpoch starts at 0 and is a number
+    eq("metaEpoch is number", typeof A.metaEpoch(), "number");
+    // changing media root clears the cache (configure bumps epoch)
+    var e1 = A.metaEpoch();
+    A.configure(BASE + "/");
+    var e2 = A.metaEpoch();
+    eq("configure clears meta cache (epoch bumps)", e2 > e1, true);
+})();
 A.configure(BASE); // restore
 
 // --- report --------------------------------------------------------------------

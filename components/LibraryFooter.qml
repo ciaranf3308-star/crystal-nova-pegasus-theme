@@ -1,22 +1,21 @@
 import QtQuick 2.12
 import "CrystalTheme.js" as T
 
-// Library footer: same divider/keycap geometry as the Phase 1.7 home
-// footer. Left: [B] BACK. Right: [A] PLAY. A quiet page indicator sits
-// centred, visible only when the library spans more than one page.
-// GBA/PS2 libraries add [Y] INSPECT between BACK and the centre.
+// Library footer (2026-09-18 hero): divider above the keycap row, then
+// [B] BACK left, section tabs centred (GAMES · SYSTEMS · SETUP · PLAY),
+// [A] PLAY right. GBA/PS2 libraries add [Y] INSPECT after BACK.
 Item {
     id: root
     // spans from the footer divider to the bottom of the screen
-    height: T.canvasH - T.footerDividerY
+    height: T.canvasH - T.libFooterDividerY
 
     property string fontFamily: "monospace"
-    property int page: 0
-    property int pageCount: 1
     // Hidden on the empty-collection state — there is nothing to play.
     property bool showPlay: true
     // Physical-media Inspect prompt: GBA/PS2 libraries only.
     property bool showInspect: false
+
+    readonly property int rowY: 38
 
     Rectangle {
         x: T.margin
@@ -24,18 +23,20 @@ Item {
         y: 0
         height: T.footerDividerH
         color: T.divider
+        opacity: 0.7
     }
 
     Keycap {
-        x: T.keycapL1X
-        y: T.keycapY
+        x: T.keycapL1X + 15
+        y: root.rowY - 5
         fontFamily: root.fontFamily
+        circle: true
         text: "B"
     }
 
     Text {
         x: T.recentX
-        y: T.keycapY
+        y: root.rowY + 6
         font.family: root.fontFamily
         font.pixelSize: T.fontFooterPx
         font.letterSpacing: T.footerLetterSpacing
@@ -44,16 +45,17 @@ Item {
     }
 
     Keycap {
-        x: 360
-        y: T.keycapY
+        x: 375
+        y: root.rowY - 5
         fontFamily: root.fontFamily
+        circle: true
         text: "Y"
         visible: root.showInspect
     }
 
     Text {
         x: 455
-        y: T.keycapY
+        y: root.rowY + 6
         font.family: root.fontFamily
         font.pixelSize: T.fontFooterPx
         font.letterSpacing: T.footerLetterSpacing
@@ -62,33 +64,33 @@ Item {
         visible: root.showInspect
     }
 
+    Text {
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: root.rowY + 8
+        font.family: root.fontFamily
+        font.pixelSize: 20
+        font.letterSpacing: 2
+        color: "#6a8499"
+        text: "GAMES   \u00B7   SYSTEMS   \u00B7   SETUP   \u00B7   PLAY"
+    }
+
     Keycap {
-        x: T.keycapR1X
-        y: T.keycapY
+        x: parent.width - 207
+        y: root.rowY - 5
         fontFamily: root.fontFamily
+        circle: true
         text: "A"
         visible: root.showPlay
     }
 
     Text {
-        x: T.favouritesX
-        y: T.keycapY
+        x: parent.width - 128
+        y: root.rowY + 6
         font.family: root.fontFamily
         font.pixelSize: T.fontFooterPx
         font.letterSpacing: T.footerLetterSpacing
         color: T.tileInk
         text: "PLAY"
         visible: root.showPlay
-    }
-
-    Text {
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: T.keycapY
-        font.family: root.fontFamily
-        font.pixelSize: T.fontFooterPx - 8
-        color: T.tileInk
-        opacity: 0.7
-        visible: root.pageCount > 1
-        text: (root.page + 1) + " / " + root.pageCount
     }
 }

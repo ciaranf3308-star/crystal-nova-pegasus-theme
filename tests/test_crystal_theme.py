@@ -167,31 +167,28 @@ def main():
           "SIL Open Font License" in lic)
 
     print("phase 2 library geometry")
-    # 4x2 grid fits between header and footer inside the canvas margins
-    cw, ch = g("libCoverW"), g("libCoverH")
+    # 3x3 grid fits between header and footer inside the canvas margins
+    cw, ch = g("gtileArtW"), g("gtileArtH")
     gx, gy = g("libGridX"), g("libGridY")
     cols, rows = g("libCols"), g("libRows")
-    check("library is 4x2", cols == 4 and rows == 2, f"{cols}x{rows}")
-    check("page size is 8", g("libPageSize") == cols * rows)
-    gridW = cols * cw + (cols - 1) * g("libColGap")
-    gridH = rows * ch + (rows - 1) * g("libRowGap")
+    check("library is 3x3", cols == 3 and rows == 3, f"{cols}x{rows}")
+    check("page size is 9", g("libPageSize") == cols * rows)
+    # 3x3 grid uses gtile* metrics
+    colGap, rowGap = g("gtileColGap"), g("gtileRowGap")
+    gridW = cols * cw + (cols - 1) * colGap
+    gridH = rows * (ch + g("gtileTitleH")) + (rows - 1) * rowGap
     check("library grid inside horizontal margins",
           gx >= g("margin") and gx + gridW <= W - g("margin"),
           f"x={gx} w={gridW}")
     check("library grid below header",
           gy >= g("headerH"), f"y={gy}")
-    check("library grid above title area",
-          gy + gridH <= g("libTitleY"), f"bottom={gy + gridH}")
-    check("title area above footer divider",
-          g("libTitleY") + g("libTitleH") <= g("footerDividerY"),
-          f"title bottom={g('libTitleY') + g('libTitleH')}")
     # tile helper functions agree with the constants
     check("tile helpers consistent",
           engine.evaluate("libTileX(0)").toNumber() == gx and
-          engine.evaluate("libTileX(3)").toNumber() ==
-          gx + 3 * (cw + g("libColGap")) and
+          engine.evaluate("libTileX(2)").toNumber() ==
+          gx + 2 * (cw + colGap) and
           engine.evaluate("libTileY(1)").toNumber() ==
-          gy + 1 * (ch + g("libRowGap")))
+          gy + 1 * (ch + g("gtileTitleH") + rowGap))
 
     print()
     if failures:

@@ -3,13 +3,16 @@ import "CrystalTheme.js" as T
 
 // Footer keycap: light pill with stepped pixel corners, dark navy glyphs.
 // Measured from the hero: 82x41, "L1" / "R1" centered, subtle darker rim.
+// Face buttons (A/B/Y) are circles, like a real gamepad.
 Item {
     id: root
-    width: T.keycapW
-    height: T.keycapH
+    width: root.circle ? root.diameter : T.keycapW
+    height: root.circle ? root.diameter : T.keycapH
 
     property string text: ""
     property string fontFamily: "monospace"
+    property bool circle: false
+    property int diameter: 52
 
     Canvas {
         id: cap
@@ -18,6 +21,16 @@ Item {
             var ctx = getContext("2d");
             ctx.reset();
             var w = width, h = height;
+            if (root.circle) {
+                ctx.beginPath();
+                ctx.arc(w / 2, h / 2, w / 2 - 1, 0, Math.PI * 2);
+                ctx.fillStyle = T.keycapFill;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#a9bccd";
+                ctx.stroke();
+                return;
+            }
             // stepped pixel corners: two 4px steps
             var s = 4;
             ctx.beginPath();
