@@ -38,7 +38,13 @@ Given a ROM file name (or any string):
 8. Trailing `, the` / `, a` / `, an` moves to the front
    (`"zelda, the"` → `"the zelda"`).
 9. Replace every run of non-`[a-z0-9]` with `-`; trim leading/trailing
-   `-`. Empty result becomes `"game"`.
+   `-`. When the ASCII fold erased everything (pure-CJK or
+   punctuation-only names), the id is `"game-"` + the FNV-1a 32-bit
+   hash (lowercase hex, 8 digits) of the Unicode-tolerant
+   normalization (step 1–2, tag strip, lowercase, `_`→space,
+   whitespace collapsed — non-ASCII kept); a whitespace-only result
+   there falls back to hashing the extension-stripped basename.
+   (`"ポケットモンスター.gba"` → `"game-c6b2a7b6"`.)
 
 Reference fixtures generated from the real Kotlin implementation live
 in `tests/fixtures/u2_gameid_fixtures.json`. The theme's

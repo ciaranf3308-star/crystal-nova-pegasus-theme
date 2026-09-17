@@ -401,6 +401,45 @@ eq("no-XHR environment configures fallback", resolvedFront(),
 global.XMLHttpRequest = FakeXHR;
 A.configure(BASE); // restore default state for the report
 
+// --- 12. shared golden contract: Manager fixture -> exact theme URLs -----
+// The golden fixture is the single shared scraper->theme contract. The
+// Manager's ScraperThemeContractTest pins every value in it against
+// real production code (TitleNormalizer, ScraperStorage.assetPath,
+// ScraperJson.indexEntryToJson); this section proves the theme
+// resolver requests exactly those files — in legacy mode AND in
+// dedicated MEDIA-root (bridge) mode — from the fixture's indexJson.
+// If either side drifts, its test fails.
+const golden = JSON.parse(fs.readFileSync(
+    path.join(REPO, "tests", "fixtures", "scraper_theme_contract_mario_golf.json"), "utf8"));
+const goldenGame = { title: "Mario Golf: Advance Tour",
+    files: [{ name: golden.romFileName }] };
+["legacy", "dedicated"].forEach(function (mode) {
+    A.configure(golden.baseUrls[mode]);
+    A.loadFromText(golden.indexJson);
+    const want = golden.expectedUrls[mode];
+    eq("golden front [" + mode + "]", A.front(goldenGame, "gba"), want.front);
+    eq("golden spine [" + mode + "]", A.spine(goldenGame, "gba"), want.spine);
+    eq("golden back [" + mode + "]", A.back(goldenGame, "gba"), want.back);
+    eq("golden media [" + mode + "]", A.media(goldenGame, "gba"), want.media);
+    // Missing slot in the index -> "" (graceful fallback, never a guess).
+    eq("golden absent slot [" + mode + "]", A.logo(goldenGame, "gba"), "");
+    // The golden fixture lists the exact on-disk paths the scraper
+    // writes; the deterministic fixture media tree must contain every
+    // one of them (front/spine/back/media + manifest) plus the root
+    // index.json. This closes the loop: path math AND real files.
+    const treeRoot = path.join(REPO, "tests", "fixtures", "media-tree");
+    Object.keys(golden.assetPaths).forEach(function (slot) {
+        const rel = golden.assetPaths[slot];
+        const abs = path.join(treeRoot, rel);
+        eq("fixture file exists: " + rel, fs.existsSync(abs), true);
+    });
+    eq("fixture manifest exists",
+        fs.existsSync(path.join(treeRoot, golden.manifestPath)), true);
+    eq("fixture index.json exists",
+        fs.existsSync(path.join(treeRoot, "index.json")), true);
+});
+A.configure(BASE); // restore
+
 // --- report --------------------------------------------------------------------
 if (failures.length > 0) {
     console.error("\nFAILURES (" + failures.length + "):");

@@ -42,7 +42,76 @@ function normalize(fileName) {
 function slugify(fileName) {
     var n = normalize(fileName);
     var s = n.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    return s === "" ? "game" : s;
+    if (s !== "") return s;
+    // The ASCII fold erased everything (pure-CJK or punctuation-only
+    // names). Fall back to a deterministic FNV-1a hash exactly like the
+    // Manager's TitleNormalizer, so distinct games still get distinct,
+    // stable ids instead of all collapsing to "game".
+    var uni = unicodeNormalize(fileName);
+    if (uni === "") {
+        // Whitespace-only after tag-stripping (e.g. " (E).gba"): fall
+        // back to the extension-stripped basename, per contract.
+        var b = String(fileName === undefined || fileName === null ? "" : fileName);
+        var i = Math.max(b.lastIndexOf("/"), b.lastIndexOf("\\"));
+        b = i >= 0 ? b.substring(i + 1) : b;
+        var dot = b.lastIndexOf(".");
+        uni = dot > 0 ? b.substring(0, dot) : b;
+    }
+    return "game-" + fnv1aHex(uni);
+}
+
+// Like normalize() but keeps non-ASCII letters/digits: strip
+// extension, strip tags, lowercase, collapse whitespace, trim.
+// Exact port of the Manager's TitleNormalizer.unicodeNormalize.
+function unicodeNormalize(fileName) {
+    var s = String(fileName === undefined || fileName === null ? "" : fileName);
+    var i = s.lastIndexOf("/");
+    if (i >= 0) s = s.substring(i + 1);
+    i = s.lastIndexOf("\\");
+    if (i >= 0) s = s.substring(i + 1);
+    var dot = s.lastIndexOf(".");
+    if (dot > 0) s = s.substring(0, dot);
+    s = s.replace(/[(\[][^)\]]*[)\]]/g, " ");
+    s = s.toLowerCase();
+    s = s.split("_").join(" ");
+    s = s.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+    return s;
+}
+
+// FNV-1a 32-bit over the UTF-8 bytes of s, as 8 lowercase hex chars.
+// Exact port of the Manager's TitleNormalizer.fnv1aHex: Math.imul
+// gives the 32-bit wraparound the Kotlin Int arithmetic has, and
+// (h >>> 0) renders it unsigned. Byte-for-byte identical to Kotlin
+// (verified against its "foobar" -> bf9cf968 test vector).
+function fnv1aHex(s) {
+    var h = 0x811c9dc5;
+    var str = String(s === undefined || s === null ? "" : s);
+    for (var i = 0; i < str.length; i++) {
+        var c = str.charCodeAt(i);
+        var bytes;
+        if (c < 0x80) {
+            bytes = [c];
+        } else if (c < 0x800) {
+            bytes = [0xc0 | (c >> 6), 0x80 | (c & 0x3f)];
+        } else if (c >= 0xd800 && c <= 0xdbff && i + 1 < str.length) {
+            var lo = str.charCodeAt(i + 1);
+            if (lo >= 0xdc00 && lo <= 0xdfff) {
+                var cp = 0x10000 + ((c - 0xd800) << 10) + (lo - 0xdc00);
+                bytes = [0xf0 | (cp >> 18), 0x80 | ((cp >> 12) & 0x3f),
+                         0x80 | ((cp >> 6) & 0x3f), 0x80 | (cp & 0x3f)];
+                i++;
+            } else {
+                bytes = [0xef, 0xbf, 0xbd]; // lone surrogate -> U+FFFD
+            }
+        } else {
+            bytes = [0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f)];
+        }
+        for (var j = 0; j < bytes.length; j++) {
+            h = h ^ bytes[j];
+            h = Math.imul(h, 0x01000193);
+        }
+    }
+    return (h >>> 0).toString(16).padStart(8, "0");
 }
 
 // ---------------------------------------------------------------------------
@@ -455,6 +524,8 @@ try {
         module.exports = {
             normalize: normalize,
             slugify: slugify,
+            unicodeNormalize: unicodeNormalize,
+            fnv1aHex: fnv1aHex,
             platformSlug: platformSlug,
             parseIndex: parseIndex,
             configure: configure,
