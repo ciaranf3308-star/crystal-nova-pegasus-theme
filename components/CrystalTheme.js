@@ -140,8 +140,8 @@ var metaPx     = 20;
 var metaY      = 726;
 var descPx     = 18;
 var descY      = 758;
-var descW      = 340;
-var shotsX     = 420;
+var descW      = 380;
+var shotsX     = 450;
 var shotsY     = 726;
 var shotSize   = 76;
 
@@ -171,7 +171,7 @@ var pageY = 800;                 // page indicator baseline row
 
 // Library footer divider sits lower than the home one (hero-measured:
 // divider y955/1086 -> 844).
-var libFooterDividerY = 844;
+var libFooterDividerY = 880;
 
 // Game tile frame: dark inner edge + cream outer frame on selection,
 // with the same viewfinder corner-bracket language as the system tiles.

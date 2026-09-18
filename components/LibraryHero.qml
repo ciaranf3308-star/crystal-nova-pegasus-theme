@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import QtGraphicalEffects 1.12
 import "CrystalTheme.js" as T
 import "CrystalAssets.js" as CrystalAssets
 import "SystemMeta.js" as SystemMeta
@@ -81,56 +82,66 @@ Item {
         catch (e) { return ""; }
     }
 
-    // ---- ambient backdrop: selected game's cover, dark and quiet ----
-    // Sits below the header (y 100+) so it never dims the status bar.
-    Image {
-        id: ambientBg
-        x: T.heroLeftX; y: T.heroTopY
-        width: T.heroLeftW; height: 700
-        fillMode: Image.PreserveAspectCrop
-        smooth: true
-        asynchronous: true
-        source: root.ambientArt
-        opacity: 0.18
-        visible: source !== "" && status === Image.Ready
-    }
-    Rectangle {
-        x: T.heroLeftX; y: T.heroTopY
-        width: T.heroLeftW; height: 700
-        visible: ambientBg.visible
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#0a1929"; }
-            GradientStop { position: 0.18; color: "#0a192900"; }
-            GradientStop { position: 0.82; color: "#0a192900"; }
-            GradientStop { position: 1.0; color: "#0a1929"; }
-        }
-        opacity: 0.6
-    }
+    // ---- (dynamic per-game atmosphere is below; this old quiet
+    // backdrop is removed to avoid double-layering) ----
 
-    // ---- scenic environment: crisp system-specific backdrop ----
-    // GBA uses the golden-hour golf landscape (matches the reference
-    // hero 1-to-1). PS2 uses a dark neutral gradient — never the GBA
-    // golf course (user: "same on all games" was wrong).
-    Image {
+    // ---- dynamic per-game atmosphere: selected game's art ----
+    // Each game gets its own environmental feel (user: "same on all
+    // games" was wrong). The art is shown full-bleed, softened by
+    // darkening and warm grading for the premium feel. On device,
+    // FastBlur provides the softening; the dark overlays ensure
+    // readability in all cases.
+    Item {
         x: 0; y: 92
         width: 1280; height: 628
-        source: "../assets/hero/gba-backdrop.png"
-        fillMode: Image.PreserveAspectCrop
-        smooth: true
-        asynchronous: true
-        opacity: 1.0
-        visible: root.shortName === "gba"
+        visible: root.ambientArt !== ""
+
+        Image {
+            id: atmoSource
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+            smooth: true
+            asynchronous: true
+            cache: true
+            source: root.ambientArt
+            opacity: 0.50
+        }
+        // Softens the art into an environmental wash on real hardware.
+        // (The desktop preview shim leaves FastBlur transparent, so the
+        // source Image shows through there.)
+        FastBlur {
+            anchors.fill: parent
+            source: atmoSource
+            radius: 48
+        }
+        // darken for text readability — lighter than before to keep the
+        // vibrant, premium feel of the reference hero
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: "#0a141fb3" }
+                GradientStop { position: 0.35; color: "#0a141f73" }
+                GradientStop { position: 0.65; color: "#0a141f59" }
+                GradientStop { position: 1.0; color: "#060d18b3" }
+            }
+        }
+        // warm golden-hour grade — stronger for the reference's warmth
+        Rectangle {
+            anchors.fill: parent
+            color: "#ff9a3c"
+            opacity: 0.12
+        }
     }
-    // PS2: dark neutral atmosphere (not the GBA golf course)
+    // Fallback: system-specific gradient when no art is available
     Rectangle {
         x: 0; y: 92
         width: 1280; height: 628
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#0a1420" }
-            GradientStop { position: 0.6; color: "#0d1a2a" }
+            GradientStop { position: 0.0; color: "#0e1a2a" }
+            GradientStop { position: 0.5; color: "#0c1626" }
             GradientStop { position: 1.0; color: "#060d18" }
         }
-        visible: root.shortName === "ps2"
+        visible: root.ambientArt === ""
     }
 
     // Scrim behind the system title for readability over the bright
@@ -257,7 +268,7 @@ Item {
         color: "#a9c0d4"
         lineHeight: 1.35
         wrapMode: Text.WordWrap
-        maximumLineCount: 6
+        maximumLineCount: 5
         elide: Text.ElideRight
         text: root.description
         visible: root.description !== ""
