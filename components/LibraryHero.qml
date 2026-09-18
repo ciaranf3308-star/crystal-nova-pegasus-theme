@@ -170,25 +170,8 @@ Item {
         text: root.subLine
     }
 
-    // script tagline (italic mono — no script face is bundled).
-    // Positioned to clear the castle; brighter for readability.
-    Text {
-        x: T.heroLeftX + 380; y: 205
-        width: 290
-        horizontalAlignment: Text.AlignRight
-        font.family: root.fontFamily
-        font.pixelSize: T.taglinePx
-        font.italic: true
-        color: "#ffffff"
-        opacity: 0.95
-        style: Text.Outline
-        styleColor: "#0a1626"
-        lineHeight: 1.25
-        wrapMode: Text.WordWrap
-        text: {
-            try { return root.sysMeta.tagline || ""; } catch (e) { return ""; }
-        }
-    }
+    // (tagline removed 2026-09-18: caused text overlap/clipping with
+    // the subline and the 3D box; the subline carries the system info)
 
     // Scrim behind the system title for readability over the bright backdrop.
     Rectangle {

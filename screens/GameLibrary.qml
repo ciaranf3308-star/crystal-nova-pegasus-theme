@@ -145,35 +145,9 @@ Item {
             Rectangle { x: 27; y: 0; width: 5; height: 32; color: "#7ba7d9" }
         }
 
-        // top row: L1 / SORT / R1
-        Rectangle {  // L1 mini keycap
-            x: 25; y: T.panelTopY - T.panelY
-            width: 46; height: 28
-            radius: 6
-            color: T.keycapFill
-            Text {
-                anchors.centerIn: parent
-                font.family: root.fontFamily
-                font.pixelSize: 16
-                color: T.keycapInk
-                text: "L1"
-            }
-        }
-        Rectangle {  // R1 mini keycap
-            x: parent.width - 25 - 46; y: T.panelTopY - T.panelY
-            width: 46; height: 28
-            radius: 6
-            color: T.keycapFill
-            Text {
-                anchors.centerIn: parent
-                font.family: root.fontFamily
-                font.pixelSize: 16
-                color: T.keycapInk
-                text: "R1"
-            }
-        }
+        // top row: sort / filter info (L1/R1 removed — they had no function)
         Text {
-            x: 85
+            x: 25
             y: T.panelTopY - T.panelY + 1
             font.family: root.fontFamily
             font.pixelSize: 18
@@ -183,7 +157,7 @@ Item {
         }
         Text {
             anchors.right: parent.right
-            anchors.rightMargin: 85
+            anchors.rightMargin: 25
             y: T.panelTopY - T.panelY + 1
             font.family: root.fontFamily
             font.pixelSize: 18
