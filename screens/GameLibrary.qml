@@ -32,6 +32,24 @@ Item {
     function reset()     { grid.reset() }
     function setGameIndex(i) { grid.setIndex(i) }
 
+    // ---- sort / filter (L1/R1) --------------------------------------------
+    // L1 cycles sort mode, R1 cycles filter mode. Both are real: the
+    // grid rebuilds its index map when these change.
+    property int sortMode: 0    // 0=Name A-Z, 1=Name Z-A
+    property int filterMode: 0  // 0=All, 1=Favorites
+    readonly property var sortLabels: ["OFF", "A-Z", "Z-A"]
+    readonly property var filterLabels: ["ALL", "FAVS"]
+    readonly property string sortLabel: sortLabels[sortMode] || "OFF"
+    readonly property string filterLabel: filterLabels[filterMode] || "ALL"
+    function cycleSort() {
+        sortMode = (sortMode + 1) % sortLabels.length
+        grid.reset()
+    }
+    function cycleFilter() {
+        filterMode = (filterMode + 1) % filterLabels.length
+        grid.reset()
+    }
+
     // ---- physical-media Inspect -------------------------------------------
     // Available only for the GBA/PS2 families and only when Pegasus
     // exposes the Details key; every other system keeps the production
@@ -145,25 +163,58 @@ Item {
             Rectangle { x: 27; y: 0; width: 5; height: 32; color: "#7ba7d9" }
         }
 
-        // top row: sort / filter info (L1/R1 removed — they had no function)
+        // top row: L1 / SORT / FILTER / R1
+        // L1 cycles sort mode, R1 cycles filter mode (both functional).
+        Rectangle {  // L1 keycap
+            x: 25; y: T.panelTopY - T.panelY
+            width: 46; height: 28
+            radius: 6
+            color: T.keycapFill
+            border.width: 1
+            border.color: "#3a5a7a"
+            Text {
+                anchors.centerIn: parent
+                font.family: root.fontFamily
+                font.pixelSize: 16
+                font.bold: true
+                color: "#ffffff"
+                text: "L1"
+            }
+        }
+        Rectangle {  // R1 keycap
+            x: parent.width - 25 - 46; y: T.panelTopY - T.panelY
+            width: 46; height: 28
+            radius: 6
+            color: T.keycapFill
+            border.width: 1
+            border.color: "#3a5a7a"
+            Text {
+                anchors.centerIn: parent
+                font.family: root.fontFamily
+                font.pixelSize: 16
+                font.bold: true
+                color: "#ffffff"
+                text: "R1"
+            }
+        }
         Text {
-            x: 25
+            x: 85
             y: T.panelTopY - T.panelY + 1
             font.family: root.fontFamily
             font.pixelSize: 18
             font.letterSpacing: 2
             color: "#9fb2c2"
-            text: "SORT: NAME"
+            text: "SORT: " + root.sortLabel
         }
         Text {
             anchors.right: parent.right
-            anchors.rightMargin: 25
+            anchors.rightMargin: 85
             y: T.panelTopY - T.panelY + 1
             font.family: root.fontFamily
             font.pixelSize: 18
             font.letterSpacing: 2
             color: "#9fb2c2"
-            text: "FILTER: ALL"
+            text: "FILTER: " + root.filterLabel
         }
 
         // page indicator
@@ -186,6 +237,8 @@ Item {
         shortName: root.shortName
         fontFamily: root.fontFamily
         artEpoch: root.artEpoch
+        sortMode: root.sortMode
+        filterMode: root.filterMode
         visible: !root.isEmpty
     }
 

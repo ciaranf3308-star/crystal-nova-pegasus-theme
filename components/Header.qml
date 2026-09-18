@@ -18,6 +18,14 @@ Item {
     // keeps the plain "CRYSTAL" brand.
     property string title: "CRYSTAL"
 
+    // Solid background — the reference hero has an opaque dark top bar;
+    // without this the scenic backdrop bleeds through and washes out
+    // the brand text (1-to-1 comparison 2026-09-18).
+    Rectangle {
+        anchors.fill: parent
+        color: "#081120"
+    }
+
     Text {
         id: brand
         text: root.title

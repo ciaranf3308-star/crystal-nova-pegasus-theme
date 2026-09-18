@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="430" viewBox="0 0 700 430">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d5fae"/>
+      <stop offset="0.55" stop-color="#6fb3e8"/>
+      <stop offset="0.8" stop-color="#cfe8f2"/>
+      <stop offset="1" stop-color="#f7e3b0"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fffbe8" stop-opacity="0.95"/>
+      <stop offset="0.35" stop-color="#ffefc0" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffefc0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="farHill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4d8a68"/>
+      <stop offset="1" stop-color="#2e5c44"/>
+    </linearGradient>
+    <linearGradient id="nearHill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3c7a52"/>
+      <stop offset="1" stop-color="#1e4028"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#274b5e" stop-opacity="0.9"/>
+      <stop offset="0.4" stop-color="#12242f"/>
+      <stop offset="1" stop-color="#060d14"/>
+    </linearGradient>
+    <radialGradient id="vign" cx="0.5" cy="0.46" r="0.75">
+      <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#04101c" stop-opacity="0.88"/>
+    </radialGradient>
+  </defs>
+
+  <!-- sky -->
+  <rect x="0" y="0" width="700" height="430" fill="url(#sky)"/>
+  <!-- sun glow upper right -->
+  <ellipse cx="520" cy="105" rx="150" ry="120" fill="url(#sun)"/>
+  <circle cx="520" cy="105" r="34" fill="#fffdf2" opacity="0.95"/>
+
+  <!-- clouds -->
+  <g fill="#ffffff" opacity="0.55">
+    <ellipse cx="150" cy="70" rx="70" ry="18"/>
+    <ellipse cx="200" cy="60" rx="50" ry="14"/>
+    <ellipse cx="420" cy="48" rx="80" ry="16"/>
+    <ellipse cx="620" cy="180" rx="60" ry="13" opacity="0.7"/>
+    <ellipse cx="90" cy="150" rx="55" ry="12" opacity="0.7"/>
+  </g>
+
+  <!-- far hills -->
+  <path d="M0,250 Q120,190 260,235 Q400,280 520,225 Q620,190 700,230 L700,430 L0,430 Z" fill="url(#farHill)" opacity="0.9"/>
+  <!-- castle hill right -->
+  <path d="M430,250 Q520,180 640,215 Q680,228 700,235 L700,430 L430,430 Z" fill="#356b4c"/>
+  <!-- castle silhouette -->
+  <g fill="#5a5a72" opacity="0.95">
+    <rect x="548" y="150" width="52" height="70"/>
+    <rect x="536" y="165" width="24" height="55"/>
+    <rect x="588" y="165" width="24" height="55"/>
+    <polygon points="548,150 574,128 600,150"/>
+    <polygon points="536,165 548,148 560,165"/>
+    <polygon points="588,165 600,148 612,165"/>
+    <rect x="560" y="105" width="28" height="45"/>
+    <polygon points="560,105 574,88 588,105"/>
+  </g>
+  <g fill="#f7e3b0" opacity="0.8">
+    <rect x="568" y="118" width="6" height="10"/>
+    <rect x="542" y="176" width="5" height="8"/>
+    <rect x="594" y="176" width="5" height="8"/>
+  </g>
+
+  <!-- near hills -->
+  <path d="M0,290 Q150,240 320,285 Q470,325 560,290 Q640,265 700,290 L700,430 L0,430 Z" fill="url(#nearHill)"/>
+
+  <!-- tree clusters -->
+  <g fill="#1c3a26">
+    <polygon points="60,300 85,240 110,300"/>
+    <polygon points="95,310 120,255 145,310"/>
+    <polygon points="30,315 55,265 80,315"/>
+    <polygon points="640,310 665,250 690,310"/>
+    <polygon points="605,320 628,270 651,320"/>
+  </g>
+  <g fill="#2a5232">
+    <polygon points="70,295 88,250 106,295"/>
+    <polygon points="648,305 664,262 680,305"/>
+  </g>
+
+  <!-- reflective floor -->
+  <rect x="0" y="300" width="700" height="130" fill="url(#floor)"/>
+  <!-- warm light pool where the box sits -->
+  <ellipse cx="280" cy="360" rx="220" ry="60" fill="#ffdf9e" opacity="0.14"/>
+
+  <!-- vignette to melt into the dark theme -->
+  <rect x="0" y="0" width="700" height="430" fill="url(#vign)"/>
+</svg>

@@ -86,8 +86,13 @@ Item {
         height: T.gtileTitleH - 6
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignTop
+        // Long titles wrap to 2 lines then shrink to fit — never "..."
+        // (1-to-1: reference shows full game names, never clipped).
+        wrapMode: Text.WordWrap
+        maximumLineCount: 2
         elide: Text.ElideRight
-        maximumLineCount: 1
+        fontSizeMode: Text.Fit
+        minimumPixelSize: 10
         font.family: root.fontFamily
         font.pixelSize: 17
         font.letterSpacing: 1

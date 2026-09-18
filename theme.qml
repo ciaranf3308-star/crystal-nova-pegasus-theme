@@ -196,6 +196,16 @@ FocusScope {
                 event.accepted = true
                 sysScreen.openInspect()
             }
+            // L1/R1: cycle sort / filter. Both are real — the grid
+            // rebuilds its display index map on change.
+            else if (!event.isAutoRepeat && api.keys.isPrevPage(event)) {
+                event.accepted = true
+                sysScreen.cycleSort()
+            }
+            else if (!event.isAutoRepeat && api.keys.isNextPage(event)) {
+                event.accepted = true
+                sysScreen.cycleFilter()
+            }
             return
         }
 

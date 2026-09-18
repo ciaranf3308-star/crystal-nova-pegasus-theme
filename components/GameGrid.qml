@@ -16,20 +16,58 @@ Item {
     // (re)load completes, tiles re-resolve their cover art.
     property int artEpoch: 0
 
+    // Sort/filter state from GameLibrary (L1/R1). The grid builds a
+    // display index map so sort/filter are real, not just labels.
+    // sortMode: 0=Original (Pegasus order), 1=Name A-Z, 2=Name Z-A
+    property int sortMode: 0
+    property int filterMode: 0  // 0=All, 1=Favorites
+
+    // Maps display position -> model index, applying filter then sort.
+    // Rebuilt when games, sortMode, or filterMode change.
+    readonly property var indexMap: {
+        // Depend on the inputs so the binding re-evaluates.
+        var sm = root.sortMode, fm = root.filterMode, g = root.games;
+        if (!g) return [];
+        var n = 0;
+        try { n = g.count; } catch (e) { return []; }
+        if (typeof n !== "number" || n <= 0) return [];
+        var indices = [];
+        for (var i = 0; i < n; i++) {
+            var game = null;
+            try { game = g.get(i); } catch (e) { continue; }
+            if (!game) continue;
+            if (fm === 1) {
+                var fav = false;
+                try { fav = !!game.favorite; } catch (e) {}
+                if (!fav) continue;
+            }
+            indices.push(i);
+        }
+        // Sort by title (locale-aware). Mode 0 keeps Pegasus order.
+        if (sm === 1 || sm === 2) {
+            var desc = (sm === 2);
+            indices.sort(function(a, b) {
+                var ta = "", tb = "";
+                try { ta = (g.get(a).title || "").toString(); } catch (e) {}
+                try { tb = (g.get(b).title || "").toString(); } catch (e) {}
+                var c = ta.localeCompare(tb);
+                return desc ? -c : c;
+            });
+        }
+        return indices;
+    }
+
     property int currentIndex: 0
 
-    readonly property int count: {
-        if (!root.games) return 0
-        var c = root.games.count
-        return (typeof c === "number" && c > 0) ? c : 0
-    }
+    readonly property int count: root.indexMap.length
     readonly property int page: Math.floor(root.currentIndex / T.libPageSize)
     readonly property int pageCount: Math.ceil(root.count / T.libPageSize)
     readonly property int pageStart: root.page * T.libPageSize
 
     function gameAt(i) {
-        if (!root.games || i < 0 || i >= root.count) return null
-        try { return root.games.get(i) } catch (e) { return null }
+        if (i < 0 || i >= root.indexMap.length) return null
+        var modelIdx = root.indexMap[i]
+        try { return root.games.get(modelIdx) } catch (e) { return null }
         return null
     }
 

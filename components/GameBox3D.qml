@@ -79,8 +79,8 @@ Item {
 
         Item {
             id: box3d
-            x: 80; y: 22
-            scale: 1.06
+            x: 60; y: 10
+            scale: 1.42
             transformOrigin: Item.TopLeft
 
             // front face: cover art. The box depth comes from the
@@ -123,8 +123,8 @@ Item {
             }
             // spine title text, vertical
             Text {
-                x: -30; y: 100
-                width: 24; height: 120
+                x: -30; y: 60
+                width: 24; height: 180
                 rotation: -90
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter

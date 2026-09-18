@@ -107,31 +107,42 @@ Item {
         opacity: 0.6
     }
 
-    // ---- scenic environment: per-game atmosphere ----
-    // The selected game's art, heavily blurred and darkened, fills the
-    // hero as a full-bleed backdrop. This gives every game its own
-    // atmosphere instead of one static image for all.
+    // ---- scenic environment: crisp system-specific backdrop ----
+    // GBA uses the golden-hour golf landscape (matches the reference
+    // hero 1-to-1). PS2 uses a dark neutral gradient — never the GBA
+    // golf course (user: "same on all games" was wrong).
     Image {
-        x: 0; y: 0
-        width: 1280; height: 720
-        source: {
-            try {
-                var a = CrystalAssets.front(root.game, root.shortName);
-                return a !== "" ? a : "../assets/hero/gba-backdrop.png";
-            } catch (e) { return "../assets/hero/gba-backdrop.png"; }
-        }
+        x: 0; y: 92
+        width: 1280; height: 628
+        source: "../assets/hero/gba-backdrop.png"
         fillMode: Image.PreserveAspectCrop
         smooth: true
         asynchronous: true
-        opacity: 0.55
-        visible: root.shortName === "gba" || root.shortName === "ps2"
+        opacity: 1.0
+        visible: root.shortName === "gba"
     }
-    // Darken the blurred art so text stays readable
+    // PS2: dark neutral atmosphere (not the GBA golf course)
     Rectangle {
-        x: 0; y: 0
-        width: 1280; height: 720
-        color: "#060d18"
-        opacity: 0.35
+        x: 0; y: 92
+        width: 1280; height: 628
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#0a1420" }
+            GradientStop { position: 0.6; color: "#0d1a2a" }
+            GradientStop { position: 1.0; color: "#060d18" }
+        }
+        visible: root.shortName === "ps2"
+    }
+
+    // Scrim behind the system title for readability over the bright
+    // backdrop. Declared BEFORE the text so it paints behind, not over.
+    Rectangle {
+        x: 0; y: T.heroTopY - 10
+        width: 740; height: 150
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#060d18"; }
+            GradientStop { position: 0.6; color: "#060d18cc"; }
+            GradientStop { position: 1.0; color: "transparent"; }
+        }
         visible: root.shortName === "gba" || root.shortName === "ps2"
     }
 
@@ -156,7 +167,9 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.sysTitlePx
         font.letterSpacing: 2
-        color: T.primaryInk
+        color: "#ffffff"
+        style: Text.Outline
+        styleColor: "#0a1626"
         text: root.sysTitle
     }
     Text {
@@ -170,19 +183,26 @@ Item {
         text: root.subLine
     }
 
-    // (tagline removed 2026-09-18: caused text overlap/clipping with
-    // the subline and the 3D box; the subline carries the system info)
-
-    // Scrim behind the system title for readability over the bright backdrop.
-    Rectangle {
-        x: 0; y: T.heroTopY - 10
-        width: 740; height: 150
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#060d18"; }
-            GradientStop { position: 0.6; color: "#060d18cc"; }
-            GradientStop { position: 1.0; color: "transparent"; }
+    // script tagline (italic mono — no script face is bundled).
+    // Restored 2026-09-18 for 1-to-1 with reference: "Small Console.
+    // Big Adventures." in the hero area right of the box, left of the
+    // grid panel. Text outline carries readability (no boxy scrim).
+    Text {
+        x: 520; y: 270
+        width: 210
+        horizontalAlignment: Text.AlignRight
+        font.family: root.fontFamily
+        font.pixelSize: T.taglinePx
+        font.italic: true
+        color: "#ffffff"
+        opacity: 0.95
+        style: Text.Outline
+        styleColor: "#0a1626"
+        lineHeight: 1.3
+        wrapMode: Text.WordWrap
+        text: {
+            try { return root.sysMeta.tagline || ""; } catch (e) { return ""; }
         }
-        visible: root.shortName === "gba" || root.shortName === "ps2"
     }
 
     // ---- physical composition ----
@@ -237,7 +257,7 @@ Item {
         color: "#a9c0d4"
         lineHeight: 1.35
         wrapMode: Text.WordWrap
-        maximumLineCount: 4
+        maximumLineCount: 6
         elide: Text.ElideRight
         text: root.description
         visible: root.description !== ""
