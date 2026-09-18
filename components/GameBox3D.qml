@@ -70,24 +70,51 @@ Item {
             opacity: 0.85
         }
 
-        // Box with 2D fake-3D depth: the front has a perspective skew
-        // and the spine/top are drawn as receding parallelograms.
-        // (Nested Qt 3D rotations do not compose reliably.)
+        // Box: FLAT straight-on presentation matching the reference hero.
+        // Wide black spine on the left with large vertical white text,
+        // large square front with cover art. No top face, no angled
+        // fake-3D — the reference is a clean front view.
         Item {
             id: gbaTilt
             anchors.fill: parent
 
         Item {
             id: box3d
-            x: 60; y: 10
-            scale: 1.42
-            transformOrigin: Item.TopLeft
-
-            // front face: cover art. The box depth comes from the
-            // spine/top parallelograms; the front stays a clean rectangle.
+            x: 40; y: 0
+            // spine: flat wide black strip, left edge of the box
+            Rectangle {
+                id: gbaSpine
+                x: 0; y: 0
+                width: 110; height: 352
+                color: "#0b0e14"
+                border.width: 2
+                border.color: "#1a2230"
+                // subtle vertical highlight on the spine's right edge
+                Rectangle {
+                    x: parent.width - 3; y: 0
+                    width: 3; height: parent.height
+                    color: "#232f45"
+                    opacity: 0.6
+                }
+                Text {
+                    anchors.centerIn: parent
+                    width: 340; height: 40
+                    rotation: -90
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    font.family: root.fontFamily
+                    font.pixelSize: 28
+                    font.bold: true
+                    font.letterSpacing: 6
+                    color: "#f2f6fa"
+                    text: root.spineLabel
+                }
+            }
+            // front face: large square cover art, flush against the spine
             Rectangle {
                 id: gbaBoxFront
-                width: 260; height: 290
+                x: 110; y: 0
+                width: 330; height: 352
                 color: "#0e2236"
                 border.width: 2
                 border.color: "#2a4a6a"
@@ -101,68 +128,17 @@ Item {
                     visible: source !== "" && status === Image.Ready
                 }
             }
-            // spine: left side face as a 2D parallelogram receding into
-            // the distance (fake 3D — nested 3D Rotation does not render).
-            Canvas {
-                x: -38; y: 8
-                width: 42; height: 282
-                onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.fillStyle = "#0b1c30";
-                    ctx.strokeStyle = "#2a4a6a";
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(38, 6);    // top-right (at front edge)
-                    ctx.lineTo(4, 18);    // top-left (receded)
-                    ctx.lineTo(4, 264);   // bottom-left (receded)
-                    ctx.lineTo(38, 276);  // bottom-right (at front edge)
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                }
-            }
-            // spine title text, vertical
-            Text {
-                x: -30; y: 60
-                width: 24; height: 180
-                rotation: -90
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.family: root.fontFamily
-                font.pixelSize: 16
-                font.letterSpacing: 4
-                color: T.cream
-                text: root.spineLabel
-            }
-            // top face: 2D parallelogram above the front, receding back.
-            Canvas {
-                x: 2; y: -30
-                width: 262; height: 44
-                onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.fillStyle = "#1d3a5c";
-                    ctx.strokeStyle = "#2a4a6a";
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(2, 38);     // front-left
-                    ctx.lineTo(36, 6);     // back-left (receded)
-                    ctx.lineTo(228, 6);    // back-right (receded)
-                    ctx.lineTo(260, 38);   // front-right
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                }
-            }
         }  // box3d
 
-        // cartridge in front, leaning against the box's lower right —
-        // larger and more present for the hero's physical-media feel
+        // cartridge in front-right, overlapping the box's lower right —
+        // matches the reference hero composition. Bottom aligns with
+        // the box bottom (y=352) so it clears the SELECTED GAME kicker.
         Item {
-            x: 275; y: 155
+            x: 300; y: 120
             width: 220; height: 230
-            rotation: -6
+            rotation: -4
             GbaCartridge {
-                scale: 0.44
+                scale: 0.52
                 transformOrigin: Item.TopLeft
                 view: "front"
                 labelArt: root.frontArt
