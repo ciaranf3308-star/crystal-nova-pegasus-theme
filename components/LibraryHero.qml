@@ -107,16 +107,31 @@ Item {
         opacity: 0.6
     }
 
-    // ---- scenic environment for the physical-media showcase ----
-    // The hero stages the 3D GBA/PS2 composition inside a golden-hour
-    // landscape; it sits behind the title and composition alike.
+    // ---- scenic environment: per-game atmosphere ----
+    // The selected game's art, heavily blurred and darkened, fills the
+    // hero as a full-bleed backdrop. This gives every game its own
+    // atmosphere instead of one static image for all.
     Image {
-        x: 0; y: T.heroTopY - 10
-        width: 740; height: 580
-        source: "../assets/hero/gba-backdrop.png"
+        x: 0; y: 0
+        width: 1280; height: 720
+        source: {
+            try {
+                var a = CrystalAssets.front(root.game, root.shortName);
+                return a !== "" ? a : "../assets/hero/gba-backdrop.png";
+            } catch (e) { return "../assets/hero/gba-backdrop.png"; }
+        }
         fillMode: Image.PreserveAspectCrop
         smooth: true
         asynchronous: true
+        opacity: 0.55
+        visible: root.shortName === "gba" || root.shortName === "ps2"
+    }
+    // Darken the blurred art so text stays readable
+    Rectangle {
+        x: 0; y: 0
+        width: 1280; height: 720
+        color: "#060d18"
+        opacity: 0.35
         visible: root.shortName === "gba" || root.shortName === "ps2"
     }
 
