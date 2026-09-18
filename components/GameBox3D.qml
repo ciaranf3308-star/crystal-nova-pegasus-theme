@@ -80,7 +80,7 @@ Item {
 
         Item {
             id: box3d
-            x: 40; y: 0
+            x: 10; y: 0
             // spine: flat wide black strip, left edge of the box
             Rectangle {
                 id: gbaSpine
@@ -130,15 +130,14 @@ Item {
             }
         }  // box3d
 
-        // cartridge in front-right, overlapping the box's lower right —
-        // matches the reference hero composition. Bottom aligns with
-        // the box bottom (y=352) so it clears the SELECTED GAME kicker.
+        // cartridge in front of the box's lower-right, like the reference —
+        // small, subtle, overlapping the front. Bottom clears the kicker.
         Item {
-            x: 300; y: 120
-            width: 220; height: 230
-            rotation: -4
+            x: 270; y: 165
+            width: 180; height: 190
+            rotation: -3
             GbaCartridge {
-                scale: 0.52
+                scale: 0.38
                 transformOrigin: Item.TopLeft
                 view: "front"
                 labelArt: root.frontArt
