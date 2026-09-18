@@ -2,9 +2,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="580" height="600" viewBox="0 0 580 600">
   <defs>
     <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#c9dfee"/>
-      <stop offset="0.45" stop-color="#a4c4e2"/>
-      <stop offset="1" stop-color="#7ba3cc"/>
+      <stop offset="0" stop-color="#4a525b"/>
+      <stop offset="0.45" stop-color="#333a42"/>
+      <stop offset="1" stop-color="#1e2329"/>
     </linearGradient>
     <radialGradient id="contactShadow">
       <stop offset="0" stop-color="#000000" stop-opacity="0.35"/>
@@ -20,8 +20,8 @@
   <ellipse cx="490" cy="560" rx="70" ry="26" fill="url(#contactShadow)"/>
 
   <!-- shell silhouette -->
-  <path d="M52,120 H150 V96 H275 V110 H305 V96 H430 V120 H528 Q554,120 554,146 V546 Q554,572 528,572 H400 Q290,540 180,572 H52 Q26,572 26,546 V146 Q26,120 52,120 Z"
-        fill="url(#shell)"/>
+  <path d="M52,120 H150 V96 H275 V110 H305 V96 H430 V120 H528 Q554,120 554,146 V546 Q554,572 528,572 H400 Q290,540 180,572 H52 Q26,572 26,546 V146 Q26,120 52,120 Z M80,160 H500 V440 H80 Z"
+        fill="url(#shell)" fill-rule="evenodd"/>
 
   <!-- label window groove + lip (window left empty for game art) -->
   <rect x="62" y="142" width="456" height="316" rx="14" fill="none" stroke="#4a6c8e" stroke-width="10" opacity="0.55"/>

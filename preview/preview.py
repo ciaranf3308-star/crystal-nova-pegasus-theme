@@ -24,6 +24,7 @@ import os
 import sys
 import time
 import argparse
+import json
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ.setdefault("QT_QUICK_BACKEND", "software")
@@ -435,6 +436,39 @@ def main():
     view.show()
     view.requestActivate()
     app.processEvents()
+    # Preview-only: point CrystalAssets at the mock scraper media tree so
+    # the hero exercises the real scraped-art paths (front/screenshot/
+    # manifest) instead of every fallback. JS library state is per-engine,
+    # so configuring from this snippet covers all theme importers.
+    try:
+        from PySide6.QtQml import QQmlComponent
+        mock_base = QUrl.fromLocalFile(os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "assets", "mock-media") + os.sep).toString()
+        with open(os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "assets", "mock-media", "index.json"),
+                encoding="utf-8") as f:
+            mock_index = f.read()
+        cfg_qml = (
+            'import QtQuick 2.12\n'
+            'import "components/CrystalAssets.js" as CA\n'
+            'Item { Component.onCompleted: {\n'
+            '  CA.configure("%s");\n'
+            '  CA.loadFromText(%s);\n'
+            '} }\n'
+        ) % (mock_base, json.dumps(mock_index))
+        cfg = QQmlComponent(view.engine())
+        cfg.setData(cfg_qml.encode("utf-8"),
+                    QUrl.fromLocalFile(THEME_DIR + "/"))
+        if cfg.isError():
+            for e in cfg.errors():
+                print("MOCK-MEDIA ERROR:", e.toString(), file=sys.stderr)
+        else:
+            cfg.create(view.engine().rootContext())
+            app.processEvents()
+    except Exception as e:
+        print("MOCK-MEDIA SETUP FAILED:", e, file=sys.stderr)
     if args.clock:
         from PySide6.QtQuick import QQuickItem
         hdr = view.rootObject().findChild(QQuickItem, "crystalHeader")

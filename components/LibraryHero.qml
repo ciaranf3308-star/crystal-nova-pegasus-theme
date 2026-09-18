@@ -107,6 +107,19 @@ Item {
         opacity: 0.6
     }
 
+    // ---- scenic environment for the physical-media showcase ----
+    // The hero stages the 3D GBA/PS2 composition inside a golden-hour
+    // landscape; it sits behind the title and composition alike.
+    Image {
+        x: 0; y: T.heroTopY - 10
+        width: 740; height: 580
+        source: "../assets/hero/gba-backdrop.png"
+        fillMode: Image.PreserveAspectCrop
+        smooth: true
+        asynchronous: true
+        visible: root.shortName === "gba" || root.shortName === "ps2"
+    }
+
     // ---- system kickers ----
     Item {
         x: T.heroLeftX + 32; y: T.heroKickerY
@@ -136,22 +149,25 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.sysSubPx
         font.letterSpacing: 3
-        color: "#9fb2c2"
+        color: "#e8f1f8"
+        style: Text.Outline
+        styleColor: "#0a1626"
         text: root.subLine
     }
 
     // script tagline (italic mono — no script face is bundled).
-    // Set right, below the meta line; the script face it stands in for
-    // is much narrower than mono, so side-by-side never clears.
+    // Positioned to clear the castle; brighter for readability.
     Text {
-        x: T.heroLeftX + 412; y: 228
-        width: 260
+        x: T.heroLeftX + 380; y: 205
+        width: 290
         horizontalAlignment: Text.AlignRight
         font.family: root.fontFamily
         font.pixelSize: T.taglinePx
         font.italic: true
-        color: "#9fc3e0"
-        opacity: 0.9
+        color: "#ffffff"
+        opacity: 0.95
+        style: Text.Outline
+        styleColor: "#0a1626"
         lineHeight: 1.25
         wrapMode: Text.WordWrap
         text: {
@@ -159,9 +175,21 @@ Item {
         }
     }
 
+    // Scrim behind the system title for readability over the bright backdrop.
+    Rectangle {
+        x: 0; y: T.heroTopY - 10
+        width: 740; height: 150
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#060d18"; }
+            GradientStop { position: 0.6; color: "#060d18cc"; }
+            GradientStop { position: 1.0; color: "transparent"; }
+        }
+        visible: root.shortName === "gba" || root.shortName === "ps2"
+    }
+
     // ---- physical composition ----
     GameBox3D {
-        x: T.heroLeftX + 10; y: T.compY
+        x: T.heroLeftX + 10; y: T.compY + 20
         width: 640; height: T.compH
         game: root.game
         shortName: root.shortName

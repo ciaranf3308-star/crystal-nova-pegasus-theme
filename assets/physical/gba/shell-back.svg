@@ -2,9 +2,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="580" height="600" viewBox="0 0 580 600">
   <defs>
     <linearGradient id="shellB" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#b8d2e8"/>
-      <stop offset="0.45" stop-color="#8fb2d4"/>
-      <stop offset="1" stop-color="#6b93bd"/>
+      <stop offset="0" stop-color="#434b54"/>
+      <stop offset="0.45" stop-color="#2c333b"/>
+      <stop offset="1" stop-color="#1a1f24"/>
     </linearGradient>
     <radialGradient id="contactShadowB">
       <stop offset="0" stop-color="#000000" stop-opacity="0.35"/>

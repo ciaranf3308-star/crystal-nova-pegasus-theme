@@ -60,70 +60,109 @@ Item {
         anchors.fill: parent
         visible: root.family === "gba"
 
-        // scaled up to match hero's dominant box presence
+        // Warm glow washing the scene where the box stands.
+        Image {
+            x: 20; y: 10
+            width: 480; height: 340
+            source: "../assets/hero/warm-glow.svg"
+            smooth: true
+            asynchronous: true
+            opacity: 0.85
+        }
+
+        // Box with 2D fake-3D depth: the front has a perspective skew
+        // and the spine/top are drawn as receding parallelograms.
+        // (Nested Qt 3D rotations do not compose reliably.)
         Item {
-            x: 0; y: 5
-            scale: 1.15
+            id: gbaTilt
+            anchors.fill: parent
+
+        Item {
+            id: box3d
+            x: 80; y: 22
+            scale: 1.06
             transformOrigin: Item.TopLeft
 
-        // box front (cover art)
-        Rectangle {
-            id: gbaBoxFront
-            x: 50; y: 6
-            width: 293; height: 330
-            color: "#0e2236"
-            border.width: 2
-            border.color: "#2a4a6a"
-            Image {
-                anchors.fill: parent
-                anchors.margins: 3
-                fillMode: Image.PreserveAspectCrop
-                smooth: true
-                asynchronous: true
-                source: root.frontArt
-                visible: source !== "" && status === Image.Ready
-            }
-            // top edge sliver: the 2.5D hint
+            // front face: cover art. The box depth comes from the
+            // spine/top parallelograms; the front stays a clean rectangle.
             Rectangle {
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                height: 10
-                color: "#1d3a5c"
-                opacity: 0.9
+                id: gbaBoxFront
+                width: 260; height: 290
+                color: "#0e2236"
+                border.width: 2
+                border.color: "#2a4a6a"
+                Image {
+                    anchors.fill: parent
+                    anchors.margins: 3
+                    fillMode: Image.PreserveAspectCrop
+                    smooth: true
+                    asynchronous: true
+                    source: root.frontArt
+                    visible: source !== "" && status === Image.Ready
+                }
             }
-        }
-        // spine (left): branded strip with vertical system text
-        Rectangle {
-            x: 12; y: 6
-            width: 38; height: 330
-            color: "#0b1c30"
-            border.width: 2
-            border.color: "#2a4a6a"
-            Rectangle {  // spine highlight edge
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                width: 3
-                color: "#3a5f8a"
+            // spine: left side face as a 2D parallelogram receding into
+            // the distance (fake 3D — nested 3D Rotation does not render).
+            Canvas {
+                x: -38; y: 8
+                width: 42; height: 282
+                onPaint: {
+                    var ctx = getContext("2d");
+                    ctx.fillStyle = "#0b1c30";
+                    ctx.strokeStyle = "#2a4a6a";
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(38, 6);    // top-right (at front edge)
+                    ctx.lineTo(4, 18);    // top-left (receded)
+                    ctx.lineTo(4, 264);   // bottom-left (receded)
+                    ctx.lineTo(38, 276);  // bottom-right (at front edge)
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                }
             }
+            // spine title text, vertical
             Text {
-                anchors.centerIn: parent
+                x: -30; y: 100
+                width: 24; height: 120
                 rotation: -90
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
                 font.family: root.fontFamily
-                font.pixelSize: 21
-                font.letterSpacing: 6
+                font.pixelSize: 16
+                font.letterSpacing: 4
                 color: T.cream
                 text: root.spineLabel
             }
-        }
+            // top face: 2D parallelogram above the front, receding back.
+            Canvas {
+                x: 2; y: -30
+                width: 262; height: 44
+                onPaint: {
+                    var ctx = getContext("2d");
+                    ctx.fillStyle = "#1d3a5c";
+                    ctx.strokeStyle = "#2a4a6a";
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(2, 38);     // front-left
+                    ctx.lineTo(36, 6);     // back-left (receded)
+                    ctx.lineTo(228, 6);    // back-right (receded)
+                    ctx.lineTo(260, 38);   // front-right
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            }
+        }  // box3d
 
-        // cartridge in front, overlapping the box's lower right
+        // cartridge in front, leaning against the box's lower right —
+        // larger and more present for the hero's physical-media feel
         Item {
-            x: 305; y: 170
-            width: 174; height: 180
+            x: 275; y: 155
+            width: 220; height: 230
+            rotation: -6
             GbaCartridge {
-                scale: 0.30
+                scale: 0.44
                 transformOrigin: Item.TopLeft
                 view: "front"
                 labelArt: root.frontArt
@@ -136,13 +175,62 @@ Item {
                 fontFamily: root.fontFamily
             }
         }
-        }  // scale wrapper
+        }  // gbaTilt (3D rotation)
+
+        // Glossy-floor reflection: live mirror of the tilted composition,
+        // faded into the floor.
+        Item {
+            x: 0; y: 292
+            width: 640; height: 58
+            clip: true
+            ShaderEffectSource {
+                width: 640; height: 350
+                y: -350
+                sourceItem: gbaTilt
+                live: true
+                hideSource: false
+                transform: Scale { yScale: -1; origin.y: 350 }
+                opacity: 0.22
+            }
+            Rectangle {
+                anchors.fill: parent
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#00000000" }
+                    GradientStop { position: 1.0; color: "#0a141f" }
+                }
+            }
+        }
     }
 
     // ================= PS2: case + disc =================
     Item {
         anchors.fill: parent
         visible: root.family === "ps2"
+
+        // Warm glow; the scenic backdrop is provided by LibraryHero behind
+        // the whole composition.
+        Image {
+            x: 20; y: 10
+            width: 480; height: 340
+            source: "../assets/hero/warm-glow.svg"
+            smooth: true
+            asynchronous: true
+            opacity: 0.85
+        }
+
+        Item {
+            id: ps2Tilt
+            anchors.fill: parent
+            transform: Rotation {
+                origin.x: 200; origin.y: 150
+                axis { x: 0; y: 1; z: 0 }
+                angle: -16
+            }
+
+        Item {
+            x: 40; y: -6
+            scale: 0.85
+            transformOrigin: Item.TopLeft
 
         Item {
             x: 60; y: 0
@@ -219,6 +307,31 @@ Item {
                 border.width: 14
                 border.color: "#ffffff"
                 opacity: 0.06
+            }
+        }
+        }  // ps2 scale wrapper
+        }  // ps2Tilt (3D rotation)
+
+        // Glossy-floor reflection: live mirror of the tilted composition.
+        Item {
+            x: 0; y: 292
+            width: 640; height: 58
+            clip: true
+            ShaderEffectSource {
+                width: 640; height: 350
+                y: -350
+                sourceItem: ps2Tilt
+                live: true
+                hideSource: false
+                transform: Scale { yScale: -1; origin.y: 350 }
+                opacity: 0.22
+            }
+            Rectangle {
+                anchors.fill: parent
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#00000000" }
+                    GradientStop { position: 1.0; color: "#0a141f" }
+                }
             }
         }
     }
