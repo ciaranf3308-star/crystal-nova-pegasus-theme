@@ -132,6 +132,12 @@ FocusScope {
         CrystalAssets.configureFromBridge(
             Qt.resolvedUrl("../crystal-media-bridge.json"),
             Qt.resolvedUrl("../crystal-nova-data/"))
+        // SD MEDIA PROBE (test only): when the Manager has written
+        // crystal-esde-probe.json into the themes root, show the
+        // diagnostic overlay proving whether QML can render a file://
+        // image straight from the SD card.
+        CrystalAssets.loadProbe(Qt.resolvedUrl("../crystal-esde-probe.json"))
+        CrystalAssets.setProbeChangedHandler(function() { probeOverlay.refreshProbe() })
         // Whenever the asynchronous index (re)load completes, bump the
         // library's art epoch so tile cover bindings re-evaluate.
         CrystalAssets.setIndexChangedHandler(function() { sysScreen.bumpArtEpoch() })
@@ -159,6 +165,20 @@ FocusScope {
     }
 
     Keys.onPressed: {
+        // SD MEDIA PROBE overlay (test only): while it is up it owns
+        // every key — A or B dismisses it, everything else is swallowed
+        // so the underlying screens cannot move underneath.
+        if (probeOverlay.visible) {
+            if (!event.isAutoRepeat &&
+                (api.keys.isAccept(event) || api.keys.isCancel(event))) {
+                event.accepted = true
+                probeOverlay.dismissed = true
+                probeOverlay.visible = false
+            } else {
+                event.accepted = true
+            }
+            return
+        }
         if (root.screen === "system") {
             // Physical-media Inspect owns the keys while open: the grid
             // underneath never moves, so B returns to the same tile.
@@ -230,5 +250,126 @@ FocusScope {
         }
         // NOTE: isCancel is deliberately NOT accepted on the home screen so
         // Pegasus can open its own main menu with B.
+    }
+
+    // ------------------------------------------------------------------
+    // SD MEDIA PROBE overlay (TEST ONLY — delete after the render test).
+    //
+    // Visible only when the Manager has written crystal-esde-probe.json
+    // into the themes root. Shows the exact diagnostic the Manager
+    // produced, the test image itself (proving whether QML can render
+    // file:// URLs straight from the SD card), and the result line the
+    // user sends back. A or B dismisses it.
+    // ------------------------------------------------------------------
+    Item {
+        id: probeOverlay
+        anchors.fill: parent
+        z: 1000
+        visible: false
+        property bool dismissed: false
+        property string sdRoot: ""
+        property string testAsset: ""
+        property string themeUrl: ""
+
+        function refreshProbe() {
+            var info = null
+            try { info = CrystalAssets.probeInfo() } catch (e) { info = null }
+            if (info && !dismissed) {
+                sdRoot = info.sdMediaRoot
+                testAsset = info.testAsset
+                themeUrl = info.themeUrl
+                visible = true
+            } else {
+                visible = false
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#000000"
+            opacity: 0.9
+        }
+
+        Column {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 80, 960)
+            spacing: 12
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "SD MEDIA PROBE — TEST ONLY"
+                color: "#ffd23f"
+                font.pixelSize: 36
+                font.bold: true
+                font.family: root.fontFamily
+            }
+            Text {
+                width: parent.width
+                text: "External SD media root:\n" + probeOverlay.sdRoot
+                color: "#ffffff"
+                font.pixelSize: 17
+                font.family: root.fontFamily
+                wrapMode: Text.WrapAnywhere
+            }
+            Text {
+                width: parent.width
+                text: "Test asset:\n" + probeOverlay.testAsset
+                color: "#ffffff"
+                font.pixelSize: 17
+                font.family: root.fontFamily
+                wrapMode: Text.WrapAnywhere
+            }
+            Text {
+                width: parent.width
+                text: "Theme URL:\n" + probeOverlay.themeUrl
+                color: "#7fd4ff"
+                font.pixelSize: 17
+                font.family: root.fontFamily
+                wrapMode: Text.WrapAnywhere
+            }
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 480
+                height: 360
+                color: "#3a0d0d"
+                border.color: "#ffd23f"
+                border.width: 2
+                Image {
+                    id: probeImage
+                    anchors.fill: parent
+                    anchors.margins: 4
+                    source: CrystalAssets.probeImageUrl()
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                }
+                Text {
+                    anchors.centerIn: parent
+                    text: "NO IMAGE"
+                    color: "#ff6b6b"
+                    font.pixelSize: 28
+                    font.bold: true
+                    font.family: root.fontFamily
+                    visible: probeImage.status !== Image.Ready
+                }
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Result: pending device validation — DOES THE COVER SHOW ABOVE?"
+                color: "#ffd23f"
+                font.pixelSize: 19
+                font.bold: true
+                font.family: root.fontFamily
+                wrapMode: Text.WordWrap
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "PRESS A OR B TO DISMISS"
+                color: "#8a93a6"
+                font.pixelSize: 16
+                font.family: root.fontFamily
+            }
+        }
     }
 }

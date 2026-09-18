@@ -261,9 +261,10 @@ FakeXHR.prototype.open = function (method, url, async) {
     this._url = url;
     this._async = async;
     this.readyState = 1;
-    check("open is async GET of index.json, bridge file, or manifest",
+    check("open is async GET of index.json, bridge/probe file, or manifest",
         async === true && (url.slice(-10) === "index.json" ||
             url.slice(-25) === "crystal-media-bridge.json" ||
+            url.slice(-23) === "crystal-esde-probe.json" ||
             url.slice(-13) === "manifest.json"));
 };
 FakeXHR.prototype.send = function () { /* completed manually below */ };
@@ -462,6 +463,63 @@ A.configure(BASE); // restore
     eq("configure clears meta cache (epoch bumps)", e2 > e1, true);
 })();
 A.configure(BASE); // restore
+
+// --- 17. SD media probe --------------------------------------------------------
+(function () {
+    var GOOD = JSON.stringify({
+        version: 1,
+        sdMediaRoot: "/storage/1234-ABCD/Crystal/imports/esde",
+        system: "ps2",
+        testAsset: "/storage/1234-ABCD/Crystal/imports/esde/media/ps2/covers/x.png",
+        themeUrl: "file:///storage/1234-ABCD/Crystal/imports/esde/media/ps2/covers/x.png",
+        created: 1700000000
+    });
+    // parseProbe: strict validation
+    var p = A.parseProbe(GOOD);
+    check("parseProbe accepts a valid probe",
+        p !== null &&
+        p.sdMediaRoot === "/storage/1234-ABCD/Crystal/imports/esde" &&
+        p.system === "ps2" &&
+        p.themeUrl === "file:///storage/1234-ABCD/Crystal/imports/esde/media/ps2/covers/x.png");
+    check("parseProbe rejects bad version",
+        A.parseProbe(GOOD.replace('"version":1', '"version":2')) === null);
+    check("parseProbe rejects non-file URL",
+        A.parseProbe(GOOD.replace("file:///storage", "content:///storage")) === null);
+    check("parseProbe rejects .. in path",
+        A.parseProbe(GOOD.split("media/ps2").join("media/../x")) === null);
+    check("parseProbe rejects themeUrl/testAsset mismatch",
+        A.parseProbe(GOOD.replace(
+            '"themeUrl":"file:///storage/1234-ABCD/Crystal/imports/esde/media/ps2/covers/x.png"',
+            '"themeUrl":"file:///storage/1234-ABCD/Crystal/imports/esde/media/ps2/covers/y.png"')) === null);
+    check("parseProbe rejects garbage", A.parseProbe("not json") === null);
+    check("parseProbe rejects empty", A.parseProbe("") === null);
+    // install + accessors
+    check("no probe installed initially", A.probeInfo() === null && A.probeImageUrl() === "");
+    A.loadProbeFromText(GOOD);
+    check("probeInfo installed", A.probeInfo() !== null);
+    check("probeImageUrl hands the exact file:// URL to QML",
+        A.probeImageUrl() === "file:///storage/1234-ABCD/Crystal/imports/esde/media/ps2/covers/x.png");
+    // async loadProbe through the fake XHR
+    var probeNotified = 0;
+    var epoch0 = A.probeEpoch();
+    A.setProbeChangedHandler(function () { probeNotified++; });
+    A.loadProbe("file:///themes/crystal-esde-probe.json");
+    check("loadProbe issues an async GET", xhrLog.length > 0);
+    completeXHR(xhrLog[xhrLog.length - 1], 200, GOOD);
+    check("loadProbe installs the probe", A.probeImageUrl().indexOf("file:///storage/") === 0);
+    check("probe change handler fired", probeNotified === 1);
+    check("probe epoch bumped", A.probeEpoch() === epoch0 + 1);
+    // invalid probe clears
+    A.loadProbe("file:///themes/crystal-esde-probe.json");
+    completeXHR(xhrLog[xhrLog.length - 1], 200, "garbage");
+    check("invalid probe clears the install", A.probeInfo() === null && A.probeImageUrl() === "");
+    // missing probe file clears
+    A.loadProbeFromText(GOOD);
+    A.loadProbe("file:///themes/crystal-esde-probe.json");
+    completeXHR(xhrLog[xhrLog.length - 1], 404, "");
+    check("missing probe file clears the install", A.probeInfo() === null);
+    A.setProbeChangedHandler(null);
+})();
 
 // --- report --------------------------------------------------------------------
 if (failures.length > 0) {
