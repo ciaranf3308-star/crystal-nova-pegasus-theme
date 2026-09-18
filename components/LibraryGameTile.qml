@@ -57,7 +57,9 @@ Item {
             id: art
             anchors.fill: parent
             anchors.margins: 5
-            fillMode: Image.PreserveAspectFit
+            // Fill the frame like the reference hero (aspect-crop);
+            // box art is composed to survive a center crop.
+            fillMode: Image.PreserveAspectCrop
             smooth: true
             asynchronous: true
             source: {
@@ -81,9 +83,9 @@ Item {
 
     Text {
         x: root.selected ? 8 : 0
-        y: T.gtileArtH + (root.selected ? 2 : 6)
+        y: T.gtileArtH + (root.selected ? 0 : 4)
         width: T.gtileArtW - (root.selected ? 16 : 0)
-        height: T.gtileTitleH - 6
+        height: T.gtileTitleH
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignTop
         // Long titles wrap to 2 lines then shrink to fit — never "..."
@@ -94,7 +96,7 @@ Item {
         fontSizeMode: Text.Fit
         minimumPixelSize: 10
         font.family: root.fontFamily
-        font.pixelSize: 17
+        font.pixelSize: 16
         font.letterSpacing: 1
         color: root.selected ? T.creamInk : T.tileInk
         text: root.title.toUpperCase()

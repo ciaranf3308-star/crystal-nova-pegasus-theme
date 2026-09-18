@@ -30,14 +30,18 @@ function deepEq(name, actual, expected) {
         "expected " + JSON.stringify(expected) + ", got " + JSON.stringify(actual));
 }
 
-// --- 1. platform families: exactly gba + ps2 -------------------------------
+// --- 1. platform families: gba + ps2 bespoke; cart/disc generic --------
 eq("family gba", M.familyFor("gba"), "gba");
 eq("family GBA case", M.familyFor("GBA"), "gba");
 eq("family ps2", M.familyFor("ps2"), "ps2");
 eq("family PS2 case/space", M.familyFor("  Ps2 "), "ps2");
-eq("family snes unsupported", M.familyFor("snes"), "");
-eq("family gbc unsupported", M.familyFor("gbc"), "");
-eq("family psx unsupported", M.familyFor("psx"), "");
+eq("family snes cart", M.familyFor("snes"), "cart");
+eq("family gbc cart", M.familyFor("gbc"), "cart");
+eq("family nes cart", M.familyFor("nes"), "cart");
+eq("family psx disc", M.familyFor("psx"), "disc");
+eq("family ps1 disc", M.familyFor("ps1"), "disc");
+eq("family dreamcast disc", M.familyFor("dreamcast"), "disc");
+eq("family arcade framed", M.familyFor("arcade"), "");
 eq("family empty", M.familyFor(""), "");
 eq("family null", M.familyFor(null), "");
 eq("family undefined", M.familyFor(undefined), "");
@@ -45,7 +49,14 @@ eq("family no substring match", M.familyFor("gba2"), "");
 eq("family no long-name guess", M.familyFor("gameboyadvance"), "");
 check("supports gba", M.supportsPhysical("gba") === true);
 check("supports ps2", M.supportsPhysical("ps2") === true);
-check("rejects nes", M.supportsPhysical("nes") === false);
+check("supports snes cart", M.supportsPhysical("snes") === true);
+check("supports ps1 disc", M.supportsPhysical("ps1") === true);
+check("rejects arcade", M.supportsPhysical("arcade") === false);
+// Inspect stays exclusive to the two bespoke compositions
+check("inspect gba", M.supportsInspect("gba") === true);
+check("inspect ps2", M.supportsInspect("ps2") === true);
+check("no inspect snes", M.supportsInspect("snes") === false);
+check("no inspect ps1", M.supportsInspect("ps1") === false);
 
 // --- 2. inspect view cycles -------------------------------------------------
 deepEq("gba views", M.inspectViews("gba"), ["front", "back"]);

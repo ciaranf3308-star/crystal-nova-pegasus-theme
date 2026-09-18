@@ -21,20 +21,75 @@
 // Platform families
 // ---------------------------------------------------------------------------
 
-// Canonical family for a Pegasus collection shortName, or "" when the
-// system keeps the flat production library. Matching is intentionally
-// strict: only the exact shortNames below gain the physical-media
-// experience — no long-name guessing, no substring matching.
+// Canonical family for a Pegasus collection shortName. Matching is
+// intentionally strict on the exact shortNames below — no long-name
+// guessing, no substring matching.
+//
+// Families:
+//   "gba"  — bespoke GBA box + cartridge composition
+//   "ps2"  — bespoke PS2 case + disc composition
+//   "cart" — generic cartridge composition (game art label, system
+//            accent color) for cartridge-based systems
+//   "disc" — generic disc composition (game art disc) for optical
+//            media systems
+//   ""     — framed cover art (honest fallback: arcade PCBs, etc.)
 function familyFor(shortName) {
     if (shortName === undefined || shortName === null) return "";
     var k = String(shortName).replace(/^\s+|\s+$/g, "").toLowerCase();
     if (k === "gba") return "gba";
     if (k === "ps2") return "ps2";
+    // cartridge-based systems
+    if (k === "gb" || k === "gbc" || k === "nes" || k === "snes" ||
+        k === "n64" || k === "genesis" || k === "megadrive" || k === "md" ||
+        k === "32x" || k === "tg16" || k === "pce" || k === "pcengine" ||
+        k === "nds" || k === "ds" || k === "gg" || k === "gamegear" ||
+        k === "ws" || k === "wonderswan" || k === "ngp" || k === "ngpc" ||
+        k === "lynx" || k === "atarilynx" || k === "jaguar") return "cart";
+    // optical-disc systems
+    if (k === "ps1" || k === "psx" || k === "dreamcast" || k === "saturn" ||
+        k === "segacd" || k === "mega-cd" || k === "megacd" || k === "psp" ||
+        k === "wii" || k === "gc" || k === "gamecube" || k === "ps3" ||
+        k === "3ds") return "disc";
     return "";
 }
 
 function supportsPhysical(shortName) {
     return familyFor(shortName) !== "";
+}
+
+// The Y (Details) Inspect overlay is only built for the bespoke GBA
+// and PS2 compositions. Generic cart/disc families get their physical
+// media in the hero; Inspect stays exclusive to the two bespoke sets.
+function supportsInspect(shortName) {
+    var f = familyFor(shortName);
+    return f === "gba" || f === "ps2";
+}
+
+// Accent color for the generic cartridge grip / disc ring, per system.
+// Muted, authentic-ish tones — never neon.
+var CART_ACCENTS = {
+    "gb": "#9aa4ad", "gbc": "#8e9aaf", "nes": "#b0b4b8", "snes": "#a8a4b8",
+    "n64": "#8b9096", "genesis": "#3a3f45", "megadrive": "#3a3f45",
+    "md": "#3a3f45", "32x": "#3a3f45", "tg16": "#c0c4c8", "pce": "#c0c4c8",
+    "pcengine": "#c0c4c8", "nds": "#b8bcc0", "ds": "#b8bcc0",
+    "gg": "#2a2e35", "gamegear": "#2a2e35", "ws": "#a0a8b0",
+    "wonderswan": "#a0a8b0", "ngp": "#3a4a5a", "ngpc": "#3a4a5a",
+    "lynx": "#4a4e55", "atarilynx": "#4a4e55", "jaguar": "#2e333a"
+};
+var DISC_ACCENTS = {
+    "ps1": "#8a94a0", "psx": "#8a94a0", "dreamcast": "#d8dce0",
+    "saturn": "#3a3f45", "segacd": "#3a3f45", "mega-cd": "#3a3f45",
+    "megacd": "#3a3f45", "psp": "#2a2e35", "wii": "#e8ecef",
+    "gc": "#6a4a8a", "gamecube": "#6a4a8a", "ps3": "#2a2e35", "3ds": "#b8bcc0"
+};
+
+function accentFor(shortName) {
+    var k = "";
+    try { k = String(shortName).replace(/^\s+|\s+$/g, "").toLowerCase(); }
+    catch (e) { return "#7ba7d9"; }
+    if (CART_ACCENTS.hasOwnProperty(k)) return CART_ACCENTS[k];
+    if (DISC_ACCENTS.hasOwnProperty(k)) return DISC_ACCENTS[k];
+    return "#7ba7d9";
 }
 
 // ---------------------------------------------------------------------------
@@ -203,6 +258,8 @@ try {
         module.exports = {
             familyFor: familyFor,
             supportsPhysical: supportsPhysical,
+            supportsInspect: supportsInspect,
+            accentFor: accentFor,
             inspectViews: inspectViews,
             viewLabel: viewLabel,
             nextView: nextView,

@@ -6,10 +6,11 @@ import "PhysicalMedia"
 import "PhysicalMedia/MediaTemplates.js" as MT
 
 // Library hero physical composition: the selected game's physical media,
-// rendered large. GBA: 3D-ish game box (branded spine + cover front)
-// with a cartridge in front. PS2: DVD case with cover art and the disc
-// leaning beside it. Every other system: large framed cover art —
-// never a placeholder card.
+// rendered large. GBA: bespoke game box (branded spine + cover front)
+// with a cartridge in front. PS2: bespoke DVD case with cover art and
+// the disc leaning beside it. Cart/disc families: generic cartridge /
+// disc compositions with the game's art. Every other system: large
+// framed cover art — never a placeholder card.
 Item {
     id: root
 
@@ -40,6 +41,10 @@ Item {
         var s = (root.shortName || "").toString().trim().toUpperCase();
         if (root.family === "gba") return "GAME BOY ADVANCE";
         if (root.family === "ps2") return "PLAYSTATION 2";
+        try {
+            var dn = SystemMeta.metaFor(root.shortName).name;
+            if (dn) return String(dn).toUpperCase();
+        } catch (e) {}
         return s;
     }
 
@@ -133,11 +138,10 @@ Item {
         // cartridge in front of the box's lower-right, like the reference —
         // small, subtle, overlapping the front. Bottom clears the kicker.
         Item {
-            x: 270; y: 165
+            x: 285; y: 185
             width: 180; height: 190
-            rotation: -3
             GbaCartridge {
-                scale: 0.38
+                scale: 0.30
                 transformOrigin: Item.TopLeft
                 view: "front"
                 labelArt: root.frontArt
@@ -311,10 +315,140 @@ Item {
         }
     }
 
+    // ================= generic cartridge (cart family) =================
+    // Cartridge-based systems (GB/GBC, NES/SNES, N64, Genesis, ...):
+    // a clean cartridge silhouette with the game's art as the label.
+    // Simple flat shapes only — no rotation, no clipping, no nesting.
+    Item {
+        anchors.fill: parent
+        visible: root.family === "cart"
+        // cartridge body
+        Rectangle {
+            x: 170; y: 40
+            width: 240; height: 320
+            radius: 16
+            color: "#232b36"
+            border.width: 2
+            border.color: "#3d4a5e"
+        }
+        // label with game art
+        Rectangle {
+            x: 194; y: 120
+            width: 192; height: 170
+            radius: 8
+            color: "#0e2236"
+            border.width: 2
+            border.color: "#2a4a6a"
+        }
+        Image {
+            x: 198; y: 124
+            width: 184; height: 162
+            fillMode: Image.PreserveAspectCrop
+            smooth: true
+            asynchronous: true
+            source: root.frontArt
+            visible: source !== "" && status === Image.Ready
+        }
+        Text {
+            x: 194; y: 185
+            width: 192
+            horizontalAlignment: Text.AlignHCenter
+            font.family: root.fontFamily
+            font.pixelSize: 22
+            font.letterSpacing: 3
+            color: "#7ba7d9"
+            text: root.spineLabel
+            visible: root.frontArt === ""
+        }
+        // title under the label
+        Text {
+            x: 170; y: 300
+            width: 240
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
+            font.family: root.fontFamily
+            font.pixelSize: 18
+            font.letterSpacing: 2
+            color: "#d7e3ec"
+            text: {
+                var t = "";
+                try { t = root.game ? (root.game.title || "") : ""; } catch (e) {}
+                return t.toUpperCase();
+            }
+        }
+    }
+
+    // ================= generic disc (disc family) =================
+    // Optical-media systems (PS1, Dreamcast, Saturn, ...): a disc with
+    // the game's art leaning against a slim system spine.
+    Item {
+        anchors.fill: parent
+        visible: root.family === "disc"
+        // slim spine with system name
+        Rectangle {
+            x: 90; y: 50
+            width: 60; height: 310
+            color: "#0b0e14"
+            border.width: 2
+            border.color: "#1a2230"
+        }
+        Text {
+            x: 90; y: 195
+            width: 60
+            horizontalAlignment: Text.AlignHCenter
+            font.family: root.fontFamily
+            font.pixelSize: 16
+            font.bold: true
+            font.letterSpacing: 2
+            color: "#dfe9f1"
+            text: root.spineLabel.substring(0, 4)
+        }
+        // disc
+        Rectangle {
+            x: 190; y: 60
+            width: 280; height: 280
+            radius: 140
+            color: "#101c2c"
+            border.width: 3
+            border.color: "#3d4a5e"
+            clip: true
+            Image {
+                anchors.fill: parent
+                anchors.margins: 6
+                fillMode: Image.PreserveAspectCrop
+                smooth: true
+                asynchronous: true
+                source: root.frontArt
+                visible: source !== "" && status === Image.Ready
+            }
+        }
+        Text {
+            x: 190; y: 130
+            width: 280
+            horizontalAlignment: Text.AlignHCenter
+            font.family: root.fontFamily
+            font.pixelSize: 20
+            font.letterSpacing: 3
+            color: "#7ba7d9"
+            text: root.spineLabel
+            visible: root.frontArt === ""
+        }
+        // hub
+        Rectangle {
+            x: 308; y: 178
+            width: 44; height: 44
+            radius: 22
+            color: "#0a1929"
+            border.width: 2
+            border.color: "#3d4a5e"
+        }
+    }
+
     // ================= other systems: framed cover =================
     Item {
         anchors.fill: parent
-        visible: root.family !== "gba" && root.family !== "ps2"
+        visible: root.family !== "gba" && root.family !== "ps2" &&
+                 root.family !== "cart" && root.family !== "disc"
         Rectangle {
             anchors.centerIn: parent
             width: 300; height: 336

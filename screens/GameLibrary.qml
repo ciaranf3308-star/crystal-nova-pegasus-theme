@@ -51,15 +51,15 @@ Item {
     }
 
     // ---- physical-media Inspect -------------------------------------------
-    // Available only for the GBA/PS2 families and only when Pegasus
-    // exposes the Details key; every other system keeps the production
-    // library untouched. The platform check lives in MediaTemplates —
-    // this file never names a system.
+    // Available only for the bespoke GBA/PS2 compositions and only when
+    // Pegasus exposes the Details key; every other system keeps the
+    // production library untouched. The platform check lives in
+    // MediaTemplates — this file never names a system.
     readonly property bool inspectAvailable: {
         if (root.isEmpty) return false
         if (typeof api === "undefined" || !api.keys) return false
         if (typeof api.keys.isDetails !== "function") return false
-        return MediaTemplates.supportsPhysical(root.shortName)
+        return MediaTemplates.supportsInspect(root.shortName)
     }
     property bool inspecting: false
 
@@ -177,7 +177,7 @@ Item {
                 font.family: root.fontFamily
                 font.pixelSize: 16
                 font.bold: true
-                color: "#ffffff"
+                color: T.keycapInk
                 text: "L1"
             }
         }
@@ -193,7 +193,7 @@ Item {
                 font.family: root.fontFamily
                 font.pixelSize: 16
                 font.bold: true
-                color: "#ffffff"
+                color: T.keycapInk
                 text: "R1"
             }
         }

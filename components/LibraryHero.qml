@@ -87,10 +87,12 @@ Item {
 
     // ---- dynamic per-game atmosphere: selected game's art ----
     // Each game gets its own environmental feel (user: "same on all
-    // games" was wrong). The art is shown full-bleed, softened by
-    // darkening and warm grading for the premium feel. On device,
-    // FastBlur provides the softening; the dark overlays ensure
-    // readability in all cases.
+    // games" was wrong). The art is shown full-bleed and dissolved into
+    // an abstract color wash: heavy blur removes recognizability (no
+    // giant faces), a strong top-down dark grade carries readability,
+    // and a warm golden-hour tint keeps the premium feel. On device,
+    // FastBlur provides the dissolve; the dark overlays are tuned to
+    // carry the design even where blur is unavailable.
     Item {
         x: 0; y: 92
         width: 1280; height: 628
@@ -104,32 +106,50 @@ Item {
             asynchronous: true
             cache: true
             source: root.ambientArt
-            opacity: 0.50
+            // hidden: the FastBlur below renders the blurred copy; this
+            // keeps the source from double-painting on real hardware.
+            // (The desktop preview shim leaves FastBlur transparent, so
+            // nothing shows there — the dark grade below still applies.)
+            visible: false
+            // zoom slightly so blur edges never show the frame
+            scale: 1.08
         }
-        // Softens the art into an environmental wash on real hardware.
-        // (The desktop preview shim leaves FastBlur transparent, so the
-        // source Image shows through there.)
+        // Dissolves the art into an environmental wash on real hardware.
         FastBlur {
             anchors.fill: parent
             source: atmoSource
-            radius: 48
+            radius: 96
+            opacity: 0.55
         }
-        // darken for text readability — lighter than before to keep the
-        // vibrant, premium feel of the reference hero
+        // cinematic dark grade: deep at top (header legibility) and
+        // bottom (selected-game legibility), breathing in the middle
+        // where the physical media sits
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
-                GradientStop { position: 0.0; color: "#0a141fb3" }
-                GradientStop { position: 0.35; color: "#0a141f73" }
-                GradientStop { position: 0.65; color: "#0a141f59" }
-                GradientStop { position: 1.0; color: "#060d18b3" }
+                GradientStop { position: 0.0; color: "#060d18e6" }
+                GradientStop { position: 0.28; color: "#0a141fa6" }
+                GradientStop { position: 0.52; color: "#0a141f66" }
+                GradientStop { position: 0.74; color: "#0a141f8c" }
+                GradientStop { position: 1.0; color: "#060d18e6" }
             }
         }
-        // warm golden-hour grade — stronger for the reference's warmth
+        // side vignette: keeps the frame edges moody like the reference
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "#060d1880" }
+                GradientStop { position: 0.18; color: "#060d1800" }
+                GradientStop { position: 0.82; color: "#060d1800" }
+                GradientStop { position: 1.0; color: "#060d1880" }
+            }
+        }
+        // warm golden-hour grade
         Rectangle {
             anchors.fill: parent
             color: "#ff9a3c"
-            opacity: 0.12
+            opacity: 0.10
         }
     }
     // Fallback: system-specific gradient when no art is available
@@ -195,11 +215,10 @@ Item {
     }
 
     // script tagline (italic mono — no script face is bundled).
-    // Restored 2026-09-18 for 1-to-1 with reference: "Small Console.
-    // Big Adventures." in the hero area right of the box, left of the
-    // grid panel. Text outline carries readability (no boxy scrim).
+    // Sits just right of the box, left of the grid panel, like the
+    // reference hero. Text outline carries readability (no boxy scrim).
     Text {
-        x: 520; y: 270
+        x: 495; y: 265
         width: 210
         horizontalAlignment: Text.AlignRight
         font.family: root.fontFamily
@@ -253,6 +272,8 @@ Item {
     }
     Text {
         x: T.heroLeftX + 34; y: T.metaY
+        width: T.metaW
+        elide: Text.ElideRight
         font.family: root.fontFamily
         font.pixelSize: T.metaPx
         font.letterSpacing: 2
@@ -266,9 +287,9 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.descPx
         color: "#a9c0d4"
-        lineHeight: 1.35
+        lineHeight: 1.28
         wrapMode: Text.WordWrap
-        maximumLineCount: 5
+        maximumLineCount: 4
         elide: Text.ElideRight
         text: root.description
         visible: root.description !== ""

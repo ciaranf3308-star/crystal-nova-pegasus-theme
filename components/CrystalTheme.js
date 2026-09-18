@@ -17,7 +17,7 @@ var cream           = "#f0ebdc"; // selected tile fill (warm ivory)
 var creamInk        = "#1b2c4e"; // dark navy ink on the cream tile
 var primaryInk      = "#e9f1f6"; // muted white: CRYSTAL brand, clock
 var divider         = "#8fa5b8"; // header / footer hairlines
-var keycapFill      = "#cfd9e2"; // footer keycap fill
+var keycapFill      = "#f0ebdc"; // warm ivory: matches selected-tile cream
 var keycapInk       = "#1b2c4e"; // footer keycap glyphs
 var selectedOutline = "#081425"; // subtle dark outline around cream tile
 var batteryFrame    = "#9fb2c2"; // battery shell
@@ -133,17 +133,18 @@ var sysSubY    = 195;
 var taglinePx  = 22;
 var compY      = 225;            // physical-media composition zone
 var compH      = 430;
-var selKickerY = 628;
+var selKickerY = 630;
 var selTitlePx = 42;
-var selTitleY  = 660;
-var metaPx     = 20;
-var metaY      = 726;
+var selTitleY  = 656;
+var metaPx     = 18;
+var metaY      = 712;
+var metaW      = 420;
 var descPx     = 18;
-var descY      = 758;
-var descW      = 380;
-var shotsX     = 450;
-var shotsY     = 726;
-var shotSize   = 76;
+var descY      = 736;
+var descW      = 395;
+var shotsX     = 490;
+var shotsY     = 710;
+var shotSize   = 84;
 
 // Right grid panel (framed)
 var panelX = 745;
@@ -153,25 +154,26 @@ var panelH = 728;                // 108..836
 var panelTopY = 124;             // L1 / SORT / R1 row
 
 // Grid: 3x3 tiles; each tile is box art with the title set below it.
+// Measured from the 1280x960 library hero: art ~140x175, pitch ~165x221,
+// panel inner x795-1205.
 var libCols   = 3;
 var libRows   = 3;
 var libPageSize = 9;
-var gtileArtW = 128;
-var gtileArtH = 160;
-var gtileTitleH = 34;
-var gtileColGap = 18;
-var gtileRowGap = 14;
-var libGridX  = 775;
-var libGridY  = 176;
+var gtileArtW = 140;
+var gtileArtH = 170;
+var gtileTitleH = 36;
+var gtileColGap = 15;
+var gtileRowGap = 10;
+var libGridX  = 760;
+var libGridY  = 170;
 
 function libTileX(col) { return libGridX + col * (gtileArtW + gtileColGap); }
 function libTileY(row) { return libGridY + row * (gtileArtH + gtileTitleH + gtileRowGap); }
 
-var pageY = 800;                 // page indicator baseline row
+var pageY = 810;                 // page indicator baseline row
 
-// Library footer divider sits lower than the home one (hero-measured:
-// divider y955/1086 -> 844).
-var libFooterDividerY = 880;
+// Library footer divider (hero-measured: divider y845/960).
+var libFooterDividerY = 845;
 
 // Game tile frame: dark inner edge + cream outer frame on selection,
 // with the same viewfinder corner-bracket language as the system tiles.

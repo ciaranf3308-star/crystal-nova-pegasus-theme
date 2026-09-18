@@ -2,7 +2,9 @@
 """Physical-media milestone tests: MediaTemplates logic + architecture guards.
 
 Runs the Node.js driver (tests/media_templates_driver.js), which asserts:
-  - exactly two platform families (gba, ps2); everything else unsupported
+  - platform families: gba/ps2 bespoke, cart/disc generic, rest framed;
+    strict shortName matching (no substring/long-name guessing)
+  - Inspect stays exclusive to the bespoke gba/ps2 compositions
   - inspect view cycles (gba: front/back; ps2: front/spine/back/open)
   - artwork slot fallback chains (label/disc/case faces)
   - generated-face helpers (spine text, abbreviations)
@@ -11,8 +13,9 @@ Runs the Node.js driver (tests/media_templates_driver.js), which asserts:
 Plus static architecture guards (no QML runtime needed):
   - authored SVG templates exist, parse, and avoid QtSvg-unsafe features
     (no filters/turbulence/masks/text elements)
-  - renderers compose the templates (referenced paths resolve); the
-    cartridge/case is never drawn from QML primitives
+  - bespoke renderers compose the templates (referenced paths resolve);
+    the bespoke cartridge/case is never drawn from QML primitives
+    (generic cart/disc families are simple QML shapes by design)
   - GameTile is pure box-art again (no PhysicalObject, no PhysicalMedia)
   - platform checks live only in MediaTemplates.js (no "gba"/"ps2"
     literals scattered through GameLibrary.qml, GameTile.qml, theme.qml)
