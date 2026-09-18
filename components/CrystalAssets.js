@@ -278,6 +278,129 @@ function configureFromBridge(bridgeUrl, fallbackUrl) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// SD media probe (TEST ONLY).
+//
+// The Manager may write a tiny `crystal-esde-probe.json` into the themes
+// root (beside the theme directory) declaring ONE test image inside the
+// read-only ES-DE export on the SD card:
+//
+//   {"version":1,
+//    "sdMediaRoot":"/storage/XXXX-XXXX/Crystal/imports/esde",
+//    "system":"ps2",
+//    "testAsset":"/storage/XXXX-XXXX/Crystal/imports/esde/media/ps2/covers/x.png",
+//    "themeUrl":"file:///storage/XXXX-XXXX/Crystal/imports/esde/media/ps2/covers/x.png",
+//    "created":<epochSeconds>}
+//
+// loadProbe() reads it (same async XHR pattern as the media bridge) and
+// the theme shows a diagnostic overlay with the image. This is the
+// vertical slice proving Pegasus/QML can render file:// URLs straight
+// from the SD card — no artwork is ever copied.
+//
+// Validation is as strict as the media bridge: the theme URL must be a
+// file:// URL whose path passes validMediaRoot (absolute, safe
+// characters, no "..", length-capped). Anything else is rejected and the
+// probe stays absent. A probe problem must never break the library
+// screen: every failure path leaves _probe null.
+// ---------------------------------------------------------------------------
+
+var _probe = null;              // {sdMediaRoot,system,testAsset,themeUrl} or null
+var _probeEpoch = 0;            // bumped whenever the installed probe changes
+var _onProbeChanged = null;     // optional QML change-notification callback
+
+// Parse + validate a probe document. Returns the probe record on
+// success, null on any failure — never throws. Exported for the test
+// driver.
+function parseProbe(text) {
+    try {
+        if (!text) return null;
+        var doc = JSON.parse(text);
+        if (!doc || doc.version !== 1) return null;
+        var url = String(doc.themeUrl || "");
+        if (url.slice(0, 7) !== "file://") return null;
+        var path = url.slice(7);
+        if (!validMediaRoot(path)) return null;
+        var asset = String(doc.testAsset || "");
+        if (asset !== path) return null; // themeUrl must match testAsset exactly
+        return {
+            sdMediaRoot: String(doc.sdMediaRoot || ""),
+            system: String(doc.system || ""),
+            testAsset: asset,
+            themeUrl: url
+        };
+    } catch (e) {
+        return null;
+    }
+}
+
+// The installed probe record, or null when no valid probe file was
+// loaded. Never throws.
+function probeInfo() { return _probe; }
+
+// The exact file:// URL handed to QML for the test image, or "" when
+// no probe is installed.
+function probeImageUrl() { return _probe ? _probe.themeUrl : ""; }
+
+// QML registers a change-notification callback here; invoked on the GUI
+// thread whenever the installed probe changes (including "cleared").
+function setProbeChangedHandler(fn) {
+    _onProbeChanged = (typeof fn === "function") ? fn : null;
+}
+
+// Monotonic counter of installed-probe changes.
+function probeEpoch() { return _probeEpoch; }
+
+function _notifyProbeChanged() {
+    _probeEpoch++;
+    var cb = _onProbeChanged;
+    if (typeof cb === "function") {
+        try { cb(); } catch (e) { /* a QML handler must never break resolution */ }
+    }
+}
+
+// Test/manual hook: install a parsed probe directly.
+function loadProbeFromText(text) {
+    _probe = parseProbe(text);
+    _notifyProbeChanged();
+}
+
+// (Re)load crystal-esde-probe.json from the themes root. Async like the
+// bridge: returns immediately; the overlay appears when the parse
+// completes. A missing/invalid probe installs null (overlay hidden).
+// Safe no-op outside QML (no XMLHttpRequest). Never throws.
+function loadProbe(probeUrl) {
+    if (typeof XMLHttpRequest === "undefined") {
+        _probe = null;
+        _notifyProbeChanged();
+        return;
+    }
+    var u = String(probeUrl === undefined || probeUrl === null ? "" : probeUrl);
+    if (!u) {
+        _probe = null;
+        _notifyProbeChanged();
+        return;
+    }
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", u, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) return;
+            var text = "";
+            var ok = false;
+            try {
+                ok = (xhr.status === 200 || xhr.status === 0);
+                if (ok) text = xhr.responseText || "";
+            } catch (e) { ok = false; }
+            _probe = ok ? parseProbe(text) : null;
+            _notifyProbeChanged();
+        };
+        xhr.send();
+    } catch (e) {
+        _probe = null;
+        _notifyProbeChanged();
+    }
+}
+
 // QML registers a change-notification callback here. It is invoked on the
 // GUI thread whenever the installed index changes (including "cleared"),
 // so tile art bindings can re-evaluate. Never throws into the caller.
@@ -603,6 +726,13 @@ try {
             configure: configure,
             configureFromBridge: configureFromBridge,
             validMediaRoot: validMediaRoot,
+            parseProbe: parseProbe,
+            loadProbe: loadProbe,
+            loadProbeFromText: loadProbeFromText,
+            probeInfo: probeInfo,
+            probeImageUrl: probeImageUrl,
+            setProbeChangedHandler: setProbeChangedHandler,
+            probeEpoch: probeEpoch,
             loadFromText: loadFromText,
             refresh: refresh,
             setIndexChangedHandler: setIndexChangedHandler,
