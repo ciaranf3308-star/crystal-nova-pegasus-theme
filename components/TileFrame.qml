@@ -9,7 +9,7 @@ Item {
     id: root
     anchors.fill: parent
 
-    property color frameColor: T.tileBorder
+    property color frameColor: CrystalColors.frame
 
     // border segments (inset from corners by frameCornerCut)
     Rectangle { x: T.frameCornerCut; y: 0

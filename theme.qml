@@ -23,7 +23,7 @@ FocusScope {
 
     Rectangle {
         anchors.fill: parent
-        color: "#0a1929"
+        color: CrystalColors.background
     }
 
     Header {
@@ -74,7 +74,7 @@ FocusScope {
         font.family: root.fontFamily
         font.pixelSize: 26
         font.letterSpacing: 2
-        color: "#8ba3b5"
+        color: CrystalColors.dimText
         visible: root.screen === "home" && api.collections.count === 0
         text: "NO SYSTEMS FOUND"
     }
@@ -123,7 +123,50 @@ FocusScope {
         root.screen = "home"
     }
 
+    // User colors: the Manager app's APPEARANCE screen writes
+    // <themes-root>/crystal-user-colors.json (next to the media bridge,
+    // so theme updates never touch it):
+    //   {"version":1,"background":"#0a1929","accent":"#7ba7d9",
+    //    "cream":"#f0ebdc","joystick":"#ffc93c","updated":<epochSeconds>}
+    // All four keys are optional; only present + valid (^#[0-9a-fA-F]{6}$)
+    // values are applied to the CrystalColors singleton. A missing,
+    // malformed, or invalid file silently keeps theme defaults — a
+    // colors problem can never break rendering. NOTE: a cold Pegasus
+    // restart picks up color changes (the file is read once at startup).
+    function loadUserColors() {
+        var url = Qt.resolvedUrl("../crystal-user-colors.json")
+        if (typeof XMLHttpRequest === "undefined") return
+        try {
+            var xhr = new XMLHttpRequest()
+            xhr.open("GET", url, true)
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState !== 4) return
+                try {
+                    var ok = (xhr.status === 200 || xhr.status === 0)
+                    if (!ok) return
+                    var doc = JSON.parse(xhr.responseText || "")
+                    if (!doc || doc.version !== 1) return
+                    var hexRe = /^#[0-9a-fA-F]{6}$/
+                    var keys = ["background", "accent", "cream", "joystick"]
+                    for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i]
+                        var v = doc[k]
+                        if (typeof v === "string" && hexRe.test(v)) {
+                            CrystalColors[k] = v
+                            CrystalColors[k + "Custom"] = true
+                        }
+                    }
+                } catch (e) { /* silent fallback to theme defaults */ }
+            }
+            xhr.send()
+        } catch (e) { /* silent fallback to theme defaults */ }
+    }
+
     Component.onCompleted: {
+        // User-overridable palette (see loadUserColors): applied when the
+        // file is present and valid; otherwise the theme renders its
+        // measured defaults.
+        loadUserColors()
         // Scraper asset bridge: prefer the Manager-written crystal-media-bridge.json
         // (themes root; canonical external-media path) when it is present and
         // valid, else fall back to the legacy sibling directory
@@ -286,7 +329,7 @@ FocusScope {
 
         Rectangle {
             anchors.fill: parent
-            color: "#000000"
+            color: CrystalColors.black
             opacity: 0.9
         }
 
@@ -298,7 +341,7 @@ FocusScope {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "SD MEDIA PROBE — TEST ONLY"
-                color: "#ffd23f"
+                color: CrystalColors.joystick
                 font.pixelSize: 36
                 font.bold: true
                 font.family: root.fontFamily
@@ -306,7 +349,7 @@ FocusScope {
             Text {
                 width: parent.width
                 text: "External SD media root:\n" + probeOverlay.sdRoot
-                color: "#ffffff"
+                color: CrystalColors.white
                 font.pixelSize: 17
                 font.family: root.fontFamily
                 wrapMode: Text.WrapAnywhere
@@ -314,7 +357,7 @@ FocusScope {
             Text {
                 width: parent.width
                 text: "Test asset:\n" + probeOverlay.testAsset
-                color: "#ffffff"
+                color: CrystalColors.white
                 font.pixelSize: 17
                 font.family: root.fontFamily
                 wrapMode: Text.WrapAnywhere
@@ -322,7 +365,7 @@ FocusScope {
             Text {
                 width: parent.width
                 text: "Theme URL:\n" + probeOverlay.themeUrl
-                color: "#7fd4ff"
+                color: CrystalColors.probeLink
                 font.pixelSize: 17
                 font.family: root.fontFamily
                 wrapMode: Text.WrapAnywhere
@@ -331,8 +374,8 @@ FocusScope {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 480
                 height: 360
-                color: "#3a0d0d"
-                border.color: "#ffd23f"
+                color: CrystalColors.probePanel
+                border.color: CrystalColors.joystick
                 border.width: 2
                 Image {
                     id: probeImage
@@ -350,7 +393,7 @@ FocusScope {
                 Text {
                     anchors.centerIn: parent
                     text: "NO IMAGE"
-                    color: "#ff6b6b"
+                    color: CrystalColors.bad
                     font.pixelSize: 28
                     font.bold: true
                     font.family: root.fontFamily
@@ -360,7 +403,7 @@ FocusScope {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "Result: pending device validation — DOES THE COVER SHOW ABOVE?"
-                color: "#ffd23f"
+                color: CrystalColors.joystick
                 font.pixelSize: 19
                 font.bold: true
                 font.family: root.fontFamily
@@ -371,7 +414,7 @@ FocusScope {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "PRESS A OR B TO DISMISS"
-                color: "#8a93a6"
+                color: CrystalColors.probeDim
                 font.pixelSize: 16
                 font.family: root.fontFamily
             }

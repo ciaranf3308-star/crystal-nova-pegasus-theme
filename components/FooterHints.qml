@@ -19,7 +19,7 @@ Item {
         width: parent.width - 2 * T.margin
         y: 0
         height: T.footerDividerH
-        color: T.divider
+        color: CrystalColors.divider
     }
 
     Keycap {
@@ -35,7 +35,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.fontFooterPx
         font.letterSpacing: T.footerLetterSpacing
-        color: T.tileInk
+        color: CrystalColors.tileInk
         text: "RECENT"
     }
 
@@ -52,7 +52,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.fontFooterPx
         font.letterSpacing: T.footerLetterSpacing
-        color: T.tileInk
+        color: CrystalColors.tileInk
         text: "FAVOURITES"
     }
 
@@ -61,7 +61,7 @@ Item {
         y: T.keycapY
         font.family: root.fontFamily
         font.pixelSize: T.fontFooterPx - 8
-        color: T.tileInk
+        color: CrystalColors.tileInk
         opacity: 0.7
         visible: root.pageCount > 1
         text: (root.page + 1) + " / " + root.pageCount

@@ -23,7 +23,7 @@ Item {
     // the brand text (1-to-1 comparison 2026-09-18).
     Rectangle {
         anchors.fill: parent
-        color: "#081120"
+        color: CrystalColors.headerShade
     }
 
     Text {
@@ -35,7 +35,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.fontTitlePx
         font.letterSpacing: T.titleLetterSpacing
-        color: T.primaryInk
+        color: CrystalColors.ink
     }
 
     Text {
@@ -48,7 +48,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.fontTitlePx
         font.letterSpacing: 2
-        color: T.primaryInk
+        color: CrystalColors.ink
         // fixedClock pins the text for deterministic previews; the live
         // timer writes clockText so it never breaks this binding.
         property string clockText: "--:--"
@@ -87,7 +87,7 @@ Item {
             font.family: root.fontFamily
             font.pixelSize: 24
             font.letterSpacing: 4
-            color: T.primaryInk
+            color: CrystalColors.ink
             text: root.subtitle
         }
         Rectangle {  // left rule
@@ -95,14 +95,14 @@ Item {
             y: 15
             width: 330 - subText.implicitWidth / 2 - 34
             height: 2
-            color: T.divider
+            color: CrystalColors.divider
             opacity: 0.55
         }
         Rectangle {  // left node
             x: parent.width / 2 - subText.implicitWidth / 2 - 30
             y: 11
             width: 8; height: 8
-            color: T.divider
+            color: CrystalColors.divider
             opacity: 0.8
         }
         Rectangle {  // right rule
@@ -110,14 +110,14 @@ Item {
             y: 15
             width: 330 - subText.implicitWidth / 2 - 34
             height: 2
-            color: T.divider
+            color: CrystalColors.divider
             opacity: 0.55
         }
         Rectangle {  // right node
             x: parent.width / 2 + subText.implicitWidth / 2 + 22
             y: 11
             width: 8; height: 8
-            color: T.divider
+            color: CrystalColors.divider
             opacity: 0.8
         }
     }
@@ -127,6 +127,6 @@ Item {
         width: parent.width - 2 * T.margin
         y: T.headerDividerY
         height: T.headerDividerH
-        color: T.divider
+        color: CrystalColors.divider
     }
 }

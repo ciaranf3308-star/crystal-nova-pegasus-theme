@@ -14,9 +14,9 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: T.tileFill
+        color: CrystalColors.tile
         border.width: 2
-        border.color: T.tileBorder
+        border.color: CrystalColors.frame
     }
 
     // production system icon, small and quiet at the top
@@ -39,7 +39,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.fallbackAbbrPx
         font.letterSpacing: 4
-        color: T.primaryInk
+        color: CrystalColors.ink
         text: T.displayNameFor(root.shortName, "")
         elide: Text.ElideRight
     }
@@ -57,7 +57,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.fallbackTitlePx
         font.letterSpacing: 1
-        color: T.tileInk
+        color: CrystalColors.tileInk
         text: (root.title || "UNTITLED").toUpperCase()
     }
 }

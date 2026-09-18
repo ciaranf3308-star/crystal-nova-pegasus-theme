@@ -21,13 +21,13 @@ Item {
         x: 0; y: 2
         width: 62; height: 28
         color: "transparent"
-        border.color: T.batteryFrame
+        border.color: CrystalColors.mutedBlue
         border.width: 2
     }
     Rectangle { // terminal nub
         x: 62; y: 10
         width: 6; height: 12
-        color: T.batteryFrame
+        color: CrystalColors.mutedBlue
     }
     Row { // segmented charge fill
         x: 6; y: 7
@@ -37,8 +37,8 @@ Item {
             Rectangle {
                 width: 11; height: 18
                 color: index < root.filledSegments
-                       ? (root.charging ? T.primaryInk
-                          : root.level < 0.2 ? T.batteryLow : T.batteryFill)
+                       ? (root.charging ? CrystalColors.ink
+                          : root.level < 0.2 ? CrystalColors.badDeep : CrystalColors.batteryFill)
                        : "transparent"
             }
         }

@@ -56,7 +56,7 @@ Item {
         width: parent.width * 0.72
         height: 26
         radius: 13
-        color: "#000000"
+        color: CrystalColors.black
         opacity: 0.45
     }
 
@@ -91,14 +91,14 @@ Item {
                 id: gbaSpine
                 x: 0; y: 0
                 width: 110; height: 352
-                color: "#0b0e14"
+                color: CrystalColors.boxBlack
                 border.width: 2
-                border.color: "#1a2230"
+                border.color: CrystalColors.spineBorder
                 // subtle vertical highlight on the spine's right edge
                 Rectangle {
                     x: parent.width - 3; y: 0
                     width: 3; height: parent.height
-                    color: "#232f45"
+                    color: CrystalColors.spineHi
                     opacity: 0.6
                 }
                 Text {
@@ -111,7 +111,7 @@ Item {
                     font.pixelSize: 28
                     font.bold: true
                     font.letterSpacing: 6
-                    color: "#f2f6fa"
+                    color: CrystalColors.inkBright
                     text: root.spineLabel
                 }
             }
@@ -120,9 +120,9 @@ Item {
                 id: gbaBoxFront
                 x: 110; y: 0
                 width: 330; height: 352
-                color: "#0e2236"
+                color: CrystalColors.tile
                 border.width: 2
-                border.color: "#2a4a6a"
+                border.color: CrystalColors.borderDeep
                 Image {
                     anchors.fill: parent
                     anchors.margins: 3
@@ -174,8 +174,8 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 gradient: Gradient {
-                    GradientStop { position: 0.0; color: "#00000000" }
-                    GradientStop { position: 1.0; color: "#0a141f" }
+                    GradientStop { position: 0.0; color: CrystalColors.clear }
+                    GradientStop { position: 1.0; color: CrystalColors.gradientDark }
                 }
             }
         }
@@ -251,9 +251,9 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 radius: width / 2
-                color: "#101c2c"
+                color: CrystalColors.boxPanel
                 border.width: 2
-                border.color: "#3a5f8a"
+                border.color: CrystalColors.boxBorder
                 clip: true
                 Image {
                     anchors.fill: parent
@@ -273,9 +273,9 @@ Item {
                     anchors.centerIn: parent
                     width: 40; height: 40
                     radius: 20
-                    color: "#0a1929"
+                    color: CrystalColors.background
                     border.width: 2
-                    border.color: "#3a5f8a"
+                    border.color: CrystalColors.boxBorder
                 }
             }
             // disc sheen arc
@@ -284,7 +284,7 @@ Item {
                 radius: width / 2
                 color: "transparent"
                 border.width: 14
-                border.color: "#ffffff"
+                border.color: CrystalColors.white
                 opacity: 0.06
             }
         }
@@ -308,8 +308,8 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 gradient: Gradient {
-                    GradientStop { position: 0.0; color: "#00000000" }
-                    GradientStop { position: 1.0; color: "#0a141f" }
+                    GradientStop { position: 0.0; color: CrystalColors.clear }
+                    GradientStop { position: 1.0; color: CrystalColors.gradientDark }
                 }
             }
         }
@@ -327,18 +327,18 @@ Item {
             x: 170; y: 40
             width: 240; height: 320
             radius: 16
-            color: "#232b36"
+            color: CrystalColors.panelDark
             border.width: 2
-            border.color: "#3d4a5e"
+            border.color: CrystalColors.panelBorder
         }
         // label with game art
         Rectangle {
             x: 194; y: 120
             width: 192; height: 170
             radius: 8
-            color: "#0e2236"
+            color: CrystalColors.tile
             border.width: 2
-            border.color: "#2a4a6a"
+            border.color: CrystalColors.borderDeep
         }
         Image {
             x: 198; y: 124
@@ -356,7 +356,7 @@ Item {
             font.family: root.fontFamily
             font.pixelSize: 22
             font.letterSpacing: 3
-            color: "#7ba7d9"
+            color: CrystalColors.frame
             text: root.spineLabel
             visible: root.frontArt === ""
         }
@@ -369,7 +369,7 @@ Item {
             font.family: root.fontFamily
             font.pixelSize: 18
             font.letterSpacing: 2
-            color: "#d7e3ec"
+            color: CrystalColors.tileInk
             text: {
                 var t = "";
                 try { t = root.game ? (root.game.title || "") : ""; } catch (e) {}
@@ -388,9 +388,9 @@ Item {
         Rectangle {
             x: 90; y: 50
             width: 60; height: 310
-            color: "#0b0e14"
+            color: CrystalColors.boxBlack
             border.width: 2
-            border.color: "#1a2230"
+            border.color: CrystalColors.spineBorder
         }
         Text {
             x: 90; y: 195
@@ -400,7 +400,7 @@ Item {
             font.pixelSize: 16
             font.bold: true
             font.letterSpacing: 2
-            color: "#dfe9f1"
+            color: CrystalColors.batteryFill
             text: root.spineLabel.substring(0, 4)
         }
         // disc
@@ -408,9 +408,9 @@ Item {
             x: 190; y: 60
             width: 280; height: 280
             radius: 140
-            color: "#101c2c"
+            color: CrystalColors.boxPanel
             border.width: 3
-            border.color: "#3d4a5e"
+            border.color: CrystalColors.panelBorder
             clip: true
             Image {
                 anchors.fill: parent
@@ -429,7 +429,7 @@ Item {
             font.family: root.fontFamily
             font.pixelSize: 20
             font.letterSpacing: 3
-            color: "#7ba7d9"
+            color: CrystalColors.frame
             text: root.spineLabel
             visible: root.frontArt === ""
         }
@@ -438,9 +438,9 @@ Item {
             x: 308; y: 178
             width: 44; height: 44
             radius: 22
-            color: "#0a1929"
+            color: CrystalColors.background
             border.width: 2
-            border.color: "#3d4a5e"
+            border.color: CrystalColors.panelBorder
         }
     }
 
@@ -452,9 +452,9 @@ Item {
         Rectangle {
             anchors.centerIn: parent
             width: 300; height: 336
-            color: "#0e2236"
+            color: CrystalColors.tile
             border.width: 2
-            border.color: "#2a4a6a"
+            border.color: CrystalColors.borderDeep
             Image {
                 anchors.fill: parent
                 anchors.margins: 4

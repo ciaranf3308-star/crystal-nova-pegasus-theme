@@ -267,7 +267,7 @@ Item {
     Rectangle {
         id: dim
         anchors.fill: parent
-        color: T.background
+        color: CrystalColors.background
         opacity: 0
         visible: opacity > 0.01
         Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -292,7 +292,7 @@ Item {
             font.family: root.fontFamily
             font.pixelSize: 34
             font.letterSpacing: 5
-            color: T.primaryInk
+            color: CrystalColors.ink
             text: {
                 var t = ""
                 try { t = root.game ? (root.game.title || "") : "" } catch (e) {}
@@ -303,7 +303,7 @@ Item {
         Rectangle {
             x: (parent.width - 120) / 2; y: 104
             width: 120; height: T.footerDividerH
-            color: T.divider
+            color: CrystalColors.divider
             opacity: 0.7
         }
 
@@ -318,7 +318,7 @@ Item {
                     font.family: root.fontFamily
                     font.pixelSize: 18
                     font.letterSpacing: 3
-                    color: index === root.viewIndex ? T.primaryInk : T.tileInk
+                    color: index === root.viewIndex ? CrystalColors.ink : CrystalColors.tileInk
                     opacity: index === root.viewIndex ? 1 : 0.4
                     text: MT.viewLabel(modelData)
                 }
@@ -339,7 +339,7 @@ Item {
                     font.family: root.fontFamily
                     font.pixelSize: T.fontFooterPx
                     font.letterSpacing: T.footerLetterSpacing
-                    color: T.tileInk
+                    color: CrystalColors.tileInk
                     text: root.family === "gba" ? "ROTATE" : "VIEWS"
                 }
             }
@@ -351,7 +351,7 @@ Item {
                     font.family: root.fontFamily
                     font.pixelSize: T.fontFooterPx
                     font.letterSpacing: T.footerLetterSpacing
-                    color: T.tileInk
+                    color: CrystalColors.tileInk
                     text: "LAUNCH"
                 }
             }
@@ -363,7 +363,7 @@ Item {
                     font.family: root.fontFamily
                     font.pixelSize: T.fontFooterPx
                     font.letterSpacing: T.footerLetterSpacing
-                    color: T.tileInk
+                    color: CrystalColors.tileInk
                     text: "BACK"
                 }
             }
@@ -381,9 +381,9 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 radius: 12
-                color: "#050c14"
+                color: CrystalColors.inspectShade
                 border.width: 2
-                border.color: T.tileBorder
+                border.color: CrystalColors.frame
             }
         }
 

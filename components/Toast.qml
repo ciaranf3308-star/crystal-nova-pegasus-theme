@@ -11,7 +11,7 @@ Text {
     font.family: root.fontFamily
     font.pixelSize: 22
     font.letterSpacing: 2
-    color: "#8ba3b5"
+    color: CrystalColors.dimText
     opacity: 0
 
     Timer {

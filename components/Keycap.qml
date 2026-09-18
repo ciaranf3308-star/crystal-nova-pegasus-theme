@@ -17,6 +17,13 @@ Item {
     Canvas {
         id: cap
         anchors.fill: parent
+        // The user palette arrives asynchronously after first paint;
+        // repaint so the keycap tracks it like every binding does.
+        Connections {
+            target: CrystalColors
+            onCreamChanged: cap.requestPaint()
+            onKeycapStrokeChanged: cap.requestPaint()
+        }
         onPaint: {
             var ctx = getContext("2d");
             ctx.reset();
@@ -24,10 +31,10 @@ Item {
             if (root.circle) {
                 ctx.beginPath();
                 ctx.arc(w / 2, h / 2, w / 2 - 1, 0, Math.PI * 2);
-                ctx.fillStyle = T.keycapFill;
+                ctx.fillStyle = CrystalColors.cream;
                 ctx.fill();
                 ctx.lineWidth = 2;
-                ctx.strokeStyle = "#a9bccd";
+                ctx.strokeStyle = CrystalColors.keycapStroke;
                 ctx.stroke();
                 return;
             }
@@ -43,10 +50,10 @@ Item {
             ctx.lineTo(s, h - s * 2);   ctx.lineTo(0, h - s * 2);
             ctx.lineTo(0, s * 2);       ctx.lineTo(s, s * 2);
             ctx.lineTo(s, s);           ctx.closePath();
-            ctx.fillStyle = T.keycapFill;
+            ctx.fillStyle = CrystalColors.cream;
             ctx.fill();
             ctx.lineWidth = 2;
-            ctx.strokeStyle = "#a9bccd";
+            ctx.strokeStyle = CrystalColors.keycapStroke;
             ctx.stroke();
         }
         Component.onCompleted: requestPaint()
@@ -57,7 +64,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.fontFooterPx
         font.letterSpacing: 1
-        color: T.keycapInk
+        color: CrystalColors.creamInk
         text: root.text
     }
 }

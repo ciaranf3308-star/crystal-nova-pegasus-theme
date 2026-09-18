@@ -20,7 +20,7 @@ Item {
     Rectangle {
         id: bg
         anchors.fill: parent
-        color: root.selected ? T.cream : T.tileFill
+        color: root.selected ? CrystalColors.cream : CrystalColors.tile
 
         // subtle + fast: colour crossfade only, no movement
         Behavior on color { ColorAnimation { duration: 90 } }
@@ -35,7 +35,7 @@ Item {
         anchors.fill: parent
         color: "transparent"
         border.width: 2
-        border.color: T.selectedOutline
+        border.color: CrystalColors.selectedOutline
         visible: root.selected
     }
 
@@ -77,7 +77,7 @@ Item {
         verticalAlignment: Text.AlignVCenter
         font.family: root.fontFamily
         font.pixelSize: 44
-        color: root.selected ? T.creamInk : T.tileInk
+        color: root.selected ? CrystalColors.creamInk : CrystalColors.tileInk
         text: root.shortName.length >= 2 ? root.shortName.substring(0, 3).toUpperCase() : "?"
     }
 
@@ -92,7 +92,7 @@ Item {
         font.pixelSize: T.fontLabelPx
         font.letterSpacing: T.labelLetterSpacing
         font.bold: true
-        color: root.selected ? T.creamInk : T.tileInk
+        color: root.selected ? CrystalColors.creamInk : CrystalColors.tileInk
         text: root.label
     }
 }

@@ -9,7 +9,7 @@ Item {
     id: root
     anchors.fill: parent
 
-    property color markColor: T.creamInk
+    property color markColor: CrystalColors.creamInk
 
     // top-left
     Rectangle { x: T.markInset; y: T.markInset

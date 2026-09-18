@@ -127,11 +127,11 @@ Item {
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
-                GradientStop { position: 0.0; color: "#060d18e6" }
-                GradientStop { position: 0.28; color: "#0a141fa6" }
-                GradientStop { position: 0.52; color: "#0a141f66" }
-                GradientStop { position: 0.74; color: "#0a141f8c" }
-                GradientStop { position: 1.0; color: "#060d18e6" }
+                GradientStop { position: 0.0; color: CrystalColors.alpha(CrystalColors.heroDeep, 0xe6/255) }
+                GradientStop { position: 0.28; color: CrystalColors.alpha(CrystalColors.gradientDark, 0xa6/255) }
+                GradientStop { position: 0.52; color: CrystalColors.alpha(CrystalColors.gradientDark, 0x66/255) }
+                GradientStop { position: 0.74; color: CrystalColors.alpha(CrystalColors.gradientDark, 0x8c/255) }
+                GradientStop { position: 1.0; color: CrystalColors.alpha(CrystalColors.heroDeep, 0xe6/255) }
             }
         }
         // side vignette: keeps the frame edges moody like the reference
@@ -139,16 +139,16 @@ Item {
             anchors.fill: parent
             gradient: Gradient {
                 orientation: Gradient.Horizontal
-                GradientStop { position: 0.0; color: "#060d1880" }
-                GradientStop { position: 0.18; color: "#060d1800" }
-                GradientStop { position: 0.82; color: "#060d1800" }
-                GradientStop { position: 1.0; color: "#060d1880" }
+                GradientStop { position: 0.0; color: CrystalColors.alpha(CrystalColors.heroDeep, 0x80/255) }
+                GradientStop { position: 0.18; color: CrystalColors.alpha(CrystalColors.heroDeep, 0) }
+                GradientStop { position: 0.82; color: CrystalColors.alpha(CrystalColors.heroDeep, 0) }
+                GradientStop { position: 1.0; color: CrystalColors.alpha(CrystalColors.heroDeep, 0x80/255) }
             }
         }
         // warm golden-hour grade
         Rectangle {
             anchors.fill: parent
-            color: "#ff9a3c"
+            color: CrystalColors.amber
             opacity: 0.10
         }
     }
@@ -157,9 +157,9 @@ Item {
         x: 0; y: 92
         width: 1280; height: 628
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#0e1a2a" }
-            GradientStop { position: 0.5; color: "#0c1626" }
-            GradientStop { position: 1.0; color: "#060d18" }
+            GradientStop { position: 0.0; color: CrystalColors.heroGrad0 }
+            GradientStop { position: 0.5; color: CrystalColors.heroShade }
+            GradientStop { position: 1.0; color: CrystalColors.heroDeep }
         }
         visible: root.ambientArt === ""
     }
@@ -170,8 +170,8 @@ Item {
         x: 0; y: T.heroTopY - 10
         width: 740; height: 150
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#060d18"; }
-            GradientStop { position: 0.6; color: "#060d18cc"; }
+            GradientStop { position: 0.0; color: CrystalColors.heroDeep; }
+            GradientStop { position: 0.6; color: CrystalColors.alpha(CrystalColors.heroDeep, 0xcc/255); }
             GradientStop { position: 1.0; color: "transparent"; }
         }
         visible: root.shortName === "gba" || root.shortName === "ps2"
@@ -181,13 +181,13 @@ Item {
     Item {
         x: T.heroLeftX + 32; y: T.heroKickerY
         width: 600; height: 30
-        Rectangle { width: 4; height: 22; y: 2; color: "#7ba7d9" }
+        Rectangle { width: 4; height: 22; y: 2; color: CrystalColors.frame }
         Text {
             x: 14; y: 0
             font.family: root.fontFamily
             font.pixelSize: T.heroKickerPx
             font.letterSpacing: 4
-            color: "#7ba7d9"
+            color: CrystalColors.frame
             text: "LIBRARY"
         }
     }
@@ -198,9 +198,9 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.sysTitlePx
         font.letterSpacing: 2
-        color: "#ffffff"
+        color: CrystalColors.white
         style: Text.Outline
-        styleColor: "#0a1626"
+        styleColor: CrystalColors.tileDeep
         text: root.sysTitle
     }
     Text {
@@ -208,9 +208,9 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.sysSubPx
         font.letterSpacing: 3
-        color: "#e8f1f8"
+        color: CrystalColors.labelHi
         style: Text.Outline
-        styleColor: "#0a1626"
+        styleColor: CrystalColors.tileDeep
         text: root.subLine
     }
 
@@ -224,10 +224,10 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.taglinePx
         font.italic: true
-        color: "#ffffff"
+        color: CrystalColors.white
         opacity: 0.95
         style: Text.Outline
-        styleColor: "#0a1626"
+        styleColor: CrystalColors.tileDeep
         lineHeight: 1.3
         wrapMode: Text.WordWrap
         text: {
@@ -249,13 +249,13 @@ Item {
     Item {
         x: T.heroLeftX + 32; y: T.selKickerY
         width: 600; height: 24
-        Rectangle { width: 4; height: 20; y: 1; color: "#7ba7d9" }
+        Rectangle { width: 4; height: 20; y: 1; color: CrystalColors.frame }
         Text {
             x: 14; y: 0
             font.family: root.fontFamily
             font.pixelSize: T.heroKickerPx
             font.letterSpacing: 4
-            color: "#7ba7d9"
+            color: CrystalColors.frame
             text: "SELECTED GAME"
         }
     }
@@ -267,7 +267,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.selTitlePx
         font.letterSpacing: 1
-        color: T.primaryInk
+        color: CrystalColors.ink
         text: root.gameTitle
     }
     Text {
@@ -277,7 +277,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.metaPx
         font.letterSpacing: 2
-        color: "#9fb2c2"
+        color: CrystalColors.mutedBlue
         text: root.metaLine
         visible: root.metaLine !== ""
     }
@@ -286,7 +286,7 @@ Item {
         width: T.descW
         font.family: root.fontFamily
         font.pixelSize: T.descPx
-        color: "#a9c0d4"
+        color: CrystalColors.heroInk
         lineHeight: 1.28
         wrapMode: Text.WordWrap
         maximumLineCount: 4
@@ -305,9 +305,9 @@ Item {
             model: root.stripArts
             Rectangle {
                 width: T.shotSize; height: T.shotSize
-                color: "#0e2236"
+                color: CrystalColors.tile
                 border.width: 2
-                border.color: "#2a4a6a"
+                border.color: CrystalColors.borderDeep
                 Image {
                     anchors.fill: parent
                     anchors.margins: 3

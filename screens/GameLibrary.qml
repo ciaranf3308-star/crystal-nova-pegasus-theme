@@ -136,31 +136,31 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: 16
-            color: "#0c2036"
+            color: CrystalColors.gridTile
             border.width: 2
-            border.color: "#26456a"
+            border.color: CrystalColors.gridBorder
         }
 
         // open corner brackets over the panel corners
         Item {  // top-left
             x: -7; y: -7; width: 32; height: 32
-            Rectangle { x: 0; y: 0; width: 32; height: 5; color: "#7ba7d9" }
-            Rectangle { x: 0; y: 0; width: 5; height: 32; color: "#7ba7d9" }
+            Rectangle { x: 0; y: 0; width: 32; height: 5; color: CrystalColors.frame }
+            Rectangle { x: 0; y: 0; width: 5; height: 32; color: CrystalColors.frame }
         }
         Item {  // top-right
             x: parent.width - 25; y: -7; width: 32; height: 32
-            Rectangle { x: 0; y: 0; width: 32; height: 5; color: "#7ba7d9" }
-            Rectangle { x: 27; y: 0; width: 5; height: 32; color: "#7ba7d9" }
+            Rectangle { x: 0; y: 0; width: 32; height: 5; color: CrystalColors.frame }
+            Rectangle { x: 27; y: 0; width: 5; height: 32; color: CrystalColors.frame }
         }
         Item {  // bottom-left
             x: -7; y: parent.height - 25; width: 32; height: 32
-            Rectangle { x: 0; y: 27; width: 32; height: 5; color: "#7ba7d9" }
-            Rectangle { x: 0; y: 0; width: 5; height: 32; color: "#7ba7d9" }
+            Rectangle { x: 0; y: 27; width: 32; height: 5; color: CrystalColors.frame }
+            Rectangle { x: 0; y: 0; width: 5; height: 32; color: CrystalColors.frame }
         }
         Item {  // bottom-right
             x: parent.width - 25; y: parent.height - 25; width: 32; height: 32
-            Rectangle { x: 0; y: 27; width: 32; height: 5; color: "#7ba7d9" }
-            Rectangle { x: 27; y: 0; width: 5; height: 32; color: "#7ba7d9" }
+            Rectangle { x: 0; y: 27; width: 32; height: 5; color: CrystalColors.frame }
+            Rectangle { x: 27; y: 0; width: 5; height: 32; color: CrystalColors.frame }
         }
 
         // top row: L1 / SORT / FILTER / R1
@@ -169,15 +169,15 @@ Item {
             x: 25; y: T.panelTopY - T.panelY
             width: 46; height: 28
             radius: 6
-            color: T.keycapFill
+            color: CrystalColors.cream
             border.width: 1
-            border.color: "#3a5a7a"
+            border.color: CrystalColors.frameDim
             Text {
                 anchors.centerIn: parent
                 font.family: root.fontFamily
                 font.pixelSize: 16
                 font.bold: true
-                color: T.keycapInk
+                color: CrystalColors.creamInk
                 text: "L1"
             }
         }
@@ -185,15 +185,15 @@ Item {
             x: parent.width - 25 - 46; y: T.panelTopY - T.panelY
             width: 46; height: 28
             radius: 6
-            color: T.keycapFill
+            color: CrystalColors.cream
             border.width: 1
-            border.color: "#3a5a7a"
+            border.color: CrystalColors.frameDim
             Text {
                 anchors.centerIn: parent
                 font.family: root.fontFamily
                 font.pixelSize: 16
                 font.bold: true
-                color: T.keycapInk
+                color: CrystalColors.creamInk
                 text: "R1"
             }
         }
@@ -203,7 +203,7 @@ Item {
             font.family: root.fontFamily
             font.pixelSize: 18
             font.letterSpacing: 2
-            color: "#9fb2c2"
+            color: CrystalColors.mutedBlue
             text: "SORT: " + root.sortLabel
         }
         Text {
@@ -213,7 +213,7 @@ Item {
             font.family: root.fontFamily
             font.pixelSize: 18
             font.letterSpacing: 2
-            color: "#9fb2c2"
+            color: CrystalColors.mutedBlue
             text: "FILTER: " + root.filterLabel
         }
 
@@ -224,7 +224,7 @@ Item {
             font.family: root.fontFamily
             font.pixelSize: 20
             font.letterSpacing: 2
-            color: "#9fb2c2"
+            color: CrystalColors.mutedBlue
             text: "\u25C0  " + (grid.page + 1) + " / " + grid.pageCount + "  \u25B6"
         }
     }
@@ -269,7 +269,7 @@ Item {
             font.family: root.fontFamily
             font.pixelSize: 40
             font.letterSpacing: 4
-            color: T.primaryInk
+            color: CrystalColors.ink
             text: "NO GAMES FOUND"
         }
         Text {
@@ -277,7 +277,7 @@ Item {
             font.family: root.fontFamily
             font.pixelSize: T.fontFooterPx
             font.letterSpacing: 2
-            color: T.tileInk
+            color: CrystalColors.tileInk
             text: "ADD GAMES TO THIS COLLECTION"
         }
     }

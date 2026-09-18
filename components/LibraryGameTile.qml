@@ -38,7 +38,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: 10
-        color: T.cream
+        color: CrystalColors.cream
         visible: root.selected
     }
 
@@ -49,9 +49,9 @@ Item {
         y: root.selected ? 8 : 0
         width: T.gtileArtW - (root.selected ? 16 : 0)
         height: T.gtileArtH - (root.selected ? 16 : 0)
-        color: root.selected ? "transparent" : T.tileFill
+        color: root.selected ? "transparent" : CrystalColors.tile
         border.width: 2
-        border.color: root.selected ? T.selectedOutline : "#3a5a7a"
+        border.color: root.selected ? CrystalColors.selectedOutline : CrystalColors.frameDim
 
         Image {
             id: art
@@ -98,7 +98,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: 16
         font.letterSpacing: 1
-        color: root.selected ? T.creamInk : T.tileInk
+        color: root.selected ? CrystalColors.creamInk : CrystalColors.tileInk
         text: root.title.toUpperCase()
     }
 }

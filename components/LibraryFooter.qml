@@ -22,7 +22,7 @@ Item {
         width: parent.width - 2 * T.margin
         y: 0
         height: T.footerDividerH
-        color: T.divider
+        color: CrystalColors.divider
         opacity: 0.7
     }
 
@@ -40,7 +40,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.fontFooterPx
         font.letterSpacing: T.footerLetterSpacing
-        color: T.tileInk
+        color: CrystalColors.tileInk
         text: "BACK"
     }
 
@@ -59,7 +59,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.fontFooterPx
         font.letterSpacing: T.footerLetterSpacing
-        color: T.tileInk
+        color: CrystalColors.tileInk
         text: "INSPECT"
         visible: root.showInspect
     }
@@ -70,7 +70,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: 20
         font.letterSpacing: 2
-        color: "#6a8499"
+        color: CrystalColors.dimInk
         text: "GAMES   \u00B7   SYSTEMS   \u00B7   SETUP   \u00B7   PLAY"
     }
 
@@ -89,7 +89,7 @@ Item {
         font.family: root.fontFamily
         font.pixelSize: T.fontFooterPx
         font.letterSpacing: T.footerLetterSpacing
-        color: T.tileInk
+        color: CrystalColors.tileInk
         text: "PLAY"
         visible: root.showPlay
     }

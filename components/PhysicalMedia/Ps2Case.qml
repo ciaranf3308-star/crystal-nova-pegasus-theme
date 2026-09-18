@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtGraphicalEffects 1.12
+import ".."
 import "MediaTemplates.js" as MT
 
 // Ps2Case — thin compositor over authored SVG templates.
@@ -83,7 +84,7 @@ Item {
             height: root.isSpine ? MT.PS2.spineArtH : MT.PS2.coverH
             radius: 6
             clip: true
-            color: "#101722"   // window backing: visible only if art fails
+            color: CrystalColors.windowBacking   // window backing: visible only if art fails
 
             Image {
                 anchors.fill: parent
@@ -105,8 +106,8 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#16304a" }
-                        GradientStop { position: 1.0; color: "#0a1626" }
+                        GradientStop { position: 0.0; color: CrystalColors.wellBacking }
+                        GradientStop { position: 1.0; color: CrystalColors.tileDeep }
                     }
                 }
                 Rectangle {
@@ -114,7 +115,7 @@ Item {
                     anchors.margins: 40
                     color: "transparent"
                     border.width: 2
-                    border.color: "#7ba7d9"
+                    border.color: CrystalColors.frame
                     opacity: 0.45
                 }
                 Text {
@@ -128,7 +129,7 @@ Item {
                     font.pixelSize: 46
                     font.letterSpacing: 6
                     lineHeight: 1.4
-                    color: "#d7e3ec"
+                    color: CrystalColors.tileInk
                     text: root.titleText.toUpperCase()
                 }
                 Text {
@@ -138,7 +139,7 @@ Item {
                     font.family: root.fontFamily
                     font.pixelSize: 18
                     font.letterSpacing: 5
-                    color: "#7ba7d9"
+                    color: CrystalColors.frame
                     text: "CRYSTAL EDITION"
                 }
             }
@@ -162,7 +163,7 @@ Item {
                 }
                 Rectangle {
                     x: 48; y: 48; width: 532; height: 320
-                    color: "#16304a"
+                    color: CrystalColors.wellBacking
                     visible: !backAccentArt.visible
                 }
                 Image {
@@ -182,7 +183,7 @@ Item {
                     font.pixelSize: 42
                     font.letterSpacing: 5
                     lineHeight: 1.35
-                    color: "#d7e3ec"
+                    color: CrystalColors.tileInk
                     text: root.titleText.toUpperCase()
                 }
                 Text {
@@ -190,7 +191,7 @@ Item {
                     font.family: root.fontFamily
                     font.pixelSize: 17
                     font.letterSpacing: 5
-                    color: "#7ba7d9"
+                    color: CrystalColors.frame
                     text: "CRYSTAL EDITION"
                 }
             }
@@ -202,20 +203,20 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#1b2a40" }
-                        GradientStop { position: 1.0; color: "#101a2a" }
+                        GradientStop { position: 0.0; color: CrystalColors.caseGrad0 }
+                        GradientStop { position: 1.0; color: CrystalColors.caseShade }
                     }
                 }
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: 40; width: 26; height: 26
-                    color: "#7ba7d9"
+                    color: CrystalColors.frame
                     opacity: 0.8
                 }
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: parent.height - 66; width: 26; height: 26
-                    color: "#7ba7d9"
+                    color: CrystalColors.frame
                     opacity: 0.8
                 }
                 Text {
@@ -229,7 +230,7 @@ Item {
                     font.family: root.fontFamily
                     font.pixelSize: 30
                     font.letterSpacing: 4
-                    color: "#d7e3ec"
+                    color: CrystalColors.tileInk
                     text: MT.spineText(root.titleText)
                 }
             }
@@ -283,7 +284,7 @@ Item {
                 font.family: root.fontFamily
                 font.pixelSize: 23
                 font.letterSpacing: 6
-                color: "#d7e3ec"
+                color: CrystalColors.tileInk
                 opacity: 0.5
                 text: root.titleText.toUpperCase()
             }
@@ -315,7 +316,7 @@ Item {
                 visible: false
                 Rectangle {
                     anchors.fill: parent
-                    color: "#9fb4c9"   // disc backing: visible only if art fails
+                    color: CrystalColors.discBacking   // disc backing: visible only if art fails
                 }
                 // "scan": genuine disc artwork
                 Image {
@@ -343,8 +344,8 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: "#e6eef6" }
-                            GradientStop { position: 1.0; color: "#a9bfd4" }
+                            GradientStop { position: 0.0; color: CrystalColors.discHi }
+                            GradientStop { position: 1.0; color: CrystalColors.discLo }
                         }
                     }
                     Repeater {
@@ -356,7 +357,7 @@ Item {
                             anchors.centerIn: parent
                             color: "transparent"
                             border.width: 2
-                            border.color: "#ffffff"
+                            border.color: CrystalColors.white
                             opacity: 0.28
                         }
                     }
@@ -369,7 +370,7 @@ Item {
                         font.family: root.fontFamily
                         font.pixelSize: 26
                         font.letterSpacing: 4
-                        color: "#24344a"
+                        color: CrystalColors.discHub
                         text: root.titleText.toUpperCase()
                     }
                 }

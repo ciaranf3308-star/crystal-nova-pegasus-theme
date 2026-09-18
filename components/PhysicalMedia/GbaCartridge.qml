@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import ".."
 import "MediaTemplates.js" as MT
 
 // GbaCartridge — thin compositor over authored SVG templates.
@@ -78,7 +79,7 @@ Item {
             width: MT.GBA.labelW; height: MT.GBA.labelH
             radius: 10
             clip: true
-            color: "#7ba3cc"   // well backing: visible only if art fails
+            color: CrystalColors.cartHi   // well backing: visible only if art fails
 
             // "scan": genuine cartridge artwork, shown as-is
             Image {
@@ -108,7 +109,7 @@ Item {
                 }
                 Rectangle {
                     x: 24; y: 24; width: 392; height: 188
-                    color: "#16304a"
+                    color: CrystalColors.wellBacking
                     visible: !artCropArt.visible
                 }
                 // center-weighted vignette: seats the art into the sticker
@@ -136,7 +137,7 @@ Item {
                     font.family: root.fontFamily
                     font.pixelSize: 26
                     font.letterSpacing: 3
-                    color: "#e8f1f8"
+                    color: CrystalColors.labelHi
                     text: root.titleText.toUpperCase()
                 }
                 // micro brand mark: subtle supporting treatment
@@ -147,7 +148,7 @@ Item {
                     font.family: root.fontFamily
                     font.pixelSize: 11
                     font.letterSpacing: 4
-                    color: "#7ba7d9"
+                    color: CrystalColors.frame
                     opacity: 0.85
                     text: "CRYSTAL"
                 }
@@ -158,8 +159,8 @@ Item {
                 anchors.fill: parent
                 visible: root.labelKind === "none"
                 gradient: Gradient {
-                    GradientStop { position: 0.0; color: "#b9d4ea" }
-                    GradientStop { position: 1.0; color: "#7ba3cc" }
+                    GradientStop { position: 0.0; color: CrystalColors.cartGradHi }
+                    GradientStop { position: 1.0; color: CrystalColors.cartHi }
                 }
             }
             // sticker treatment for the "none" fallback sticker only
@@ -172,14 +173,14 @@ Item {
                 Rectangle {
                     x: 16; y: 14; width: 118; height: 26
                     radius: 13
-                    color: "#0e2236"
+                    color: CrystalColors.tile
                     opacity: 0.92
                     Text {
                         anchors.centerIn: parent
                         font.family: root.fontFamily
                         font.pixelSize: 13
                         font.letterSpacing: 3
-                        color: "#7ba7d9"
+                        color: CrystalColors.frame
                         text: "CRYSTAL"
                     }
                 }
@@ -189,7 +190,7 @@ Item {
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
                     height: 64
-                    color: "#0c1c30"
+                    color: CrystalColors.cartWell
                     opacity: 0.94
                 }
                 Rectangle {
@@ -198,7 +199,7 @@ Item {
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 64
                     height: 3
-                    color: "#7ba7d9"
+                    color: CrystalColors.frame
                 }
                 Text {
                     anchors.left: parent.left
@@ -213,7 +214,7 @@ Item {
                     font.family: root.fontFamily
                     font.pixelSize: 24
                     font.letterSpacing: 3
-                    color: "#d7e3ec"
+                    color: CrystalColors.tileInk
                     text: root.titleText.toUpperCase()
                 }
             }

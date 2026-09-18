@@ -38,7 +38,7 @@ Item {
     Rectangle {
         id: bg
         anchors.fill: parent
-        color: root.selected ? T.cream : T.tileFill
+        color: root.selected ? CrystalColors.cream : CrystalColors.tile
         Behavior on color { ColorAnimation { duration: 90 } }
     }
 
@@ -52,7 +52,7 @@ Item {
         anchors.margins: 10
         color: "transparent"
         border.width: 2
-        border.color: T.selectedOutline
+        border.color: CrystalColors.selectedOutline
         visible: root.selected
     }
 
