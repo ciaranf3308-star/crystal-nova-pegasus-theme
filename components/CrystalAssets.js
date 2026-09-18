@@ -297,10 +297,12 @@ function configureFromBridge(bridgeUrl, fallbackUrl) {
 // vertical slice proving Pegasus/QML can render file:// URLs straight
 // from the SD card — no artwork is ever copied.
 //
-// Validation is as strict as the media bridge: the theme URL must be a
-// file:// URL whose path passes validMediaRoot (absolute, safe
-// characters, no "..", length-capped). Anything else is rejected and the
-// probe stays absent. A probe problem must never break the library
+// Validation: the theme URL must be a file:// URL whose percent-decoded
+// path is absolute, length-capped, free of control characters and of
+// "." / ".." segments (no traversal), and must equal testAsset exactly.
+// Real cover filenames contain spaces and parentheses, so the directory
+// character class used by the media bridge does not apply here.
+// Anything else is rejected and the probe stays absent. A probe problem must never break the library
 // screen: every failure path leaves _probe null.
 // ---------------------------------------------------------------------------
 
@@ -308,9 +310,37 @@ var _probe = null;              // {sdMediaRoot,system,testAsset,themeUrl} or nu
 var _probeEpoch = 0;            // bumped whenever the installed probe changes
 var _onProbeChanged = null;     // optional QML change-notification callback
 
+// Validation for a probe *file* path (decoded). Unlike validMediaRoot
+// (directory names), real ES-DE cover filenames contain spaces,
+// parentheses, brackets, apostrophes, etc. The security properties we
+// need are: absolute, length-capped, no control characters, no empty
+// segments, and no "." / ".." segments (no traversal). The Manager
+// generated the path by listing a real file; the theme only ever
+// hands it to QML Image as a read (no shell, no write).
+function validProbePath(path) {
+    if (typeof path !== "string" || path.length === 0) return false;
+    if (path.length > 2048) return false;
+    if (path.charAt(0) !== "/") return false;
+    for (var i = 0; i < path.length; i++) {
+        var code = path.charCodeAt(i);
+        if (code < 0x20 || code === 0x7f) return false;
+    }
+    var segs = path.split("/");
+    for (var j = 1; j < segs.length; j++) {
+        if (segs[j].length === 0 || segs[j] === "." || segs[j] === "..") return false;
+    }
+    return true;
+}
+
 // Parse + validate a probe document. Returns the probe record on
 // success, null on any failure — never throws. Exported for the test
 // driver.
+//
+// The Manager percent-encodes the file path in themeUrl (proper URL
+// form: spaces become %20, etc.) while testAsset stays the raw
+// filesystem path. Validation decodes the URL path, checks it with
+// validProbePath, and requires the decoded path to equal testAsset
+// exactly.
 function parseProbe(text) {
     try {
         if (!text) return null;
@@ -318,10 +348,15 @@ function parseProbe(text) {
         if (!doc || doc.version !== 1) return null;
         var url = String(doc.themeUrl || "");
         if (url.slice(0, 7) !== "file://") return null;
-        var path = url.slice(7);
-        if (!validMediaRoot(path)) return null;
+        var path;
+        try {
+            path = decodeURIComponent(url.slice(7));
+        } catch (e) {
+            return null;
+        }
+        if (!validProbePath(path)) return null;
         var asset = String(doc.testAsset || "");
-        if (asset !== path) return null; // themeUrl must match testAsset exactly
+        if (asset !== path) return null; // decoded URL must match testAsset exactly
         return {
             sdMediaRoot: String(doc.sdMediaRoot || ""),
             system: String(doc.system || ""),

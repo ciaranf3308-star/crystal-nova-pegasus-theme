@@ -513,6 +513,27 @@ A.configure(BASE); // restore
     A.loadProbe("file:///themes/crystal-esde-probe.json");
     completeXHR(xhrLog[xhrLog.length - 1], 200, "garbage");
     check("invalid probe clears the install", A.probeInfo() === null && A.probeImageUrl() === "");
+    // real-world filenames: spaces, parentheses, brackets, apostrophes.
+    // The Manager percent-encodes the path in themeUrl; testAsset stays raw.
+    var SPACED = JSON.stringify({
+        version: 1,
+        sdMediaRoot: "/storage/1234-ABCD/Crystal/imports/esde",
+        system: "ps2",
+        testAsset: "/storage/1234-ABCD/Crystal/imports/esde/media/ps2/covers/Sonic the Hedgehog (USA).png",
+        themeUrl: "file:///storage/1234-ABCD/Crystal/imports/esde/media/ps2/covers/Sonic%20the%20Hedgehog%20%28USA%29.png",
+        created: 1700000000
+    });
+    var sp = A.parseProbe(SPACED);
+    check("parseProbe accepts percent-encoded real-world filenames",
+        sp !== null &&
+        sp.testAsset === "/storage/1234-ABCD/Crystal/imports/esde/media/ps2/covers/Sonic the Hedgehog (USA).png" &&
+        sp.themeUrl === "file:///storage/1234-ABCD/Crystal/imports/esde/media/ps2/covers/Sonic%20the%20Hedgehog%20%28USA%29.png");
+    check("parseProbe rejects decoded-path/testAsset mismatch",
+        A.parseProbe(SPACED.replace("Sonic%20the", "Sonic%20teh")) === null);
+    check("parseProbe rejects encoded traversal",
+        A.parseProbe(SPACED.split("media/ps2").join("media/%2e%2e/x")) === null);
+    check("parseProbe rejects bad percent-encoding",
+        A.parseProbe(SPACED.replace("Sonic%20the", "Sonic%2the")) === null);
     // missing probe file clears
     A.loadProbeFromText(GOOD);
     A.loadProbe("file:///themes/crystal-esde-probe.json");

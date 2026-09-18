@@ -338,7 +338,12 @@ FocusScope {
                     id: probeImage
                     anchors.fill: parent
                     anchors.margins: 4
-                    source: CrystalAssets.probeImageUrl()
+                    // Bind the overlay's own property, not a JS-module call:
+                    // QML cannot track dependencies inside CrystalAssets, so
+                    // probeImageUrl() would evaluate once (empty) and never
+                    // update. themeUrl is set by refreshProbe() before the
+                    // overlay becomes visible.
+                    source: probeOverlay.themeUrl
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                 }
