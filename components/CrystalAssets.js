@@ -208,25 +208,18 @@ function configure(baseUrl) {
 // ---------------------------------------------------------------------------
 
 var MEDIA_ROOT_MAX_LEN = 256;
+var MEDIA_ROOT_RE = /^\/[A-Za-z0-9_.\-]+(\/[A-Za-z0-9_.\-]+)*$/;
 
 // Strict whitelist check for a bridge mediaRoot. Returns true only for an
-// absolute Unix path free of control characters and "." / ".." segments.
-// Real Android paths contain spaces (and parens, brackets, etc.) — those
-// are safe in a file:// URL and must not be rejected. Exported for the
-// test driver.
+// absolute Unix path of safe characters. Exported for the test driver.
 function validMediaRoot(root) {
     if (typeof root !== "string" || root.length === 0) return false;
     if (root.length > MEDIA_ROOT_MAX_LEN) return false;
-    if (root.charAt(0) !== "/") return false;
-    for (var i = 0; i < root.length; i++) {
-        var code = root.charCodeAt(i);
-        if (code < 0x20 || code === 0x7f) return false;
-    }
-    // "." and ".." segments are rejected (no traversal); empty segments
-    // (double slashes, trailing slash) are rejected.
+    if (!MEDIA_ROOT_RE.test(root)) return false;
+    // "." and ".." pass the character class above as segments; reject them.
     var segs = root.split("/");
     for (var i = 1; i < segs.length; i++) {
-        if (segs[i].length === 0 || segs[i] === "." || segs[i] === "..") return false;
+        if (segs[i] === "." || segs[i] === "..") return false;
     }
     return true;
 }
