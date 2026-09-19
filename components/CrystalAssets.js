@@ -664,10 +664,40 @@ function tileFront(game, shortName) {
     try {
         if (game && game.assets) {
             var a = game.assets;
-            return a.boxFront || a.poster || "";
+            var p = a.boxFront || a.poster || "";
+            if (p) return p;
         }
     } catch (e2) { /* fall through */ }
-    return "";
+    // ES-DE fallback: the importer keeps covers at
+    // <mediaRoot>/media/<platform>/covers/<romBaseName>.jpg.
+    // Use the ROM filename (stable, from Pegasus) when the Crystal
+    // index has no entry and Pegasus has no asset.
+    try {
+        c = esdeCover(game, shortName);
+    } catch (e3) { c = ""; }
+    return c || "";
+}
+
+// ES-DE cover path: <mediaRoot>/media/<platform>/covers/<romBase>.jpg
+// Returns "" when the media root, platform, or ROM name is unavailable.
+function esdeCover(game, shortName) {
+    if (!_baseUrl) return "";
+    var plat = "";
+    try {
+        plat = platformSlug(shortName);
+    } catch (e) { return ""; }
+    if (!plat) return "";
+    var rom = "";
+    try {
+        rom = romFileName(game);
+    } catch (e2) { return ""; }
+    if (!rom) return "";
+    // Strip the ROM extension; the cover uses .jpg.
+    var dot = rom.lastIndexOf(".");
+    var base = dot > 0 ? rom.substring(0, dot) : rom;
+    if (!base) return "";
+    // encodeURI keeps parentheses/commas readable, encodes spaces.
+    return _baseUrl + "media/" + plat + "/covers/" + encodeURI(base) + ".jpg";
 }
 
 // ---------------------------------------------------------------------------

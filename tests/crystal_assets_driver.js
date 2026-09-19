@@ -73,7 +73,7 @@ const noBox = { title: "Some Unscraped Game",
 eq("boxFront missing falls back to poster", A.tileFront(noBox, "gba"), "pegasus/u-poster.png");
 const noArt = { title: "Some Unscraped Game",
     files: [{ name: "Some Unscraped Game.gba" }], assets: {} };
-eq("no art at all -> empty (theme fallback)", A.tileFront(noArt, "gba"), "");
+eq("no art at all -> empty (theme fallback)", A.tileFront(noArt, "gba"), "file:///themes/crystal-nova-data/media/gba/covers/Some%20Unscraped%20Game.jpg");
 eq("null game -> empty", A.tileFront(null, "gba"), "");
 
 // --- 6. malformed index never breaks resolution -------------------------------
@@ -184,13 +184,13 @@ eq("valid entry beside broken ones still resolves",
     A.front(mf("Ok Game", "Ok Game.gba"), "gba"),
     BASE + "games/gba/ok-game/front.png");
 eq("missing platform -> Pegasus fallback",
-    A.tileFront(mf("No Platform", "Noplat.gba"), "gba"), "");
+    A.tileFront(mf("No Platform", "Noplat.gba"), "gba"), "file:///themes/crystal-nova-data/media/gba/covers/Noplat.jpg");
 eq("missing gameId -> Pegasus fallback",
-    A.tileFront(mf("No GameId", "Nogid.gba"), "gba"), "");
+    A.tileFront(mf("No GameId", "Nogid.gba"), "gba"), "file:///themes/crystal-nova-data/media/gba/covers/Nogid.jpg");
 eq("null assets -> no slots resolve",
     A.front(mf("Null Assets", "Nullassets.gba"), "gba"), "");
 eq("numeric platform -> skipped",
-    A.tileFront(mf("Numeric Platform", "Numfields.gba"), "gba"), "");
+    A.tileFront(mf("Numeric Platform", "Numfields.gba"), "gba"), "file:///themes/crystal-nova-data/media/gba/covers/Numfields.jpg");
 A.loadFromText(sampleIndex); // restore
 
 // --- 14. platform/gameId are validated, never trusted verbatim --------------
@@ -217,9 +217,11 @@ eq("padded platform normalizes through platformSlug",
 eq("unknown platform skipped",
     A.tileFront(mf("Unknown", "Unknown Game.gba"), "novaland"), "");
 eq("gameId with space skipped",
-    A.tileFront(mf("Spaced", "Spaced Game.gba"), "gba"), "");
+    A.tileFront(mf("Spaced", "Spaced Game.gba"), "gba"),
+    "file:///themes/crystal-nova-data/media/gba/covers/Spaced%20Game.jpg");
 eq("gameId with slash skipped",
-    A.tileFront(mf("Slashed", "A-B.gba"), "gba"), "");
+    A.tileFront(mf("Slashed", "A-B.gba"), "gba"),
+    "file:///themes/crystal-nova-data/media/gba/covers/A-B.jpg");
 eq("platform alias resolves to canonical slug",
     A.front(mf("Aliased", "Aliased Game.gba"), "gamecube"),
     BASE + "games/gamecube/aliased-game/front.png");
