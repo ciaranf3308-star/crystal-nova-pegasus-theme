@@ -680,24 +680,39 @@ function tileFront(game, shortName) {
 
 // ES-DE cover path: <mediaRoot>/media/<platform>/covers/<romBase>.jpg
 // Returns "" when the media root, platform, or ROM name is unavailable.
+//
+// Prefers the probe's sdMediaRoot (written by the Manager during the
+// ES-DE import — known to be where the covers are) over the bridge
+// _baseUrl (which points to the Crystal tree, not the ES-DE import).
 function esdeCover(game, shortName) {
-    if (!_baseUrl) return "";
+    var baseUrl = "";
+    try {
+        if (_probe && _probe.sdMediaRoot) {
+            baseUrl = _probe.sdMediaRoot;
+            // Ensure trailing slash for URL construction.
+            if (baseUrl.charAt(baseUrl.length - 1) !== "/") baseUrl += "/";
+            // Convert filesystem path to file:// URL.
+            if (baseUrl.charAt(0) === "/") baseUrl = "file://" + baseUrl;
+        }
+    } catch (e) { baseUrl = ""; }
+    if (!baseUrl) baseUrl = _baseUrl;
+    if (!baseUrl) return "";
     var plat = "";
     try {
         plat = platformSlug(shortName);
-    } catch (e) { return ""; }
+    } catch (e2) { return ""; }
     if (!plat) return "";
     var rom = "";
     try {
         rom = romFileName(game);
-    } catch (e2) { return ""; }
+    } catch (e3) { return ""; }
     if (!rom) return "";
     // Strip the ROM extension; the cover uses .jpg.
     var dot = rom.lastIndexOf(".");
     var base = dot > 0 ? rom.substring(0, dot) : rom;
     if (!base) return "";
     // encodeURI keeps parentheses/commas readable, encodes spaces.
-    return _baseUrl + "media/" + plat + "/covers/" + encodeURI(base) + ".jpg";
+    return baseUrl + "media/" + plat + "/covers/" + encodeURI(base) + ".jpg";
 }
 
 // ---------------------------------------------------------------------------
