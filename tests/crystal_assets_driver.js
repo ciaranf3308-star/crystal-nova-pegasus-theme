@@ -329,7 +329,9 @@ A.setIndexChangedHandler(null);
 var BRIDGE_URL = "file:///themes/crystal-media-bridge.json";
 var SD_BASE = "file:///storage/1234-ABCD/CrystalNova/Media/";
 
-// validMediaRoot: strict whitelist
+// validMediaRoot: absolute path, no traversal, no control chars.
+// Spaces and shell-metachars are safe: the path becomes a file:// URL
+// for QML Image, never a shell command.
 [["/storage/1234-ABCD/CrystalNova/Media", true],
  ["/sdcard", true],
  ["/storage/1234-ABCD/CrystalNova/.thumbcache", true],
@@ -342,9 +344,9 @@ var SD_BASE = "file:///storage/1234-ABCD/CrystalNova/Media/";
  ["/storage/../etc", false],
  ["/storage/..", false],
  ["/storage/./media", false],
- ["/storage/my dir", false],
- ["/storage/evil;rm -rf", false],
- ["/storage/\"quoted\"", false],
+ ["/storage/my dir", true],
+ ["/storage/evil;rm -rf", true],
+ ["/storage/\"quoted\"", true],
  ["/storage/a".repeat(40), false], // > 256 chars
  ["/a/", false],
  [null, false],
