@@ -4,9 +4,9 @@ import "CrystalTheme.js" as T
 import "CrystalAssets.js" as CrystalAssets
 import "SystemMeta.js" as SystemMeta
 
-// Left panel of the library hero: system kickers over an ambient art
-// backdrop, the large physical-media composition, then the selected-game
-// block (title / meta / description / screenshots).
+// Left hero panel (rebuilt 2026-09-19): the emotional side of the library.
+// System identity dominates the top; the selected game is the hero object
+// in the middle; game details anchor the bottom. Generous space, no chrome.
 Item {
     id: root
 
@@ -14,7 +14,6 @@ Item {
     property var game: null
     property string shortName: ""
     property string fontFamily: "monospace"
-    // Crystal index epoch (art) + manifest epoch (editorial meta).
     property int artEpoch: 0
     property int metaEpoch: 0
 
@@ -25,6 +24,17 @@ Item {
         if (n === "") n = root.shortName;
         return n.toUpperCase();
     }
+    // Responsive system title size: long names (e.g. NINTENDO GAME BOY
+    // ADVANCE) shrink instead of truncating mid-word.
+    property int sysTitlePx: {
+        var len = root.sysTitle.length;
+        if (len <= 12) return 64;
+        if (len <= 18) return 54;
+        if (len <= 24) return 44;
+        return 36;
+    }
+    // Allow a controlled two-line treatment for very long names.
+    property bool sysTitleTwoLine: root.sysTitle.length > 26
     property int gameCount: {
         try {
             if (root.collection && root.collection.games) return root.collection.games.count || 0
@@ -37,9 +47,8 @@ Item {
             if (root.sysMeta.maker !== "") parts.push(root.sysMeta.maker);
             if (root.sysMeta.year !== "") parts.push(root.sysMeta.year);
         } catch (e) {}
-        return parts.join("  |  ");
+        return parts.join("   ·   ");
     }
-    // Editorial metadata for the selected game ({} while loading/absent).
     property var gameMeta: {
         root.metaEpoch;
         try { return CrystalAssets.gameMeta(root.game, root.shortName); }
@@ -52,29 +61,23 @@ Item {
             if (root.gameMeta.players) parts.push(String(root.gameMeta.players));
             if (root.gameMeta.year) parts.push(String(root.gameMeta.year));
         } catch (e) {}
-        return parts.join("  |  ");
+        return parts.join("   ·   ");
     }
     property string gameTitle: {
         var t = "";
         try { t = root.game ? (root.game.title || "") : ""; } catch (e) {}
         return t === "" ? "UNTITLED" : t.toUpperCase();
     }
+    // Responsive game title: shrink before resorting to ellipsis.
+    property int gameTitlePx: {
+        var len = root.gameTitle.length;
+        if (len <= 20) return 34;
+        if (len <= 30) return 28;
+        return 24;
+    }
     property string description: {
         try { return root.gameMeta.description ? String(root.gameMeta.description) : ""; }
         catch (e) { return ""; }
-    }
-    property var stripArts: {
-        root.artEpoch;
-        var arts = [];
-        try {
-            var s = CrystalAssets.screenshot(root.game, root.shortName);
-            if (s !== "") arts.push(s);
-            var b = CrystalAssets.back(root.game, root.shortName);
-            if (b !== "" && arts.length < 3) arts.push(b);
-            var m = CrystalAssets.media(root.game, root.shortName);
-            if (m !== "" && arts.length < 3) arts.push(m);
-        } catch (e) {}
-        return arts;
     }
     property string ambientArt: {
         root.artEpoch;
@@ -82,21 +85,13 @@ Item {
         catch (e) { return ""; }
     }
 
-    // ---- (dynamic per-game atmosphere is below; this old quiet
-    // backdrop is removed to avoid double-layering) ----
-
-    // ---- dynamic per-game atmosphere: selected game's art ----
-    // Each game gets its own environmental feel (user: "same on all
-    // games" was wrong). The art is shown full-bleed and dissolved into
-    // an abstract color wash: heavy blur removes recognizability (no
-    // giant faces), a strong top-down dark grade carries readability,
-    // and a warm golden-hour tint keeps the premium feel. On device,
-    // FastBlur provides the dissolve; the dark overlays are tuned to
-    // carry the design even where blur is unavailable.
+    // ---- ambient backdrop: selected game's art as environmental wash ----
+    // Heavy blur dissolves recognizability; dark grade carries readability.
     Item {
         x: 0; y: 92
-        width: 1280; height: 628
+        width: 768; height: 640
         visible: root.ambientArt !== ""
+        clip: true
 
         Image {
             id: atmoSource
@@ -106,56 +101,35 @@ Item {
             asynchronous: true
             cache: true
             source: root.ambientArt
-            // hidden: the FastBlur below renders the blurred copy; this
-            // keeps the source from double-painting on real hardware.
-            // (The desktop preview shim leaves FastBlur transparent, so
-            // nothing shows there — the dark grade below still applies.)
             visible: false
-            // zoom slightly so blur edges never show the frame
             scale: 1.08
         }
-        // Dissolves the art into an environmental wash on real hardware.
         FastBlur {
             anchors.fill: parent
             source: atmoSource
             radius: 96
-            opacity: 0.55
+            opacity: 0.5
         }
-        // cinematic dark grade: deep at top (header legibility) and
-        // bottom (selected-game legibility), breathing in the middle
-        // where the physical media sits
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
                 GradientStop { position: 0.0; color: CrystalColors.alpha(CrystalColors.heroDeep, 0xe6/255) }
-                GradientStop { position: 0.28; color: CrystalColors.alpha(CrystalColors.gradientDark, 0xa6/255) }
-                GradientStop { position: 0.52; color: CrystalColors.alpha(CrystalColors.gradientDark, 0x66/255) }
-                GradientStop { position: 0.74; color: CrystalColors.alpha(CrystalColors.gradientDark, 0x8c/255) }
+                GradientStop { position: 0.3; color: CrystalColors.alpha(CrystalColors.gradientDark, 0xa6/255) }
+                GradientStop { position: 0.55; color: CrystalColors.alpha(CrystalColors.gradientDark, 0x66/255) }
+                GradientStop { position: 0.78; color: CrystalColors.alpha(CrystalColors.gradientDark, 0x8c/255) }
                 GradientStop { position: 1.0; color: CrystalColors.alpha(CrystalColors.heroDeep, 0xe6/255) }
             }
         }
-        // side vignette: keeps the frame edges moody like the reference
-        Rectangle {
-            anchors.fill: parent
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0.0; color: CrystalColors.alpha(CrystalColors.heroDeep, 0x80/255) }
-                GradientStop { position: 0.18; color: CrystalColors.alpha(CrystalColors.heroDeep, 0) }
-                GradientStop { position: 0.82; color: CrystalColors.alpha(CrystalColors.heroDeep, 0) }
-                GradientStop { position: 1.0; color: CrystalColors.alpha(CrystalColors.heroDeep, 0x80/255) }
-            }
-        }
-        // warm golden-hour grade
         Rectangle {
             anchors.fill: parent
             color: CrystalColors.amber
-            opacity: 0.10
+            opacity: 0.08
         }
     }
-    // Fallback: system-specific gradient when no art is available
+    // Fallback gradient when no art is available.
     Rectangle {
         x: 0; y: 92
-        width: 1280; height: 628
+        width: 768; height: 640
         gradient: Gradient {
             GradientStop { position: 0.0; color: CrystalColors.heroGrad0 }
             GradientStop { position: 0.5; color: CrystalColors.heroShade }
@@ -164,160 +138,113 @@ Item {
         visible: root.ambientArt === ""
     }
 
-    // Scrim behind the system title for readability over the bright
-    // backdrop. Declared BEFORE the text so it paints behind, not over.
-    Rectangle {
-        x: 0; y: T.heroTopY - 10
-        width: 740; height: 150
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: CrystalColors.heroDeep; }
-            GradientStop { position: 0.6; color: CrystalColors.alpha(CrystalColors.heroDeep, 0xcc/255); }
-            GradientStop { position: 1.0; color: "transparent"; }
-        }
-        visible: root.shortName === "gba" || root.shortName === "ps2"
-    }
-
-    // ---- system kickers ----
-    Item {
-        x: T.heroLeftX + 32; y: T.heroKickerY
-        width: 600; height: 30
-        Rectangle { width: 4; height: 22; y: 2; color: CrystalColors.frame }
-        Text {
-            x: 14; y: 0
-            font.family: root.fontFamily
-            font.pixelSize: T.heroKickerPx
-            font.letterSpacing: 4
-            color: CrystalColors.frame
-            text: "LIBRARY"
-        }
-    }
+    // ---- system identity ----
+    // LIBRARY eyebrow
     Text {
-        x: T.heroLeftX + 32; y: T.sysTitleY
-        width: 640
-        elide: Text.ElideRight
+        x: T.heroLeftX; y: T.heroKickerY
         font.family: root.fontFamily
-        font.pixelSize: T.sysTitlePx
+        font.pixelSize: T.heroKickerPx
+        font.letterSpacing: 5
+        color: CrystalColors.frame
+        text: "LIBRARY"
+    }
+    // System name — dominates the screen. Responsive size, two-line
+    // treatment for very long names. Never ugly mid-word truncation.
+    Text {
+        x: T.heroLeftX; y: T.sysTitleY
+        width: T.heroLeftW
+        font.family: root.fontFamily
+        font.pixelSize: root.sysTitlePx
         font.letterSpacing: 2
+        font.bold: true
         color: CrystalColors.white
-        style: Text.Outline
-        styleColor: CrystalColors.tileDeep
+        wrapMode: root.sysTitleTwoLine ? Text.WordWrap : Text.NoWrap
+        maximumLineCount: root.sysTitleTwoLine ? 2 : 1
+        elide: Text.ElideRight
+        lineHeight: 1.05
         text: root.sysTitle
     }
+    // System metadata
     Text {
-        x: T.heroLeftX + 34; y: T.sysSubY
+        x: T.heroLeftX + 2; y: T.sysSubY
         font.family: root.fontFamily
         font.pixelSize: T.sysSubPx
-        font.letterSpacing: 3
+        font.letterSpacing: 2
         color: CrystalColors.labelHi
-        style: Text.Outline
-        styleColor: CrystalColors.tileDeep
+        opacity: 0.85
         text: root.subLine
     }
 
-    // script tagline (italic mono — no script face is bundled).
-    // Sits just right of the box, left of the grid panel, like the
-    // reference hero. Text outline carries readability (no boxy scrim).
-    Text {
-        x: 495; y: 265
-        width: 210
-        horizontalAlignment: Text.AlignRight
-        font.family: root.fontFamily
-        font.pixelSize: T.taglinePx
-        font.italic: true
-        color: CrystalColors.white
-        opacity: 0.95
-        style: Text.Outline
-        styleColor: CrystalColors.tileDeep
-        lineHeight: 1.3
-        wrapMode: Text.WordWrap
-        text: {
-            try { return root.sysMeta.tagline || ""; } catch (e) { return ""; }
-        }
+    // Thin rule separating system identity from the hero object.
+    Rectangle {
+        x: T.heroLeftX; y: T.sysSubY + 32
+        width: 64; height: 2
+        color: CrystalColors.frame
+        opacity: 0.5
     }
 
-    // ---- physical composition ----
+    // ---- selected-game hero object ----
+    // Large physical media composition. The game is the hero, not a
+    // scraper thumbnail.
     GameBox3D {
-        x: T.heroLeftX + 10; y: T.compY + 20
-        width: 640; height: T.compH
+        x: T.heroLeftX - 8; y: T.compY
+        width: T.heroLeftW + 16; height: T.compH
         game: root.game
         shortName: root.shortName
         fontFamily: root.fontFamily
         artEpoch: root.artEpoch
     }
 
-    // ---- selected game block ----
-    Item {
-        x: T.heroLeftX + 32; y: T.selKickerY
-        width: 600; height: 24
-        Rectangle { width: 4; height: 20; y: 1; color: CrystalColors.frame }
-        Text {
-            x: 14; y: 0
-            font.family: root.fontFamily
-            font.pixelSize: T.heroKickerPx
-            font.letterSpacing: 4
-            color: CrystalColors.frame
-            text: "SELECTED GAME"
-        }
+    // ---- selected game details ----
+    Text {
+        x: T.heroLeftX; y: T.selKickerY
+        font.family: root.fontFamily
+        font.pixelSize: T.heroKickerPx
+        font.letterSpacing: 5
+        color: CrystalColors.frame
+        text: "SELECTED GAME"
     }
     Text {
         objectName: "libraryGameTitle"
-        x: T.heroLeftX + 32; y: T.selTitleY
-        width: 680
-        elide: Text.ElideRight
+        x: T.heroLeftX; y: T.selTitleY
+        width: T.heroLeftW
         font.family: root.fontFamily
-        font.pixelSize: T.selTitlePx
+        font.pixelSize: root.gameTitlePx
         font.letterSpacing: 1
+        font.bold: true
         color: CrystalColors.ink
+        wrapMode: Text.WordWrap
+        maximumLineCount: 2
+        elide: Text.ElideRight
+        lineHeight: 1.1
         text: root.gameTitle
     }
     Text {
-        x: T.heroLeftX + 34; y: T.metaY
+        x: T.heroLeftX + 2; y: T.metaY
         width: T.metaW
         elide: Text.ElideRight
         font.family: root.fontFamily
         font.pixelSize: T.metaPx
         font.letterSpacing: 2
         color: CrystalColors.mutedBlue
+        opacity: 0.85
         text: root.metaLine
         visible: root.metaLine !== ""
     }
+    // Description: only if there is genuinely space (below the meta line,
+    // above the footer). Kept short and quiet.
     Text {
-        x: T.heroLeftX + 34; y: T.descY
+        x: T.heroLeftX + 2; y: T.descY
         width: T.descW
         font.family: root.fontFamily
         font.pixelSize: T.descPx
         color: CrystalColors.heroInk
-        lineHeight: 1.28
+        opacity: 0.75
+        lineHeight: 1.35
         wrapMode: Text.WordWrap
-        maximumLineCount: 4
+        maximumLineCount: 2
         elide: Text.ElideRight
         text: root.description
         visible: root.description !== ""
-    }
-
-    // artwork strip: scraped screenshot first, then back / media art —
-    // all real game imagery, hidden when the game has none scraped.
-    Row {
-        x: T.shotsX; y: T.shotsY
-        spacing: 12
-        visible: root.stripArts.length > 0
-        Repeater {
-            model: root.stripArts
-            Rectangle {
-                width: T.shotSize; height: T.shotSize
-                color: CrystalColors.tile
-                border.width: 2
-                border.color: CrystalColors.borderDeep
-                Image {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    fillMode: Image.PreserveAspectCrop
-                    smooth: true
-                    asynchronous: true
-                    source: modelData
-                    visible: source !== "" && status === Image.Ready
-                }
-            }
-        }
     }
 }

@@ -116,64 +116,63 @@ var footerLetterSpacing = 3;
 var labelLetterSpacing  = 2;
 
 // ----------------------------------------------------------------
-// Library hero (measured from the 2026-09-18 library hero, 1448x1086
-// normalized to 1280x960 @0.884). Two-panel library: selected-game
-// detail hero on the left, 3x3 game grid in a framed panel right.
+// Library hero (rebuilt 2026-09-19): two-panel 4:3 library.
+// Left hero (emotional): x32-736 (55%). Right grid (browsing):
+// x768-1248 (37.5%). No framed panel, no heavy chrome.
 // ----------------------------------------------------------------
 // Left hero panel
-var heroLeftX = 28;
-var heroLeftW = 672;             // 28..700
+var heroLeftX = 32;
+var heroLeftW = 704;             // 32..736
 var heroTopY  = 100;
-var heroKickerPx = 18;
-var heroKickerY  = 108;
-var sysTitlePx = 54;
-var sysTitleY  = 132;
-var sysSubPx   = 22;
-var sysSubY    = 195;
-var taglinePx  = 22;
-var compY      = 225;            // physical-media composition zone
-var compH      = 430;
-var selKickerY = 630;
-var selTitlePx = 42;
-var selTitleY  = 656;
-var metaPx     = 18;
-var metaY      = 712;
-var metaW      = 420;
-var descPx     = 18;
-var descY      = 736;
-var descW      = 395;
-var shotsX     = 490;
-var shotsY     = 710;
-var shotSize   = 84;
+var heroKickerPx = 16;
+var heroKickerY  = 116;
+var sysTitlePx = 64;             // responsive: shrinks for long names
+var sysTitleY  = 138;
+var sysSubPx   = 20;
+var sysSubY    = 210;
+var taglinePx  = 20;
+var compY      = 248;            // physical-media composition zone
+var compH      = 360;
+var selKickerY = 628;
+var selTitlePx = 34;
+var selTitleY  = 652;
+var metaPx     = 17;
+var metaY      = 698;
+var metaW      = 640;
+var descPx     = 17;
+var descY      = 722;
+var descW      = 640;
+var shotsX     = 32;
+var shotsY     = 790;
+var shotSize   = 76;
 
-// Right grid panel (framed)
-var panelX = 745;
+// Right grid: 3x3, no panel frame. Tiles are art-dominant.
+var panelX = 768;                // (legacy: grid now frameless)
 var panelY = 108;
 var panelW = 480;
-var panelH = 728;                // 108..836
-var panelTopY = 124;             // L1 / SORT / R1 row
+var panelH = 728;
+var panelTopY = 124;
 
-// Grid: 3x3 tiles; each tile is box art with the title set below it.
-// Measured from the 1280x960 library hero: art ~140x175, pitch ~165x221,
-// panel inner x795-1205.
+// Grid: 3x3 tiles; cover art dominates, title is secondary.
+// 480px wide: 3x148 + 2x18 gaps = 480. Art 148x182.
 var libCols   = 3;
 var libRows   = 3;
 var libPageSize = 9;
-var gtileArtW = 140;
-var gtileArtH = 170;
-var gtileTitleH = 36;
-var gtileColGap = 15;
-var gtileRowGap = 10;
-var libGridX  = 760;
-var libGridY  = 170;
+var gtileArtW = 148;
+var gtileArtH = 182;
+var gtileTitleH = 32;
+var gtileColGap = 18;
+var gtileRowGap = 16;
+var libGridX  = 768;
+var libGridY  = 168;
 
 function libTileX(col) { return libGridX + col * (gtileArtW + gtileColGap); }
 function libTileY(row) { return libGridY + row * (gtileArtH + gtileTitleH + gtileRowGap); }
 
-var pageY = 810;                 // page indicator baseline row
+var pageY = 800;                 // page indicator baseline row
 
-// Library footer divider (hero-measured: divider y845/960).
-var libFooterDividerY = 845;
+// Library footer divider.
+var libFooterDividerY = 868;
 
 // Game tile frame: dark inner edge + cream outer frame on selection,
 // with the same viewfinder corner-bracket language as the system tiles.

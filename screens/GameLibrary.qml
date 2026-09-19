@@ -4,9 +4,10 @@ import "../components/CrystalTheme.js" as T
 import "../components/PhysicalMedia"
 import "../components/PhysicalMedia/MediaTemplates.js" as MediaTemplates
 
-// Library hero: selected-game detail panel on the left, 3x3 box-art
-// grid in a framed panel on the right. A launches the selected game
-// via game.launch(); B returns home.
+// Library: selected-game hero on the left (55%), 3x3 box-art grid on the
+// right (37%). Rebuilt 2026-09-19: no framed panel, no heavy chrome —
+// spacing, scale, and typography create the hierarchy.
+// A launches the selected game via game.launch(); B returns home.
 // Y (Details) opens the physical-media Inspect view on GBA/PS2 systems.
 Item {
     id: root
@@ -51,10 +52,6 @@ Item {
     }
 
     // ---- physical-media Inspect -------------------------------------------
-    // Available only for the bespoke GBA/PS2 compositions and only when
-    // Pegasus exposes the Details key; every other system keeps the
-    // production library untouched. The platform check lives in
-    // MediaTemplates — this file never names a system.
     readonly property bool inspectAvailable: {
         if (root.isEmpty) return false
         if (typeof api === "undefined" || !api.keys) return false
@@ -76,8 +73,6 @@ Item {
 
     function openInspect() {
         if (!inspectAvailable || root.inspecting) return
-        // open() reports success: only take input ownership when the
-        // overlay actually opened, so a failed open can never trap keys.
         if (inspectView.open(grid.currentGame, root.shortName,
                              tileRectFor(grid.currentIndex))) {
             root.inspecting = true
@@ -89,9 +84,6 @@ Item {
     function inspectLaunch() { inspectView.launch() }
 
     // The real Pegasus launch mechanism: the game's own launch() method.
-    // Pegasus owns emulator selection via its metadata; the theme only
-    // invokes it. api.memory persists the selection across the reload
-    // Pegasus performs after a game exits.
     function launchCurrent() {
         var game = grid.currentGame
         if (!game) return false
@@ -112,11 +104,11 @@ Item {
     readonly property int pageCount: grid.pageCount
     readonly property int gameIndex: grid.currentIndex
 
-    // ---- left: selected-game detail hero ----
+    // ---- left: selected-game hero (55%) ----
     LibraryHero {
         id: hero
-        x: 0; y: 0
-        width: 740; height: 844
+        x: T.heroLeftX; y: 0
+        width: T.heroLeftW; height: 868
         collection: root.collection
         game: grid.currentGame
         shortName: root.shortName
@@ -126,107 +118,58 @@ Item {
         visible: !root.isEmpty
     }
 
-    // ---- right: framed grid panel ----
+    // ---- right: grid utilities (subtle, no panel chrome) ----
+    // Sort/filter/page live as quiet text above the grid — utilities,
+    // not the main content.
     Item {
-        id: panel
-        x: T.panelX; y: T.panelY
-        width: T.panelW; height: T.panelH
+        x: T.libGridX; y: 118
+        width: T.panelW; height: 36
         visible: !root.isEmpty
 
-        Rectangle {
-            anchors.fill: parent
-            radius: 16
-            color: CrystalColors.gridTile
-            border.width: 2
-            border.color: CrystalColors.gridBorder
-        }
-
-        // open corner brackets over the panel corners
-        Item {  // top-left
-            x: -7; y: -7; width: 32; height: 32
-            Rectangle { x: 0; y: 0; width: 32; height: 5; color: CrystalColors.frame }
-            Rectangle { x: 0; y: 0; width: 5; height: 32; color: CrystalColors.frame }
-        }
-        Item {  // top-right
-            x: parent.width - 25; y: -7; width: 32; height: 32
-            Rectangle { x: 0; y: 0; width: 32; height: 5; color: CrystalColors.frame }
-            Rectangle { x: 27; y: 0; width: 5; height: 32; color: CrystalColors.frame }
-        }
-        Item {  // bottom-left
-            x: -7; y: parent.height - 25; width: 32; height: 32
-            Rectangle { x: 0; y: 27; width: 32; height: 5; color: CrystalColors.frame }
-            Rectangle { x: 0; y: 0; width: 5; height: 32; color: CrystalColors.frame }
-        }
-        Item {  // bottom-right
-            x: parent.width - 25; y: parent.height - 25; width: 32; height: 32
-            Rectangle { x: 0; y: 27; width: 32; height: 5; color: CrystalColors.frame }
-            Rectangle { x: 27; y: 0; width: 5; height: 32; color: CrystalColors.frame }
-        }
-
-        // top row: L1 / SORT / FILTER / R1
-        // L1 cycles sort mode, R1 cycles filter mode (both functional).
-        Rectangle {  // L1 keycap
-            x: 25; y: T.panelTopY - T.panelY
-            width: 46; height: 28
-            radius: 6
-            color: CrystalColors.cream
-            border.width: 1
-            border.color: CrystalColors.frameDim
-            Text {
-                anchors.centerIn: parent
-                font.family: root.fontFamily
-                font.pixelSize: 16
-                font.bold: true
-                color: CrystalColors.creamInk
-                text: "L1"
-            }
-        }
-        Rectangle {  // R1 keycap
-            x: parent.width - 25 - 46; y: T.panelTopY - T.panelY
-            width: 46; height: 28
-            radius: 6
-            color: CrystalColors.cream
-            border.width: 1
-            border.color: CrystalColors.frameDim
-            Text {
-                anchors.centerIn: parent
-                font.family: root.fontFamily
-                font.pixelSize: 16
-                font.bold: true
-                color: CrystalColors.creamInk
-                text: "R1"
-            }
-        }
         Text {
-            x: 85
-            y: T.panelTopY - T.panelY + 1
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
             font.family: root.fontFamily
-            font.pixelSize: 18
+            font.pixelSize: 15
             font.letterSpacing: 2
             color: CrystalColors.mutedBlue
-            text: "SORT: " + root.sortLabel
+            opacity: 0.75
+            text: "SORT " + root.sortLabel
         }
         Text {
             anchors.right: parent.right
-            anchors.rightMargin: 85
-            y: T.panelTopY - T.panelY + 1
+            anchors.verticalCenter: parent.verticalCenter
             font.family: root.fontFamily
-            font.pixelSize: 18
+            font.pixelSize: 15
             font.letterSpacing: 2
             color: CrystalColors.mutedBlue
-            text: "FILTER: " + root.filterLabel
+            opacity: 0.75
+            text: "FILTER " + root.filterLabel
         }
-
-        // page indicator
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            y: T.pageY - T.panelY
+            anchors.verticalCenter: parent.verticalCenter
             font.family: root.fontFamily
-            font.pixelSize: 20
+            font.pixelSize: 15
             font.letterSpacing: 2
             color: CrystalColors.mutedBlue
-            text: "\u25C0  " + (grid.page + 1) + " / " + grid.pageCount + "  \u25B6"
+            opacity: 0.6
+            text: (grid.page + 1) + " / " + grid.pageCount
+            visible: grid.pageCount > 1
         }
+    }
+
+    // L1/R1 hints — only if shoulder buttons are actually wired.
+    // (Kept minimal; remove if not functional on Nova.)
+    Text {
+        x: T.libGridX; y: 846
+        font.family: root.fontFamily
+        font.pixelSize: 13
+        font.letterSpacing: 2
+        color: CrystalColors.mutedBlue
+        opacity: 0.5
+        text: "L1 SORT · R1 FILTER"
+        visible: !root.isEmpty
     }
 
     GameGrid {
@@ -242,9 +185,7 @@ Item {
         visible: !root.isEmpty
     }
 
-    // Physical-media Inspect overlay. The grid selection underneath never
-    // moves, so closing returns to the exact same tile; launching goes
-    // through the unchanged launchCurrent() path below.
+    // Physical-media Inspect overlay.
     PhysicalInspect {
         id: inspectView
         objectName: "physicalInspect"
@@ -267,7 +208,7 @@ Item {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             font.family: root.fontFamily
-            font.pixelSize: 40
+            font.pixelSize: 36
             font.letterSpacing: 4
             color: CrystalColors.ink
             text: "NO GAMES FOUND"
@@ -275,7 +216,7 @@ Item {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             font.family: root.fontFamily
-            font.pixelSize: T.fontFooterPx
+            font.pixelSize: 20
             font.letterSpacing: 2
             color: CrystalColors.tileInk
             text: "ADD GAMES TO THIS COLLECTION"
